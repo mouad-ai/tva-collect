@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CollectionStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+}
+
+enum ClientCollectionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  MISSING
+  COMPLETE
+}
+
+enum RequiredDocumentStatus {
+  MISSING
+  RECEIVED
+  NOT_APPLICABLE
+}
+
+enum ReminderChannel {
+  WHATSAPP
+  EMAIL
+  PHONE
+  MANUAL
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  firmId       String
+  firm         Firm     @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Firm {
+  id                      String             @id @default(cuid())
+  name                    String
+  city                    String?
+  phone                   String?
+  email                   String?
+  defaultRequiredDocuments Json?
+  reminderTemplate         String?            @db.Text
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+  users                   User[]
+  clients                 Client[]
+  collectionPeriods       CollectionPeriod[]
+  clientCollections       ClientCollection[]
+  requiredDocuments       RequiredDocument[]
+  uploadedDocuments       UploadedDocument[]
+  reminderLogs            ReminderLog[]
+  leads                   Lead[]
+}
+
+model Client {
+  id                String             @id @default(cuid())
+  firmId            String
+  firm              Firm               @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  companyName       String
+  contactName       String?
+  email             String?
+  phone             String?
+  ice               String?
+  taxId             String?
+  city              String?
+  notes             String?            @db.Text
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  clientCollections ClientCollection[]
+
+  @@index([firmId])
+}
+
+model CollectionPeriod {
+  id                String             @id @default(cuid())
+  firmId            String
+  firm              Firm               @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  name              String
+  month             Int
+  year              Int
+  status            CollectionStatus   @default(ACTIVE)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  clientCollections ClientCollection[]
+
+  @@index([firmId])
+}
+
+model ClientCollection {
+  id                 String                 @id @default(cuid())
+  firmId             String
+  firm               Firm                   @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  clientId           String
+  client             Client                 @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  collectionPeriodId String
+  collectionPeriod   CollectionPeriod       @relation(fields: [collectionPeriodId], references: [id], onDelete: Cascade)
+  uploadToken        String                 @unique
+  status             ClientCollectionStatus @default(NOT_STARTED)
+  accountantNotes    String?                @db.Text
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  requiredDocuments  RequiredDocument[]
+  uploadedDocuments  UploadedDocument[]
+  reminderLogs       ReminderLog[]
+
+  @@unique([clientId, collectionPeriodId])
+  @@index([firmId])
+}
+
+model RequiredDocument {
+  id                 String                 @id @default(cuid())
+  firmId             String
+  firm               Firm                   @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  clientCollectionId String
+  clientCollection   ClientCollection       @relation(fields: [clientCollectionId], references: [id], onDelete: Cascade)
+  name               String
+  description        String?
+  isRequired         Boolean                @default(true)
+  status             RequiredDocumentStatus @default(MISSING)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  uploadedDocuments  UploadedDocument[]
+
+  @@index([firmId])
+  @@index([clientCollectionId])
+}
+
+model UploadedDocument {
+  id                 String            @id @default(cuid())
+  firmId             String
+  firm               Firm              @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  clientCollectionId String
+  clientCollection   ClientCollection  @relation(fields: [clientCollectionId], references: [id], onDelete: Cascade)
+  requiredDocumentId String?
+  requiredDocument   RequiredDocument? @relation(fields: [requiredDocumentId], references: [id], onDelete: SetNull)
+  originalFileName   String
+  storageKey         String
+  mimeType           String
+  size               Int
+  uploadedByName     String?
+  uploaderComment    String?           @db.Text
+  createdAt          DateTime          @default(now())
+
+  @@index([firmId])
+  @@index([clientCollectionId])
+}
+
+model ReminderLog {
+  id                 String            @id @default(cuid())
+  firmId             String
+  firm               Firm              @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  clientCollectionId String
+  clientCollection   ClientCollection  @relation(fields: [clientCollectionId], references: [id], onDelete: Cascade)
+  channel            ReminderChannel
+  message            String            @db.Text
+  createdAt          DateTime          @default(now())
+
+  @@index([firmId])
+}
+
+model Lead {
+  id              String   @id @default(cuid())
+  firmId          String?
+  firm            Firm?    @relation(fields: [firmId], references: [id], onDelete: SetNull)
+  name            String
+  firmName        String
+  phone           String
+  email           String
+  numberOfClients Int?
+  message         String?  @db.Text
+  createdAt       DateTime @default(now())
+}
