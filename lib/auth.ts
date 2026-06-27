@@ -50,4 +50,15 @@ export async function requireUser() {
   return user;
 }
 
+export function isAdminEmail(email: string) {
+  const adminEmail = process.env.ADMIN_EMAIL || "demo@tvacollect.ma";
+  return email.toLowerCase() === adminEmail.toLowerCase();
+}
+
+export async function requireAdmin() {
+  const user = await requireUser();
+  if (!isAdminEmail(user.email)) redirect("/app");
+  return user;
+}
+
 export { cookieName };

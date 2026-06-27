@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
-import { defaultRequiredDocuments } from "@/lib/constants";
+import { requiredDocumentsFromFirm, workflowTemplateFromType } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
+import { requireFirmCollection, TenantAccessError } from "@/lib/tenant";
 import { generateUploadToken } from "@/lib/tva";
 
 const schema = z.object({
@@ -15,12 +16,25 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const body = schema.safeParse(await request.json().catch(() => null));
   if (!body.success) return NextResponse.json({ error: "Clients invalides." }, { status: 400 });
 
+  try {
+    await requireFirmCollection(user.firmId, id);
+  } catch (error) {
+    if (error instanceof TenantAccessError) return NextResponse.json({ error: error.message }, { status: 404 });
+    throw error;
+  }
   const collection = await prisma.collectionPeriod.findFirst({ where: { id, firmId: user.firmId } });
   if (!collection) return NextResponse.json({ error: "Collecte introuvable." }, { status: 404 });
+  const requiredDocuments =
+    collection.workflowType === "TVA_MONTHLY" || collection.workflowType === "TVA_QUARTERLY"
+      ? requiredDocumentsFromFirm(user.firm.defaultRequiredDocuments)
+      : [...workflowTemplateFromType(collection.workflowType).documents];
 
   const clients = await prisma.client.findMany({
     where: { id: { in: body.data.clientIds }, firmId: user.firmId }
   });
+  if (clients.length !== body.data.clientIds.length) {
+    return NextResponse.json({ error: "Un ou plusieurs clients sont introuvables pour ce cabinet." }, { status: 404 });
+  }
 
   const created = [];
   for (const client of clients) {
@@ -33,7 +47,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         collectionPeriodId: id,
         uploadToken: generateUploadToken(),
         requiredDocuments: {
-          create: defaultRequiredDocuments.map((name) => ({ firmId: user.firmId, name, isRequired: true }))
+          create: requiredDocuments.map((name) => ({ firmId: user.firmId, name, isRequired: true }))
         }
       }
     });

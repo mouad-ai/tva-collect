@@ -1,4 +1,5 @@
 import { Download } from "lucide-react";
+import { classifyUploadedDocumentAction, updateUploadedDocumentQualityAction } from "@/app/actions";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatBytes, formatDate } from "@/lib/utils";
@@ -23,7 +24,7 @@ export default async function DocumentsPage({
       },
       include: {
         requiredDocument: true,
-        clientCollection: { include: { client: true, collectionPeriod: true } }
+        clientCollection: { include: { client: true, collectionPeriod: true, requiredDocuments: { orderBy: { createdAt: "asc" } } } }
       },
       orderBy: { createdAt: "desc" }
     })
@@ -64,7 +65,9 @@ export default async function DocumentsPage({
                 <th>Fichier</th>
                 <th>Client</th>
                 <th>Collecte</th>
-                <th>Type</th>
+                <th>Classification</th>
+                <th>Controle</th>
+                <th>Accuse client</th>
                 <th>Taille</th>
                 <th>Date depot</th>
                 <th></th>
@@ -76,14 +79,51 @@ export default async function DocumentsPage({
                   <td className="font-bold">{document.originalFileName}</td>
                   <td>{document.clientCollection.client.companyName}</td>
                   <td>{document.clientCollection.collectionPeriod.name}</td>
-                  <td>{document.requiredDocument?.name || "Autre"}</td>
+                  <td className="min-w-[240px]">
+                    <form action={classifyUploadedDocumentAction.bind(null, document.id)} className="flex gap-2">
+                      <select name="requiredDocumentId" defaultValue={document.requiredDocumentId || ""}>
+                        <option value="">Autre / non classe</option>
+                        {document.clientCollection.requiredDocuments.map((doc) => (
+                          <option key={doc.id} value={doc.id}>{doc.name}</option>
+                        ))}
+                      </select>
+                      <button className="btn">OK</button>
+                    </form>
+                  </td>
+                  <td className="min-w-[320px]">
+                    <form action={updateUploadedDocumentQualityAction.bind(null, document.id)} className="grid gap-2">
+                      <select name="qualityStatus" defaultValue={document.qualityStatus}>
+                        <option value="UNREVIEWED">A verifier</option>
+                        <option value="VALID">Valide</option>
+                        <option value="WRONG_DOCUMENT">Mauvais document</option>
+                        <option value="UNREADABLE">Illisible</option>
+                        <option value="DUPLICATE">Doublon</option>
+                        <option value="MISSING_PAGE">Page manquante</option>
+                        <option value="NOT_TVA">Hors TVA</option>
+                      </select>
+                      <div className="flex gap-2">
+                        <input name="accountantComment" defaultValue={document.accountantComment || ""} placeholder="Commentaire interne" />
+                        <button className="btn">OK</button>
+                      </div>
+                    </form>
+                  </td>
+                  <td className="min-w-[220px] text-sm">
+                    {document.clientAcknowledgedDelayRisk ? (
+                      <div>
+                        <div className="font-bold text-emerald-700">Confirme</div>
+                        <div className="text-xs text-muted">{formatDate(document.clientAcknowledgedAt)}</div>
+                      </div>
+                    ) : (
+                      <span className="text-muted">Non confirme</span>
+                    )}
+                  </td>
                   <td>{formatBytes(document.size)}</td>
                   <td>{formatDate(document.createdAt)}</td>
                   <td><a className="btn" href={`/api/documents/${document.id}/download`}><Download size={16} /> Telecharger</a></td>
                 </tr>
               ))}
               {!documents.length ? (
-                <tr><td colSpan={7} className="text-muted">Aucun document trouve.</td></tr>
+                <tr><td colSpan={9} className="text-muted">Aucun document trouve.</td></tr>
               ) : null}
             </tbody>
           </table>

@@ -1,7 +1,8 @@
-import { ReminderChannel } from "@prisma/client";
+import { OperationalActorType, ReminderChannel } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
+import { recordOperationalEvent, requestEventContext } from "@/lib/operational-events";
 import { prisma } from "@/lib/prisma";
 import { generateReminderMessage, missingDocuments } from "@/lib/tva";
 
@@ -28,14 +29,35 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       firmName: item.firm.name,
       month: item.collectionPeriod.month,
       year: item.collectionPeriod.year,
+      workflowType: item.collectionPeriod.workflowType,
       uploadToken: item.uploadToken,
-      missingDocuments: missingDocuments(item.requiredDocuments)
+      missingDocuments: missingDocuments(item.requiredDocuments),
+      template: item.firm.reminderTemplate
     },
     channel
   );
 
-  await prisma.reminderLog.create({
+  const reminder = await prisma.reminderLog.create({
     data: { firmId: user.firmId, clientCollectionId: id, channel, message }
+  });
+  await recordOperationalEvent({
+    firmId: user.firmId,
+    actorUserId: user.id,
+    actorType: OperationalActorType.USER,
+    clientId: item.clientId,
+    collectionId: item.collectionPeriodId,
+    clientCollectionId: item.id,
+    eventType: "REMINDER_GENERATED",
+    eventTitle: "Relance generee",
+    eventDescription: `Relance ${channel} generee pour ${item.client.companyName}.`,
+    metadata: {
+      reminderId: reminder.id,
+      channel,
+      missingDocuments: missingDocuments(item.requiredDocuments),
+      message
+    },
+    ...requestEventContext(request),
+    source: "APP_REMINDER"
   });
 
   return NextResponse.json({ message });

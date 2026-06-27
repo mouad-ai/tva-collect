@@ -30,7 +30,7 @@ export default function LandingPage() {
       <section className="border-b border-border bg-surface py-12">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 md:grid-cols-[0.9fr_1.1fr]">
           <div>
-            <h2 className="text-2xl font-black">Chaque mois, c'est le meme chaos.</h2>
+            <h2 className="text-2xl font-black">Chaque mois, c&apos;est le meme chaos.</h2>
             <p className="mt-3 text-muted">TVA Collect centralise tout dans un lien simple par client.</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">

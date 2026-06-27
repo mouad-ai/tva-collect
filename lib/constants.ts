@@ -8,6 +8,111 @@ export const defaultRequiredDocuments = [
   "Autres documents TVA"
 ];
 
+export const workflowTemplates = [
+  {
+    type: "TVA_MONTHLY",
+    label: "TVA mensuelle",
+    description: "Collecte TVA standard pour factures, releves et justificatifs.",
+    documents: defaultRequiredDocuments
+  },
+  {
+    type: "TVA_QUARTERLY",
+    label: "TVA trimestrielle",
+    description: "Collecte TVA trimestrielle avec la meme base documentaire.",
+    documents: defaultRequiredDocuments
+  },
+  {
+    type: "CNSS_MONTHLY",
+    label: "CNSS / Paie",
+    description: "Elements mensuels de paie et declarations sociales.",
+    documents: [
+      "Nouveaux salaries",
+      "Departs salaries",
+      "Absences",
+      "Conges",
+      "Heures supplementaires",
+      "Elements variables de paie",
+      "Justificatif paiement CNSS"
+    ]
+  },
+  {
+    type: "PAYROLL",
+    label: "Paie",
+    description: "Elements variables, mouvements salaries et justificatifs de paie.",
+    documents: [
+      "Elements variables de paie",
+      "Nouveaux salaries",
+      "Departs salaries",
+      "Absences",
+      "Conges",
+      "Primes",
+      "Avances sur salaire"
+    ]
+  },
+  {
+    type: "ANNUAL_CLOSING",
+    label: "Cloture annuelle",
+    description: "Documents de cloture, inventaire, banques, clients, fournisseurs et juridique.",
+    documents: [
+      "Inventaire",
+      "Releves bancaires annuels",
+      "Etat clients",
+      "Etat fournisseurs",
+      "Immobilisations",
+      "Credits / emprunts",
+      "Contrats",
+      "Documents juridiques",
+      "Declaration stock"
+    ]
+  },
+  {
+    type: "CLIENT_ONBOARDING",
+    label: "Onboarding client",
+    description: "Pieces d'identification et acces necessaires pour demarrer un nouveau client.",
+    documents: ["ICE", "RC", "IF", "CNSS", "RIB", "Statuts", "CIN gerant", "Mandat cabinet", "Contact principal", "Acces documents"]
+  },
+  {
+    type: "BANK_DOCUMENTS",
+    label: "Documents bancaires",
+    description: "Releves, attestations et justificatifs bancaires.",
+    documents: ["Releves bancaires", "Avis de debit", "Avis de credit", "Justificatifs virements", "Attestations bancaires", "RIB"]
+  },
+  {
+    type: "LEGAL_DOCUMENTS",
+    label: "Documents juridiques",
+    description: "Pieces juridiques, contrats et documents administratifs.",
+    documents: ["Statuts", "PV d'assemblee", "Contrats", "Baux", "Autorisations", "Documents administratifs"]
+  },
+  {
+    type: "EMPLOYEE_DOCUMENTS",
+    label: "Documents salaries",
+    description: "Pieces employees pour paie, dossiers RH et declarations.",
+    documents: ["CIN salarie", "Contrat de travail", "RIB salarie", "Attestation CNSS", "Justificatifs absence", "Documents maladie"]
+  },
+  {
+    type: "SUPPLIER_DOCUMENTS",
+    label: "Documents fournisseurs",
+    description: "Factures, contrats et justificatifs fournisseurs.",
+    documents: ["Factures fournisseurs", "Contrats fournisseurs", "Bons de livraison", "Avoirs fournisseurs", "Justificatifs paiement"]
+  },
+  {
+    type: "CUSTOM",
+    label: "Workflow personnalise",
+    description: "Base personnalisable pour demandes hors TVA.",
+    documents: defaultRequiredDocuments
+  }
+] as const;
+
+export function workflowTemplateFromType(value: unknown) {
+  return workflowTemplates.find((template) => template.type === value) || workflowTemplates[0];
+}
+
+export function requiredDocumentsFromFirm(value: unknown) {
+  return Array.isArray(value) && value.every((item) => typeof item === "string") && value.length
+    ? value
+    : defaultRequiredDocuments;
+}
+
 export const monthNames = [
   "Janvier",
   "Fevrier",
@@ -36,3 +141,29 @@ export const allowedMimeTypes = new Set([
 export const allowedExtensions = new Set(["pdf", "jpg", "jpeg", "png", "xls", "xlsx", "doc", "docx"]);
 
 export const maxUploadSize = 10 * 1024 * 1024;
+
+export const clientAcknowledgementText =
+  "Je comprends que les documents manquants, incomplets ou envoyes en retard peuvent retarder le traitement de mon dossier.";
+
+export const clientPeriodConfirmationText =
+  "Je confirme que les documents deposes concernent bien la periode selectionnee.";
+
+export const clientCompletionConfirmationText =
+  "Je confirme avoir envoye tous les documents disponibles pour cette periode.";
+
+export const clientUploadProofText = `${clientAcknowledgementText}\n${clientPeriodConfirmationText}\n${clientCompletionConfirmationText}`;
+
+export const clientEducationMessages = [
+  {
+    title: "Pourquoi utiliser ce lien ?",
+    body: "Ce portail permet a votre cabinet de suivre les pieces recues et les documents encore manquants."
+  },
+  {
+    title: "Pourquoi l'echeance compte ?",
+    body: "Un depot tardif peut retarder le traitement de votre dossier."
+  },
+  {
+    title: "Qualite des fichiers",
+    body: "Envoyez des fichiers lisibles, dans la bonne periode, et evitez les photos floues ou les documents personnels."
+  }
+];

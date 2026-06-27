@@ -22,9 +22,22 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
               <label>Cabinet<input name="firmName" required /></label>
               <label>Telephone<input name="phone" required /></label>
               <label>Email<input name="email" type="email" required /></label>
+              <label>Ville<input name="city" /></label>
               <label>Nombre de clients<input name="numberOfClients" type="number" min="1" /></label>
+              <label>Assistants<input name="numberOfAssistants" type="number" min="0" /></label>
+              <label>
+                Niveau de douleur
+                <select name="painLevel" defaultValue="MEDIUM">
+                  <option value="HIGH">Eleve</option>
+                  <option value="MEDIUM">Moyen</option>
+                  <option value="LOW">Faible</option>
+                </select>
+              </label>
             </div>
-            <label>Message<textarea name="message" rows={5} /></label>
+            <label>Organisation actuelle<input name="currentWorkflow" placeholder="WhatsApp, Excel, Drive..." /></label>
+            <label>Plus gros probleme<textarea name="biggestProblem" rows={3} placeholder="Ex: clients qui envoient tout sur WhatsApp, documents manquants..." /></label>
+            <input type="hidden" name="leadSource" value="PILOT_PAGE" />
+            <label>Message<textarea name="message" rows={4} /></label>
             <button className="btn btn-primary w-fit">Demander un pilote</button>
           </form>
         </section>

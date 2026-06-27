@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/app") && !request.cookies.get("tva_session")) {
     return NextResponse.redirect(new URL("/login", request.url));
   }

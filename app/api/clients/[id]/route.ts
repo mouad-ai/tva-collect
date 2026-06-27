@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireFirmClient, TenantAccessError } from "@/lib/tenant";
 
 const clientSchema = z.object({
   companyName: z.string().min(1),
@@ -17,8 +18,13 @@ const clientSchema = z.object({
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   const { id } = await params;
-  const client = await prisma.client.findFirst({ where: { id, firmId: user.firmId } });
-  if (!client) return NextResponse.json({ error: "Client introuvable." }, { status: 404 });
+  let client;
+  try {
+    client = await requireFirmClient(user.firmId, id);
+  } catch (error) {
+    if (error instanceof TenantAccessError) return NextResponse.json({ error: error.message }, { status: 404 });
+    throw error;
+  }
   return NextResponse.json(client);
 }
 
@@ -27,8 +33,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const body = clientSchema.safeParse(await request.json().catch(() => null));
   if (!body.success) return NextResponse.json({ error: "Client invalide." }, { status: 400 });
-  const existing = await prisma.client.findFirst({ where: { id, firmId: user.firmId } });
-  if (!existing) return NextResponse.json({ error: "Client introuvable." }, { status: 404 });
+  try {
+    await requireFirmClient(user.firmId, id);
+  } catch (error) {
+    if (error instanceof TenantAccessError) return NextResponse.json({ error: error.message }, { status: 404 });
+    throw error;
+  }
   const client = await prisma.client.update({
     where: { id },
     data: { ...body.data, email: body.data.email || null }
@@ -39,6 +49,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   const { id } = await params;
+  try {
+    await requireFirmClient(user.firmId, id);
+  } catch (error) {
+    if (error instanceof TenantAccessError) return NextResponse.json({ error: error.message }, { status: 404 });
+    throw error;
+  }
   const active = await prisma.clientCollection.count({
     where: { clientId: id, firmId: user.firmId, collectionPeriod: { status: "ACTIVE" } }
   });

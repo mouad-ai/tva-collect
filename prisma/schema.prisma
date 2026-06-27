@@ -33,6 +33,36 @@ enum ReminderChannel {
   MANUAL
 }
 
+enum DocumentQualityStatus {
+  UNREVIEWED
+  VALID
+  WRONG_DOCUMENT
+  UNREADABLE
+  DUPLICATE
+  MISSING_PAGE
+  NOT_TVA
+}
+
+enum OperationalActorType {
+  USER
+  CLIENT
+  SYSTEM
+}
+
+enum WorkflowType {
+  TVA_MONTHLY
+  TVA_QUARTERLY
+  CNSS_MONTHLY
+  PAYROLL
+  ANNUAL_CLOSING
+  BANK_DOCUMENTS
+  LEGAL_DOCUMENTS
+  CLIENT_ONBOARDING
+  EMPLOYEE_DOCUMENTS
+  SUPPLIER_DOCUMENTS
+  CUSTOM
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -50,6 +80,7 @@ model Firm {
   city                    String?
   phone                   String?
   email                   String?
+  logoUrl                 String?
   defaultRequiredDocuments Json?
   reminderTemplate         String?            @db.Text
   createdAt               DateTime           @default(now())
@@ -88,6 +119,7 @@ model CollectionPeriod {
   firmId            String
   firm              Firm               @relation(fields: [firmId], references: [id], onDelete: Cascade)
   name              String
+  workflowType      WorkflowType        @default(TVA_MONTHLY)
   month             Int
   year              Int
   status            CollectionStatus   @default(ACTIVE)
@@ -96,6 +128,7 @@ model CollectionPeriod {
   clientCollections ClientCollection[]
 
   @@index([firmId])
+  @@index([firmId, workflowType])
 }
 
 model ClientCollection {
@@ -109,6 +142,8 @@ model ClientCollection {
   uploadToken        String                 @unique
   status             ClientCollectionStatus @default(NOT_STARTED)
   accountantNotes    String?                @db.Text
+  completionConfirmedAt DateTime?
+  completionConfirmationText String?         @db.Text
   createdAt          DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
   requiredDocuments  RequiredDocument[]
@@ -149,6 +184,11 @@ model UploadedDocument {
   storageKey         String
   mimeType           String
   size               Int
+  qualityStatus      DocumentQualityStatus @default(UNREVIEWED)
+  accountantComment  String?           @db.Text
+  clientAcknowledgedDelayRisk Boolean   @default(false)
+  clientAcknowledgedAt DateTime?
+  clientAcknowledgementText String?     @db.Text
   uploadedByName     String?
   uploaderComment    String?           @db.Text
   createdAt          DateTime          @default(now())
@@ -171,14 +211,58 @@ model ReminderLog {
 }
 
 model Lead {
-  id              String   @id @default(cuid())
-  firmId          String?
-  firm            Firm?    @relation(fields: [firmId], references: [id], onDelete: SetNull)
-  name            String
-  firmName        String
-  phone           String
-  email           String
-  numberOfClients Int?
-  message         String?  @db.Text
-  createdAt       DateTime @default(now())
+  id                String   @id @default(cuid())
+  firmId            String?
+  firm              Firm?    @relation(fields: [firmId], references: [id], onDelete: SetNull)
+  name              String
+  firmName          String
+  phone             String
+  email             String
+  city              String?
+  numberOfClients   Int?
+  numberOfAssistants Int?
+  currentWorkflow   String?
+  painLevel         String?
+  leadSource        String?
+  stage             String   @default("NEW")
+  nextFollowUpAt    DateTime?
+  assignedOwner     String?
+  expectedPlan      String?
+  expectedSetupFee  Int?
+  preferredDemoAt   DateTime?
+  biggestProblem    String?  @db.Text
+  message           String?  @db.Text
+  notes             String?  @db.Text
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([stage])
+  @@index([nextFollowUpAt])
+}
+
+model OperationalEvent {
+  id               String               @id @default(cuid())
+  firmId           String
+  actorUserId      String?
+  actorType        OperationalActorType
+  clientId         String?
+  collectionId     String?
+  clientCollectionId String?
+  obligationId     String?
+  documentId       String?
+  eventType        String
+  eventTitle       String
+  eventDescription String?              @db.Text
+  metadata         Json?
+  occurredAt       DateTime             @default(now())
+  ipAddress        String?
+  userAgent        String?              @db.Text
+  source           String
+
+  @@index([firmId, occurredAt])
+  @@index([clientId])
+  @@index([collectionId])
+  @@index([clientCollectionId])
+  @@index([documentId])
+  @@index([eventType])
 }

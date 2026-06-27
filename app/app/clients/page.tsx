@@ -1,6 +1,7 @@
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { createClientAction, deleteClientAction } from "@/app/actions";
+import { ClientImportForm } from "@/components/ClientImportForm";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -46,6 +47,12 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
           <label>Notes<textarea name="notes" rows={2} /></label>
           <button className="btn btn-primary w-fit"><Plus size={16} /> Nouveau client</button>
         </form>
+      </section>
+
+      <section className="card p-4">
+        <h2 className="mb-2 font-black">Importer clients</h2>
+        <p className="mb-4 text-sm text-muted">Import CSV depuis Excel avec apercu et detection des doublons par ICE ou societe.</p>
+        <ClientImportForm />
       </section>
 
       <section className="card overflow-hidden">
