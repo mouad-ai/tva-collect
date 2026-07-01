@@ -49,7 +49,7 @@ export async function setUserActiveAction(targetUserId: string, isActive: boolea
   const target = await prisma.user.findFirst({ where: { id: targetUserId, firmId: user.firmId } });
   if (!target) return;
   if (target.role === UserRole.OWNER && !isActive) {
-    const owners = await prisma.user.count({ where: { firmId: user.firmId, role: UserRole.OWNER, isActive: true, deletedAt: null } });
+    const owners = await prisma.user.count({ where: { firmId: user.firmId, role: UserRole.OWNER, isActive: true } });
     if (owners <= 1) return;
   }
   await prisma.user.update({

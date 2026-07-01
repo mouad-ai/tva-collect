@@ -25,7 +25,7 @@ export async function acceptInviteAction(token: string, formData: FormData) {
   const user = await prisma.user.update({
     where: { email: invite.email },
     data: {
-      name: invite.name,
+      name: invite.name || invite.email,
       firmId: invite.firmId,
       role: invite.role,
       passwordHash: await bcrypt.hash(password, 12),

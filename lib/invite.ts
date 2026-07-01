@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
 import { UserRole } from "@prisma/client";
 import { hashToken } from "@/lib/auth";
-import { sendEmail } from "@/lib/email";
+import { sendInviteEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
 export function createInviteToken() {
@@ -18,7 +18,7 @@ export async function createUserInvite(input: {
   email: string;
   name: string;
   role: UserRole;
-  createdByUserId?: string | null;
+  createdByUserId: string;
   expiresInDays?: number;
 }) {
   const token = createInviteToken();
@@ -30,14 +30,14 @@ export async function createUserInvite(input: {
       role: input.role,
       tokenHash: hashToken(token),
       expiresAt: new Date(Date.now() + (input.expiresInDays || 7) * 24 * 60 * 60 * 1000),
-      createdByUserId: input.createdByUserId || null
+      createdByUserId: input.createdByUserId
     }
   });
-  await sendEmail({
+  await sendInviteEmail({
     to: invite.email,
-    subject: "Invitation TVA Collect",
-    template: "team-invite",
-    variables: { name: invite.name, inviteLink: inviteUrl(token), role: invite.role }
+    name: invite.name,
+    firmName: "TVA Collect",
+    inviteLink: inviteUrl(token)
   });
   return { invite, token };
 }
