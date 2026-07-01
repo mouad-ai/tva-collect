@@ -43,6 +43,7 @@ export default async function AdminFirmBillingPage({
     take: 24
   });
   const plans = await prisma.subscriptionPlan.findMany({ where: { isActive: true }, orderBy: { monthlyPriceMad: "asc" } });
+  const defaultInvoiceDueDate = (snapshot.subscription?.currentPeriodEnd || firm.trialEndDate)?.toISOString().slice(0, 10) || "";
 
   return (
     <div className="content-stack">
@@ -98,7 +99,7 @@ export default async function AdminFirmBillingPage({
         <form action={createBillingInvoiceAction} className="mt-4 grid gap-4 md:grid-cols-[1fr_160px_180px_auto_auto] md:items-end">
           <input type="hidden" name="firmId" value={id} />
           <label>Montant MAD<input name="amountMad" type="number" defaultValue={snapshot.plan?.monthlyPriceMad || 1999} required /></label>
-          <label>Échéance<input name="dueDate" type="date" required defaultValue={new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)} /></label>
+          <label>Échéance<input name="dueDate" type="date" required defaultValue={defaultInvoiceDueDate} /></label>
           <label>Notes<textarea name="notes" rows={1} placeholder="Période, remise..." /></label>
           <label className="flex flex-row items-center gap-2 pt-6">
             <input className="w-4" type="checkbox" name="issueNow" defaultChecked />

@@ -181,6 +181,10 @@ export async function ensureSubscriptionPlans() {
   }
 }
 
+export async function ensureDefaultPlans() {
+  return ensureSubscriptionPlans();
+}
+
 export async function getPlatformBillingSettings() {
   await ensureSubscriptionPlans();
   return prisma.platformBillingSettings.upsert({
@@ -406,6 +410,10 @@ export async function requireWithinLimit(firmId: string, limit: PlanLimit) {
       throw new BillingEnforcementError("STORAGE_LIMIT", `Limite de stockage atteinte (${plan.storageLimitMb} Mo).`);
     }
   }
+}
+
+export async function requireWithinPlanLimit(firmId: string, limit: Lowercase<PlanLimit> | PlanLimit) {
+  return requireWithinLimit(firmId, limit.toUpperCase() as PlanLimit);
 }
 
 export function usagePercent(used: number, limit: number | null | undefined) {

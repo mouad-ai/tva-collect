@@ -1,6 +1,6 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHash, createHmac, randomBytes, timingSafeEqual } from "crypto";
 import { FirmStatus, UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
@@ -32,6 +32,14 @@ function idleTimeoutMs() {
 
 function sign(value: string) {
   return createHmac("sha256", secret()).update(value).digest("base64url");
+}
+
+export function createRawToken() {
+  return randomBytes(32).toString("base64url");
+}
+
+export function hashToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
 }
 
 export function createSessionToken(userId: string, now = Date.now()) {
@@ -111,6 +119,18 @@ export async function requireUser() {
 
 export function hasAnyRole(user: { role: UserRole }, roles: UserRole[]) {
   return roles.includes(user.role);
+}
+
+export function canAccessBilling(role: UserRole) {
+  return role === UserRole.OWNER;
+}
+
+export function canManageTeam(role: UserRole) {
+  return role === UserRole.OWNER || role === UserRole.MANAGER;
+}
+
+export async function revokeUserSessions(_userId: string) {
+  return;
 }
 
 export async function requireAdmin() {

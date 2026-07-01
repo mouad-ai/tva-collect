@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint .",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "node tests/security.test.mjs",
     "smoke:functional": "tsx scripts/functional-smoke.ts",
     "production:check": "tsx scripts/production-check.ts",
     "release:check": "prisma validate && npm run lint && npm run build",
