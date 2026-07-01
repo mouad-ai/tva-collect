@@ -282,21 +282,21 @@ enum TvaAmountEntryType {
 }
 
 model User {
-  id             String    @id @default(cuid())
-  name           String
-  email          String    @unique
-  passwordHash   String?
-  role           UserRole  @default(OWNER)
-  isActive       Boolean   @default(true)
-  disabledAt     DateTime?
-  disabledReason String?   @db.Text
-    firmId         String?
-    firm           Firm?     @relation(fields: [firmId], references: [id], onDelete: Cascade)
-    createdAt      DateTime  @default(now())
-    updatedAt      DateTime  @updatedAt
-    passwordResetTokens PasswordResetToken[]
-    notificationState UserNotificationState?
-    releaseChecklistItems ReleaseChecklistItem[]
+  id                    String                 @id @default(cuid())
+  name                  String
+  email                 String                 @unique
+  passwordHash          String?
+  role                  UserRole               @default(OWNER)
+  isActive              Boolean                @default(true)
+  disabledAt            DateTime?
+  disabledReason        String?                @db.Text
+  firmId                String?
+  firm                  Firm?                  @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  passwordResetTokens   PasswordResetToken[]
+  notificationState     UserNotificationState?
+  releaseChecklistItems ReleaseChecklistItem[]
 
   @@index([firmId])
   @@index([role])
@@ -942,21 +942,21 @@ model AuditResponseDraft {
 }
 
 model SubscriptionPlan {
-  id                    String   @id @default(cuid())
-  code                  String   @unique
+  id                    String             @id @default(cuid())
+  code                  String             @unique
   name                  String
   monthlyPriceMad       Int
   clientLimit           Int?
   userLimit             Int?
   storageLimitMb        Int?
   activeCollectionLimit Int?
-  hasZipExport          Boolean  @default(false)
-  hasAdvancedReports    Boolean  @default(false)
-  hasWhiteLabel         Boolean  @default(false)
-  hasWorkflowBuilder    Boolean  @default(false)
-  isActive              Boolean  @default(true)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  hasZipExport          Boolean            @default(false)
+  hasAdvancedReports    Boolean            @default(false)
+  hasWhiteLabel         Boolean            @default(false)
+  hasWorkflowBuilder    Boolean            @default(false)
+  isActive              Boolean            @default(true)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
   subscriptions         FirmSubscription[]
 }
 
@@ -1048,13 +1048,13 @@ model BillingReceipt {
 }
 
 model PlatformBillingSettings {
-  id                   String   @id @default("default")
-  bankName             String?
-  accountHolder        String?
-  rib                  String?
-  iban                 String?
-  paymentInstructions  String?  @db.Text
-  supportEmail         String?
-  supportWhatsapp      String?
-  updatedAt            DateTime @updatedAt
+  id                  String   @id @default("default")
+  bankName            String?
+  accountHolder       String?
+  rib                 String?
+  iban                String?
+  paymentInstructions String?  @db.Text
+  supportEmail        String?
+  supportWhatsapp     String?
+  updatedAt           DateTime @updatedAt
 }

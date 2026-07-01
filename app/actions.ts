@@ -375,33 +375,42 @@ export async function requestPasswordReset(formData: FormData) {
   }
 
   const ip = await actionIp();
-  const [byIp, byEmail] = await Promise.all([
-    rateLimit({ key: `password-reset:ip:${ip}`, limit: 8, windowMs: 15 * 60 * 1000 }),
-    rateLimit({ key: `password-reset:email:${email}`, limit: 3, windowMs: 15 * 60 * 1000 })
-  ]);
+  let byIp;
+  let byEmail;
+  try {
+    [byIp, byEmail] = await Promise.all([
+      rateLimit({ key: `password-reset:ip:${ip}`, limit: 8, windowMs: 15 * 60 * 1000 }),
+      rateLimit({ key: `password-reset:email:${email}`, limit: 3, windowMs: 15 * 60 * 1000 })
+    ]);
+  } catch (error) {
+    console.error("Password reset rate limit failed", error);
+    redirect("/forgot-password?sent=1");
+  }
   if (!byIp.allowed || !byEmail.allowed) redirect("/forgot-password?sent=1");
 
-  const user = await prisma.user.findUnique({ where: { email }, include: { firm: true } });
-  if (user?.isActive) {
-    const { token, tokenHash } = generatePasswordResetToken();
-    await prisma.$transaction([
-      prisma.passwordResetToken.updateMany({
-        where: { userId: user.id, usedAt: null },
-        data: { usedAt: new Date() }
-      }),
-      prisma.passwordResetToken.create({
-        data: {
-          userId: user.id,
-          tokenHash,
-          expiresAt: passwordResetExpiresAt()
-        }
-      })
-    ]);
+  let emailFailed = false;
+  try {
+    const user = await prisma.user.findUnique({ where: { email }, include: { firm: true } });
+    if (user?.isActive) {
+      const { token, tokenHash } = generatePasswordResetToken();
+      await prisma.$transaction([
+        prisma.passwordResetToken.updateMany({
+          where: { userId: user.id, usedAt: null },
+          data: { usedAt: new Date() }
+        }),
+        prisma.passwordResetToken.create({
+          data: {
+            userId: user.id,
+            tokenHash,
+            expiresAt: passwordResetExpiresAt()
+          }
+        })
+      ]);
 
     try {
       await sendPasswordResetEmail({ to: user.email, name: user.name, resetLink: passwordResetUrl(token) });
     } catch {
-      redirect("/forgot-password?error=email");
+      emailFailed = true;
     }
 
     if (user.firmId) {
@@ -416,8 +425,12 @@ export async function requestPasswordReset(formData: FormData) {
         source: "AUTH_PASSWORD_RESET"
       });
     }
+    }
+  } catch (error) {
+    console.error("Password reset request failed", error);
   }
 
+  if (emailFailed) redirect("/forgot-password?error=email");
   redirect("/forgot-password?sent=1");
 }
 

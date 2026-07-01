@@ -1,8 +1,8 @@
 import { PrismaClient, UserRole } from "@prisma/client";
-import { exec } from "node:child_process";
+import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 const prisma = new PrismaClient();
 
 type Check = {
@@ -56,7 +56,7 @@ function validProductionUrl(name: string) {
 
 async function prismaMigrateStatus() {
   try {
-    const { stdout, stderr } = await execAsync("npx prisma migrate status", {
+    const { stdout, stderr } = await execFileAsync(process.execPath, ["node_modules/prisma/build/index.js", "migrate", "status"], {
       cwd: process.cwd(),
       env: process.env,
       windowsHide: true,
