@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireFirmUser, requireMutableFirmUser } from "@/lib/auth";
+import { loggedApiError } from "@/lib/error-logging";
 import { prisma } from "@/lib/prisma";
 import { requireFirmCollection, TenantAccessError } from "@/lib/tenant";
 
@@ -11,20 +12,21 @@ const schema = z.object({
   status: z.enum(["DRAFT", "ACTIVE", "CLOSED"]).optional()
 });
 
-export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const user = await requireFirmUser();
   const { id } = await params;
   try {
     await requireFirmCollection(user.firmId, id);
   } catch (error) {
     if (error instanceof TenantAccessError) return NextResponse.json({ error: error.message }, { status: 404 });
-    throw error;
+    return loggedApiError(error, request, { firmId: user.firmId, userId: user.id });
   }
   const collection = await prisma.collectionPeriod.findFirst({
-    where: { id, firmId: user.firmId },
+    where: { id, firmId: user.firmId, deletedAt: null },
     include: {
       clientCollections: {
-        include: { client: true, requiredDocuments: true, uploadedDocuments: true }
+        where: { deletedAt: null },
+        include: { client: true, requiredDocuments: true, uploadedDocuments: { where: { deletedAt: null } } }
       }
     }
   });
@@ -33,7 +35,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
+  const user = await requireMutableFirmUser();
   const { id } = await params;
   const body = schema.safeParse(await request.json().catch(() => null));
   if (!body.success) return NextResponse.json({ error: "Collecte invalide." }, { status: 400 });
@@ -41,7 +43,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     await requireFirmCollection(user.firmId, id);
   } catch (error) {
     if (error instanceof TenantAccessError) return NextResponse.json({ error: error.message }, { status: 404 });
-    throw error;
+    return loggedApiError(error, request, { firmId: user.firmId, userId: user.id });
   }
   const collection = await prisma.collectionPeriod.update({ where: { id }, data: body.data });
   return NextResponse.json(collection);

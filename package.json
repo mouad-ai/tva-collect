@@ -7,8 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "test": "tsx --test tests/*.test.ts",
+    "smoke:functional": "tsx scripts/functional-smoke.ts",
+    "production:check": "tsx scripts/production-check.ts",
+    "release:check": "prisma validate && npm run lint && npm run build",
     "postinstall": "prisma generate",
-    "seed": "prisma db seed"
+    "seed": "prisma db seed",
+    "create-admin": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
     "@prisma/client": "5.22.0",
@@ -36,5 +41,10 @@
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.10"
+    }
   }
 }

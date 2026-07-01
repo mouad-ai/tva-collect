@@ -1,6 +1,7 @@
-import { Save } from "lucide-react";
+import { Landmark, Save, Users } from "lucide-react";
+import Link from "next/link";
 import { updateSettingsAction } from "@/app/actions";
-import { requireUser } from "@/lib/auth";
+import { requireFirmUser } from "@/lib/auth";
 import { defaultRequiredDocuments } from "@/lib/constants";
 
 function docsToText(value: unknown) {
@@ -8,23 +9,41 @@ function docsToText(value: unknown) {
 }
 
 export default async function SettingsPage() {
-  const user = await requireUser();
+  const user = await requireFirmUser();
 
   return (
-    <div className="grid gap-6">
+    <div className="content-stack">
       <div>
-        <h1 className="text-2xl font-black">Parametres</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight">Paramètres</h1>
         <p className="text-sm text-muted">Profil cabinet, documents par defaut et modele de relance.</p>
       </div>
 
       <section className="card p-4">
+        <div className="mb-4 rounded-md border border-border p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 font-black"><Landmark size={17} /> Configuration fiscale</div>
+              <div className="mt-1 text-sm text-muted">Taux TVA, regimes, frequence et jours d&apos;échéance par defaut.</div>
+            </div>
+            <Link href="/app/settings/fiscal-config" className="btn">Ouvrir configuration fiscale</Link>
+          </div>
+        </div>
+        <div className="mb-4 rounded-md border border-border p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 font-black"><Users size={17} /> Equipe cabinet</div>
+              <div className="mt-1 text-sm text-muted">Inviter responsables, assistants et profils lecture seule.</div>
+            </div>
+            <Link href="/app/settings/team" className="btn">Gerer équipe</Link>
+          </div>
+        </div>
         <form action={updateSettingsAction} className="grid gap-4">
           <div className="field-grid">
             <label>Nom cabinet<input name="name" defaultValue={user.firm.name} required /></label>
             <label>Ville<input name="city" defaultValue={user.firm.city || ""} /></label>
-            <label>Telephone<input name="phone" defaultValue={user.firm.phone || ""} /></label>
+            <label>Téléphone<input name="phone" defaultValue={user.firm.phone || ""} /></label>
             <label>Email<input name="email" type="email" defaultValue={user.firm.email || ""} /></label>
-            <label>Logo URL<input name="logoUrl" defaultValue={user.firm.logoUrl || ""} placeholder="https://..." /></label>
+            <label>URL logo<input name="logoUrl" defaultValue={user.firm.logoUrl || ""} placeholder="https://..." /></label>
           </div>
           <label>
             Documents requis par defaut
@@ -35,7 +54,7 @@ export default async function SettingsPage() {
             <textarea
               name="reminderTemplate"
               rows={8}
-              defaultValue={user.firm.reminderTemplate || "Bonjour [Client],\n\nPetit rappel pour [Workflow] [Month Year].\n\nIl nous manque encore les documents suivants :\n\n[Missing documents]\n\nMerci de les deposer ici :\n[Upload Link]\n\nCabinet [Firm Name]"}
+              defaultValue={user.firm.reminderTemplate || "Bonjour [Client],\n\nPetit rappel pour [Workflow] [Mois annee].\n\nIl nous manque encore les documents suivants :\n\n[Documents manquants]\n\nMerci de les déposer ici :\n[Lien dépôt]\n\nCabinet [Nom cabinet]"}
             />
           </label>
 
@@ -45,3 +64,4 @@ export default async function SettingsPage() {
     </div>
   );
 }
+

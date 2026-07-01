@@ -1,8 +1,10 @@
 "use client";
 
 import { LogIn } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { PasswordField } from "@/components/PasswordField";
 
 export function LoginForm() {
   const router = useRouter();
@@ -27,7 +29,8 @@ export function LoginForm() {
       setError("Email ou mot de passe incorrect.");
       return;
     }
-    router.push("/app");
+    const data = await response.json().catch(() => ({ redirectTo: "/app" }));
+    router.push(typeof data.redirectTo === "string" ? data.redirectTo : "/app");
     router.refresh();
   }
 
@@ -35,12 +38,12 @@ export function LoginForm() {
     <form onSubmit={submit} className="grid gap-4">
       <label>
         Email
-        <input name="email" type="email" defaultValue="demo@tvacollect.ma" required />
+        <input name="email" type="email" autoComplete="email" required />
       </label>
-      <label>
-        Mot de passe
-        <input name="password" type="password" defaultValue="password123" required />
-      </label>
+      <PasswordField name="password" label="Mot de passe" minLength={1} />
+      <Link href="/forgot-password" className="text-sm font-bold text-primary">
+        Mot de passe oublie ?
+      </Link>
       {error ? <p className="text-sm font-semibold text-red-700">{error}</p> : null}
       <button className="btn btn-primary" disabled={busy}>
         <LogIn size={16} />

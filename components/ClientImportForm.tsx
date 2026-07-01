@@ -109,6 +109,7 @@ export function ClientImportForm() {
           <input className="hidden" type="file" accept=".csv,text/csv" onChange={(event) => onFileChange(event.target.files?.[0])} />
         </label>
       </div>
+      <p className="text-xs text-muted">Formats acceptes: CSV exporte depuis Excel. Taille conseillee: moins de 5 Mo.</p>
 
       {rows.length ? (
         <div className="rounded-md border border-border">
@@ -139,7 +140,8 @@ export function ClientImportForm() {
 
       {rows.length ? (
         <button className="btn btn-primary w-fit" type="button" disabled={busy || !!errors.length || !validRows.length} onClick={importRows}>
-          Confirmer import
+          {busy ? <span className="spinner" aria-hidden="true" /> : null}
+          {busy ? "Import en cours..." : "Confirmer import"}
         </button>
       ) : null}
 

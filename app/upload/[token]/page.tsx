@@ -19,7 +19,7 @@ export default async function PublicUploadPage({ params }: { params: Promise<{ t
       client: true,
       collectionPeriod: true,
       requiredDocuments: { orderBy: { createdAt: "asc" } },
-      uploadedDocuments: { orderBy: { createdAt: "desc" } }
+      uploadedDocuments: { where: { deletedAt: null }, orderBy: { createdAt: "desc" } }
     }
   });
 
@@ -32,8 +32,8 @@ export default async function PublicUploadPage({ params }: { params: Promise<{ t
     collectionId: item.collectionPeriodId,
     clientCollectionId: item.id,
     eventType: "CLIENT_OPENED_LINK",
-    eventTitle: "Lien de depot ouvert",
-    eventDescription: `${item.client.companyName} a ouvert le lien de depot.`,
+    eventTitle: "Lien de dépôt ouvert",
+    eventDescription: `${item.client.companyName} a ouvert le lien de dépôt.`,
     metadata: { collectionStatus: item.collectionPeriod.status },
     ipAddress: headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() || headerStore.get("x-real-ip"),
     userAgent: headerStore.get("user-agent"),
@@ -51,9 +51,20 @@ export default async function PublicUploadPage({ params }: { params: Promise<{ t
     ? `Remplacer ou clarifier le fichier ${rejectedDocs[0].originalFileName}.`
     : missingDocs[0]
       ? `Deposer le document suivant : ${missingDocs[0].name}.`
-      : "Confirmer que tous les documents disponibles ont ete deposes.";
+      : "Confirmer que tous les documents disponibles ont été déposes.";
 
-  if (item.collectionPeriod.status !== "ACTIVE") {
+  const unavailableReason =
+    item.collectionPeriod.status !== "ACTIVE"
+      ? "Cette collecte n'est pas ouverte aux dépôts pour le moment. Veuillez contacter votre cabinet."
+      : item.isLocked
+        ? "Cette période TVA est verrouillee apres review. Veuillez contacter votre cabinet avant tout nouveau dépôt."
+        : item.uploadTokenDisabledAt
+          ? "Ce lien de dépôt a été desactive. Veuillez contacter votre cabinet."
+          : item.uploadTokenExpiresAt && item.uploadTokenExpiresAt < new Date()
+            ? "Ce lien de dépôt a expire. Veuillez contacter votre cabinet pour recevoir un nouveau lien."
+            : null;
+
+  if (unavailableReason) {
     return (
       <main className="min-h-screen bg-white px-4 py-6">
         <div className="mx-auto grid max-w-2xl gap-6">
@@ -63,9 +74,9 @@ export default async function PublicUploadPage({ params }: { params: Promise<{ t
               <img src={item.firm.logoUrl} alt={item.firm.name} className="mb-4 max-h-14 max-w-48 object-contain" />
             ) : null}
             <div className="text-sm font-bold text-primary">Cabinet: {item.firm.name}</div>
-            <h1 className="mt-2 text-2xl font-black">Collecte indisponible</h1>
+            <h1 className="mt-2 text-2xl font-black">{item.isLocked ? "Période verrouillee" : "Collecte indisponible"}</h1>
             <p className="mt-3 text-sm text-muted">
-              Cette collecte n&apos;est pas ouverte aux depots pour le moment. Veuillez contacter votre cabinet.
+              {unavailableReason}
             </p>
           </header>
         </div>
@@ -84,8 +95,8 @@ export default async function PublicUploadPage({ params }: { params: Promise<{ t
           <div className="text-sm font-bold text-primary">Cabinet: {item.firm.name}</div>
           <h1 className="mt-2 text-2xl font-black">Deposez vos documents ici</h1>
           <div className="mt-3 grid gap-1 text-sm text-muted">
-            <p><span className="font-bold text-ink">Client:</span> {item.client.companyName}</p>
-            <p><span className="font-bold text-ink">Demande:</span> {workflowTemplate.label} - {monthNames[item.collectionPeriod.month - 1]} {item.collectionPeriod.year}</p>
+            <p><span className="font-bold text-ink">Client :</span> {item.client.companyName}</p>
+            <p><span className="font-bold text-ink">Demande :</span> {workflowTemplate.label} - {monthNames[item.collectionPeriod.month - 1]} {item.collectionPeriod.year}</p>
             {item.firm.phone || item.firm.email ? (
               <p><span className="font-bold text-ink">Contact cabinet:</span> {[item.firm.phone, item.firm.email].filter(Boolean).join(" - ")}</p>
             ) : null}
@@ -94,12 +105,12 @@ export default async function PublicUploadPage({ params }: { params: Promise<{ t
 
         <section className="card p-4">
           <div className="rounded-md border border-primary/20 bg-slate-50 p-4">
-            <h2 className="font-black">Bienvenue sur le portail de depot de votre cabinet comptable</h2>
-            <p className="mt-2 text-sm text-muted">
-              Deposez ici les documents demandes pour eviter les pertes sur WhatsApp ou email. Aucun compte n&apos;est necessaire.
-            </p>
+          <h2 className="font-black">Bienvenue sur le portail de dépôt de votre cabinet comptable</h2>
+          <p className="mt-2 text-sm text-muted">
+              Deposez ici les documents demandes par votre cabinet comptable. Aucun compte n&apos;est necessaire. Vos fichiers sont transmis uniquement a votre cabinet.
+          </p>
             <div className="mt-4 grid gap-2 text-sm md:grid-cols-3">
-              <div className="rounded-md border border-border bg-white p-3"><span className="font-black">1.</span> Verifiez les documents demandes</div>
+              <div className="rounded-md border border-border bg-white p-3"><span className="font-black">1.</span> Vérifiez les documents demandes</div>
               <div className="rounded-md border border-border bg-white p-3"><span className="font-black">2.</span> Ajoutez des fichiers lisibles</div>
               <div className="rounded-md border border-border bg-white p-3"><span className="font-black">3.</span> Confirmez et gardez la preuve</div>
             </div>
@@ -119,7 +130,7 @@ export default async function PublicUploadPage({ params }: { params: Promise<{ t
                 <Clock size={16} />
                 {deadlineCountdownLabel(daysRemaining)}
               </div>
-              <div className="mt-1 text-xs text-muted">Echeance estimee: {formatDate(deadline)}</div>
+              <div className="mt-1 text-xs text-muted">Échéance estimee: {formatDate(deadline)}</div>
             </div>
           </div>
           <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
@@ -167,7 +178,7 @@ export default async function PublicUploadPage({ params }: { params: Promise<{ t
         </section>
 
         <section className="card p-4">
-          <h2 className="mb-3 font-black">Fichiers deja recus</h2>
+          <h2 className="mb-3 font-black">Fichiers deja reçus</h2>
           <div className="grid gap-2">
             {item.uploadedDocuments.map((document) => (
               <div key={document.id} className="flex items-center justify-between gap-3 rounded-md border border-border p-3">
@@ -181,7 +192,7 @@ export default async function PublicUploadPage({ params }: { params: Promise<{ t
             {!item.uploadedDocuments.length ? (
               <div className="flex items-center gap-2 rounded-md bg-slate-50 p-3 text-sm text-muted">
                 <CheckCircle2 size={16} />
-                Aucun fichier depose pour le moment.
+                Aucun fichier dépose pour le moment.
               </div>
             ) : null}
           </div>

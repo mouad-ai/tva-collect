@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   const body = schema.safeParse(Object.fromEntries(form));
   const redirectTo = body.success && body.data.redirectTo === "/demo" ? "/demo" : "/contact";
   if (!body.success) {
-    return NextResponse.redirect(new URL(`${redirectTo}?error=1`, request.url));
+    return NextResponse.redirect(new URL(`${redirectTo}?error=1`, request.url), 303);
   }
   await prisma.lead.create({
     data: {
@@ -48,5 +48,5 @@ export async function POST(request: Request) {
       message: body.data.message || null
     }
   });
-  return NextResponse.redirect(new URL(`${redirectTo}?sent=1`, request.url));
+  return NextResponse.redirect(new URL(`${redirectTo}?sent=1`, request.url), 303);
 }

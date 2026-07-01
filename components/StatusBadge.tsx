@@ -10,9 +10,9 @@ const labels: Record<string, string> = {
   COMPLETE: "Dossier complet",
   DRAFT: "Brouillon",
   ACTIVE: "Active",
-  CLOSED: "Fermee",
+  CLOSED: "Fermée",
   MISSING_DOC: "Manquant",
-  RECEIVED: "Recu",
+  RECEIVED: "Reçu",
   NOT_APPLICABLE: "N/A"
 };
 

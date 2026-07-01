@@ -1,7 +1,7 @@
 import { WorkflowType } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireFirmUser, requireMutableFirmUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
@@ -14,21 +14,21 @@ const schema = z.object({
 });
 
 export async function GET() {
-  const user = await requireUser();
+  const user = await requireFirmUser();
   const collections = await prisma.collectionPeriod.findMany({
-    where: { firmId: user.firmId },
-    include: { clientCollections: true },
+    where: { firmId: user.firmId, deletedAt: null },
+    include: { clientCollections: { where: { deletedAt: null } } },
     orderBy: [{ year: "desc" }, { month: "desc" }]
   });
   return NextResponse.json(collections);
 }
 
 export async function POST(request: Request) {
-  const user = await requireUser();
+  const user = await requireMutableFirmUser();
   const body = schema.safeParse(await request.json().catch(() => null));
   if (!body.success) return NextResponse.json({ error: "Collecte invalide." }, { status: 400 });
   if (body.data.clientIds?.length) {
-    const clients = await prisma.client.findMany({ where: { firmId: user.firmId, id: { in: body.data.clientIds } } });
+    const clients = await prisma.client.findMany({ where: { firmId: user.firmId, deletedAt: null, id: { in: body.data.clientIds } } });
     if (clients.length !== body.data.clientIds.length) {
       return NextResponse.json({ error: "Un ou plusieurs clients sont introuvables pour ce cabinet." }, { status: 404 });
     }
@@ -45,3 +45,4 @@ export async function POST(request: Request) {
   });
   return NextResponse.json(collection, { status: 201 });
 }
+

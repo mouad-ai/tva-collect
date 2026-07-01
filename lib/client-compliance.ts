@@ -33,6 +33,38 @@ export type ClientComplianceProfile = {
   repricingSignal: boolean;
 };
 
+export function complianceTrendLabel(trend: ClientComplianceProfile["trend"]) {
+  const labels: Record<ClientComplianceProfile["trend"], string> = {
+    improving: "En amélioration",
+    stable: "Stable",
+    worsening: "En dégradation",
+    "new client": "Nouveau client",
+    "not enough data": "Données insuffisantes"
+  };
+  return labels[trend];
+}
+
+export function complianceTrendTone(trend: ClientComplianceProfile["trend"]) {
+  const tones: Record<ClientComplianceProfile["trend"], string> = {
+    improving: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    stable: "border-slate-200 bg-slate-50 text-slate-700",
+    worsening: "border-red-200 bg-red-50 text-red-800",
+    "new client": "border-blue-200 bg-blue-50 text-blue-800",
+    "not enough data": "border-slate-200 bg-slate-50 text-slate-600"
+  };
+  return tones[trend];
+}
+
+export function serviceTierLabel(tier: string) {
+  const labels: Record<string, string> = {
+    "Reprice candidate": "Candidat a la revalorisation",
+    "Strict deadline": "Échéance stricte",
+    "Early reminder": "Relance anticipee",
+    Standard: "Standard"
+  };
+  return labels[tier] || tier;
+}
+
 function clamp(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
@@ -137,11 +169,11 @@ export function buildClientComplianceProfile(collections: ComplianceCollection[]
     .slice(0, 3);
 
   const breakdown: string[] = [];
-  if (averageDelayDays && averageDelayDays > 0) breakdown.push(`Depot en retard de ${averageDelayDays} jour(s) en moyenne.`);
+  if (averageDelayDays && averageDelayDays > 0) breakdown.push(`Dépôt en retard de ${averageDelayDays} jour(s) en moyenne.`);
   if (reminderCount) breakdown.push(`${reminderCount} relance(s) necessaires sur l'historique.`);
   if (invalidCount) breakdown.push(`${invalidCount} fichier(s) invalide(s) ou rejetes.`);
   if (commonMissingDocuments[0]) breakdown.push(`Document souvent manquant: ${commonMissingDocuments[0].name}.`);
-  if (!breakdown.length) breakdown.push("Client propre: peu de relances, peu de manquants et depots exploitables.");
+  if (!breakdown.length) breakdown.push("Client propre: peu de relances, peu de manquants et dépôts exploitables.");
 
   const alerts: string[] = [];
   if ((averageDelayDays || 0) >= 3) alerts.push("Client souvent en retard.");
@@ -150,13 +182,13 @@ export function buildClientComplianceProfile(collections: ComplianceCollection[]
   if (invalidCount >= 2) alerts.push("Plusieurs fichiers invalides: rappeler les regles de qualite.");
   if (!alerts.length) alerts.push("Aucune alerte comportementale forte pour le moment.");
 
-  const pressureLevel = score >= 90 ? "Soft" : score >= 75 ? "Normal" : score >= 50 ? "Ferme" : score >= 25 ? "Urgent" : "Non-conformite";
+  const pressureLevel = score >= 90 ? "Douce" : score >= 75 ? "Normale" : score >= 50 ? "Ferme" : score >= 25 ? "Urgente" : "Non-conformite";
   const nextReminderTiming = score >= 90 ? "D-3" : score >= 75 ? "D-5" : score >= 50 ? "D-7" : score >= 25 ? "D-10" : "D-15 + appel";
   const pressureStrategy =
     score >= 75
-      ? "Relance simple pres de l'echeance."
+      ? "Relance simple pres de l'échéance."
       : score >= 50
-        ? "Relancer plus tot et verifier l'ouverture du lien."
+        ? "Relancer plus tot et vérifier l'ouverture du lien."
         : "Relancer tot, utiliser un ton ferme et prevoir un appel si le client ne repond pas.";
   const frictionScore = clamp(reminderCount * 8 + invalidCount * 12 + commonMissingDocuments.reduce((sum, item) => sum + item.count, 0) * 5);
   const serviceTier = score < 35 || frictionScore > 70 ? "Reprice candidate" : score < 50 ? "Strict deadline" : score < 75 ? "Early reminder" : "Standard";

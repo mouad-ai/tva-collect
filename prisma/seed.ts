@@ -1,4 +1,4 @@
-import { PrismaClient, RequiredDocumentStatus } from "@prisma/client";
+import { DocumentSecurityScanStatus, FirmStatus, PrismaClient, RequiredDocumentStatus, ScannerProvider, SubscriptionStatus, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { mkdir, writeFile } from "fs/promises";
@@ -18,13 +18,19 @@ const defaultDocs = [
 
 async function main() {
   await prisma.reminderLog.deleteMany();
+  await prisma.documentSecurityScan.deleteMany();
   await prisma.uploadedDocument.deleteMany();
   await prisma.requiredDocument.deleteMany();
   await prisma.clientCollection.deleteMany();
   await prisma.collectionPeriod.deleteMany();
   await prisma.client.deleteMany();
+  await prisma.userInvite.deleteMany();
   await prisma.user.deleteMany();
   await prisma.lead.deleteMany();
+  await prisma.billingReceipt.deleteMany();
+  await prisma.paymentProof.deleteMany();
+  await prisma.billingInvoice.deleteMany();
+  await prisma.firmSubscription.deleteMany();
   await prisma.firm.deleteMany();
 
   const firm = await prisma.firm.create({
@@ -33,17 +39,59 @@ async function main() {
       city: "Casablanca",
       phone: "+212 522 00 00 00",
       email: "contact@cabinet-demo.ma",
+      status: FirmStatus.ACTIVE,
+      plan: "PRO",
+      trialStartDate: new Date("2026-06-01"),
+      trialEndDate: new Date("2026-07-01"),
       defaultRequiredDocuments: defaultDocs,
       reminderTemplate:
         "Bonjour [Client],\n\nPetit rappel pour la TVA [Month Year].\n\nIl nous manque encore les documents suivants :\n\n[Missing documents]\n\nMerci de les deposer ici :\n[Upload Link]\n\nCabinet [Firm Name]"
     }
   });
 
+  const proPlan = await prisma.subscriptionPlan.upsert({
+    where: { code: "PRO" },
+    update: {},
+    create: {
+      id: "plan_pro",
+      code: "PRO",
+      name: "Pro",
+      monthlyPriceMad: 1999,
+      clientLimit: 100,
+      userLimit: 3,
+      storageLimitMb: 20480,
+      hasZipExport: true,
+      hasAdvancedReports: true
+    }
+  });
+
+  await prisma.firmSubscription.create({
+    data: {
+      firmId: firm.id,
+      planId: proPlan.id,
+      status: SubscriptionStatus.ACTIVE,
+      startedAt: new Date("2026-06-01"),
+      trialEndsAt: new Date("2026-07-01"),
+      currentPeriodStart: new Date("2026-06-01"),
+      currentPeriodEnd: new Date("2026-07-01")
+    }
+  });
+
   await prisma.user.create({
     data: {
-      name: "Demo TVA Collect",
+      name: "SaaS Admin",
       email: "demo@tvacollect.ma",
       passwordHash: await bcrypt.hash("password123", 10),
+      role: UserRole.ADMIN
+    }
+  });
+
+  await prisma.user.create({
+    data: {
+      name: "Owner Cabinet Demo",
+      email: "owner@cabinet-demo.ma",
+      passwordHash: await bcrypt.hash("password123", 10),
+      role: UserRole.OWNER,
       firmId: firm.id
     }
   });
@@ -93,6 +141,7 @@ async function main() {
         clientId: client.id,
         collectionPeriodId: period.id,
         uploadToken: `cl_demo_${index}_${randomUUID().replaceAll("-", "")}`,
+        uploadTokenExpiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
         status
       }
     });
@@ -117,7 +166,7 @@ async function main() {
       const fileName = `${client.companyName.replaceAll(" ", "_")}_${doc.name.replaceAll(" ", "_")}.pdf`;
       const storageKey = path.join("seed", fileName);
       await writeFile(path.join(process.cwd(), "uploads", storageKey), `%PDF-1.4\nDemo file for ${doc.name}\n`);
-      await prisma.uploadedDocument.create({
+      const uploadedDocument = await prisma.uploadedDocument.create({
         data: {
           firmId: firm.id,
           clientCollectionId: clientCollection.id,
@@ -128,6 +177,16 @@ async function main() {
           size: 34,
           uploadedByName: client.contactName,
           uploaderComment: "Document demo ajoute au seed."
+        }
+      });
+      await prisma.documentSecurityScan.create({
+        data: {
+          firmId: firm.id,
+          documentId: uploadedDocument.id,
+          status: DocumentSecurityScanStatus.CLEAN,
+          scannerProvider: ScannerProvider.NONE,
+          details: "Seed document marked clean.",
+          scannedAt: new Date()
         }
       });
     }

@@ -4,9 +4,11 @@ import Link from "next/link";
 import { addClientsToCollectionAction, markClientCollectionCompleteAction, markRequiredDocumentAction, updateClientCollectionNotesAction, updateCollectionStatusAction } from "@/app/actions";
 import { BulkReminderButton } from "@/components/BulkReminderButton";
 import { CopyButton } from "@/components/CopyButton";
+import { PaginationControls } from "@/components/PaginationControls";
 import { ReminderButton } from "@/components/ReminderButton";
+import { SearchFilterForm } from "@/components/SearchFilterForm";
 import { StatusBadge } from "@/components/StatusBadge";
-import { requireUser } from "@/lib/auth";
+import { requireFirmUser } from "@/lib/auth";
 import { monthNames, workflowTemplateFromType } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { clientCloseRisk, deadlineCountdownLabel, deadlineRiskLabel, daysUntilWorkflowDeadline, workflowDeadline } from "@/lib/tva";
@@ -19,24 +21,35 @@ const riskTone = {
   CRITICAL: "border-red-200 bg-red-50 text-red-700"
 };
 
-export default async function CollectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
+export default async function CollectionDetailPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ search?: string; status?: string; page?: string; limit?: string }>;
+}) {
+  const user = await requireFirmUser();
   const { id } = await params;
+  const tableParams = await searchParams;
+  const page = Math.max(1, Number(tableParams.page || 1));
+  const limit = [10, 25, 50].includes(Number(tableParams.limit)) ? Number(tableParams.limit) : 10;
+  const search = tableParams.search?.trim().toLowerCase();
   const collection = await prisma.collectionPeriod.findFirst({
-    where: { id, firmId: user.firmId },
+    where: { id, firmId: user.firmId, deletedAt: null },
     include: {
       clientCollections: {
+        where: { deletedAt: null },
         include: {
           client: true,
           requiredDocuments: { orderBy: { createdAt: "asc" } },
-          uploadedDocuments: { orderBy: { createdAt: "desc" } },
+          uploadedDocuments: { where: { deletedAt: null }, orderBy: { createdAt: "desc" } },
           reminderLogs: { orderBy: { createdAt: "desc" }, take: 3 }
         },
         orderBy: { client: { companyName: "asc" } }
       }
     }
   });
-  const clients = await prisma.client.findMany({ where: { firmId: user.firmId }, orderBy: { companyName: "asc" } });
+  const clients = await prisma.client.findMany({ where: { firmId: user.firmId, deletedAt: null }, orderBy: { companyName: "asc" } });
 
   if (!collection) {
     return <div className="card p-6">Collecte introuvable.</div>;
@@ -44,6 +57,14 @@ export default async function CollectionDetailPage({ params }: { params: Promise
 
   const existingClientIds = new Set(collection.clientCollections.map((item) => item.clientId));
   const availableClients = clients.filter((client) => !existingClientIds.has(client.id));
+  const filteredClientCollections = collection.clientCollections.filter((item) => {
+    const matchesStatus = tableParams.status ? item.status === tableParams.status : true;
+    const matchesSearch = search
+      ? `${item.client.companyName} ${item.client.phone || ""} ${item.client.email || ""} ${item.accountantNotes || ""}`.toLowerCase().includes(search)
+      : true;
+    return matchesStatus && matchesSearch;
+  });
+  const paginatedClientCollections = filteredClientCollections.slice((page - 1) * limit, page * limit);
   const workflowTemplate = workflowTemplateFromType(collection.workflowType);
   const deadline = workflowDeadline(collection.workflowType, collection.year, collection.month);
   const daysRemaining = daysUntilWorkflowDeadline(collection.workflowType, collection.year, collection.month);
@@ -68,12 +89,12 @@ export default async function CollectionDetailPage({ params }: { params: Promise
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="content-stack">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-black">{collection.name}</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight">{collection.name}</h1>
           <p className="text-sm text-muted">
-            {workflowTemplate.label} - {monthNames[collection.month - 1]} {collection.year} - {collection.clientCollections.length} clients - echeance estimee {formatDate(deadline)}
+            {workflowTemplate.label} - {monthNames[collection.month - 1]} {collection.year} - {collection.clientCollections.length} clients - échéance estimee {formatDate(deadline)}
           </p>
           <div className="mt-2"><StatusBadge status={collection.status} /></div>
         </div>
@@ -87,8 +108,8 @@ export default async function CollectionDetailPage({ params }: { params: Promise
       <section className="card p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-black">Ouverture des liens</h2>
-            <p className="text-sm text-muted">Les clients peuvent deposer uniquement quand la collecte est active.</p>
+            <h2 className="font-extrabold">Ouverture des liens</h2>
+            <p className="text-sm text-muted">Les clients peuvent déposer uniquement quand la collecte est active.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <form action={updateCollectionStatusAction.bind(null, collection.id, CollectionStatus.DRAFT)}>
@@ -98,14 +119,14 @@ export default async function CollectionDetailPage({ params }: { params: Promise
               <button className="btn btn-primary" disabled={collection.status === "ACTIVE"}>Activer</button>
             </form>
             <form action={updateCollectionStatusAction.bind(null, collection.id, CollectionStatus.CLOSED)}>
-              <button className="btn btn-danger" disabled={collection.status === "CLOSED"}>Cloturer</button>
+              <button className="btn btn-danger" disabled={collection.status === "CLOSED"}>Clôturer</button>
             </form>
           </div>
         </div>
       </section>
 
       <section className="card p-4">
-        <h2 className="mb-4 font-black">Ajouter des clients a la collecte</h2>
+        <h2 className="mb-4 font-extrabold">Ajouter des clients a la collecte</h2>
         {availableClients.length ? (
           <form action={addClientsToCollectionAction.bind(null, collection.id)} className="grid gap-4">
             <div className="grid gap-2 md:grid-cols-2">
@@ -123,28 +144,40 @@ export default async function CollectionDetailPage({ params }: { params: Promise
         )}
       </section>
 
-      <section className="card overflow-hidden">
+      <section className="card min-w-0 overflow-hidden">
         <div className="border-b border-border p-4">
-          <h2 className="font-black">Suivi des dossiers</h2>
+          <h2 className="font-extrabold">Suivi des dossiers</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table>
+        <SearchFilterForm
+          searchPlaceholder="Rechercher client, telephone, note"
+          filters={[{ name: "status", label: "Statut", value: tableParams.status, options: [
+            { value: "", label: "Tous les statuts" },
+            { value: "NOT_STARTED", label: "Pas commence" },
+            { value: "IN_PROGRESS", label: "En cours" },
+            { value: "MISSING", label: "Documents manquants" },
+            { value: "COMPLETE", label: "Complet" },
+            { value: "CLOSED", label: "Cloture" }
+          ] }]}
+        />
+        <PaginationControls total={filteredClientCollections.length} page={page} limit={limit} searchParams={tableParams} />
+        <div className="table-wrap">
+          <table className="data-table">
             <thead>
               <tr>
                 <th>Client</th>
-                <th>Lien depot</th>
+                <th>Lien dépôt</th>
                 <th>Documents manquants</th>
-                <th>Documents recus</th>
+                <th>Documents reçus</th>
                 <th>Statut</th>
-                <th>Dernier depot</th>
-                <th>Echeance</th>
+                <th>Dernier dépôt</th>
+                <th>Échéance</th>
                 <th>Risque</th>
                 <th>Notes internes</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {collection.clientCollections.map((item) => {
+              {paginatedClientCollections.map((item) => {
                 const missing = item.requiredDocuments.filter((doc) => doc.isRequired && doc.status === "MISSING");
                 const received = item.requiredDocuments.filter((doc) => doc.status === "RECEIVED");
                 const invalidDocs = item.uploadedDocuments.filter((document) => !["UNREVIEWED", "VALID"].includes(document.qualityStatus)).length;
@@ -185,7 +218,7 @@ export default async function CollectionDetailPage({ params }: { params: Promise
                         {missing.map((doc) => (
                           <form key={doc.id} action={markRequiredDocumentAction.bind(null, doc.id, RequiredDocumentStatus.RECEIVED)} className="flex items-center justify-between gap-2 rounded-md bg-amber-50 px-2 py-1 text-sm">
                             <span>{doc.name}</span>
-                            <button className="btn min-h-0 px-2 py-1 text-xs" title="Marquer recu"><Check size={14} /></button>
+                            <button className="btn min-h-0 px-2 py-1 text-xs" title="Marquer reçu"><Check size={14} /></button>
                           </form>
                         ))}
                         {!missing.length ? <span className="text-sm text-muted">Aucun</span> : null}
@@ -206,7 +239,7 @@ export default async function CollectionDetailPage({ params }: { params: Promise
                     </td>
                     <td className="min-w-[260px]">
                       <form action={updateClientCollectionNotesAction.bind(null, item.id)} className="grid gap-2">
-                        <textarea name="accountantNotes" rows={3} defaultValue={item.accountantNotes || ""} placeholder="Ex: client promet lundi, releve bancaire manque" />
+                        <textarea name="accountantNotes" rows={3} defaultValue={item.accountantNotes || ""} placeholder="Ex: client promet lundi, rélevé bancaire manque" />
                         <button className="btn w-fit">Sauver note</button>
                       </form>
                       {item.reminderLogs.length ? (
@@ -224,6 +257,9 @@ export default async function CollectionDetailPage({ params }: { params: Promise
                         <Link className="btn" href={`/app/documents?clientId=${item.clientId}&collectionPeriodId=${collection.id}`} title="Documents">
                           <FileText size={16} /> Documents
                         </Link>
+                        <Link className="btn" href={`/app/tva-readiness/${item.id}`} title="TVA Readiness">
+                          TVA Readiness
+                        </Link>
                         <form action={markClientCollectionCompleteAction.bind(null, item.id)}>
                           <button className="btn" title="Marquer complet"><Check size={16} /> Complet</button>
                         </form>
@@ -235,12 +271,13 @@ export default async function CollectionDetailPage({ params }: { params: Promise
                   </tr>
                 );
               })}
-              {!collection.clientCollections.length ? (
-                <tr><td colSpan={10} className="text-muted">Ajoutez des clients pour generer leurs liens de depot.</td></tr>
+              {!paginatedClientCollections.length ? (
+                <tr><td colSpan={10} className="text-muted">Aucun dossier client ne correspond aux filtres.</td></tr>
               ) : null}
             </tbody>
           </table>
         </div>
+        <PaginationControls total={filteredClientCollections.length} page={page} limit={limit} searchParams={tableParams} />
       </section>
     </div>
   );

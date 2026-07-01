@@ -111,16 +111,16 @@ export function buildNextBestAction(item: OperationClientCollection, complianceS
     reason = `${invalidDocs.length} document(s) invalide(s) doivent etre corriges.`;
   } else if (pendingReviews.length) {
     actionType = "REVIEW_DOCUMENT";
-    actionLabel = "Verifier les documents";
-    reason = `${pendingReviews.length} document(s) attendent le controle cabinet.`;
+    actionLabel = "Vérifier les documents";
+    reason = `${pendingReviews.length} document(s) attendent le contrôle cabinet.`;
   } else if (item.status === ClientCollectionStatus.COMPLETE && item.completionConfirmedAt) {
     actionType = "CLOSE_DOSSIER";
-    actionLabel = "Cloturer le dossier";
+    actionLabel = "Clôturer le dossier";
     reason = "Le dossier est complet et le client a confirme l'envoi des documents disponibles.";
   } else if (missing.length && (daysRemaining <= 2 || reminderCount >= 3 || complianceScore < 35)) {
     actionType = daysRemaining <= 0 || reminderCount >= 4 ? "ESCALATE" : "CALL_CLIENT";
     actionLabel = actionType === "ESCALATE" ? "Escalader au manager" : "Appeler le client";
-    reason = `${missing.length} document(s) manquant(s), ${reminderCount} relance(s), echeance ${daysRemaining <= 0 ? "depassee" : `dans ${daysRemaining} jour(s)`}.`;
+    reason = `${missing.length} document(s) manquant(s), ${reminderCount} relance(s), échéance ${daysRemaining <= 0 ? "depassee" : `dans ${daysRemaining} jour(s)`}.`;
   } else if (missing.length && (daysRemaining <= 7 || complianceScore < 60)) {
     actionType = "SEND_URGENT_REMINDER";
     actionLabel = "Envoyer une relance urgente";
@@ -128,7 +128,7 @@ export function buildNextBestAction(item: OperationClientCollection, complianceS
   } else if (missing.length && reminderCount === 0) {
     actionType = "SEND_FIRST_REQUEST";
     actionLabel = "Envoyer la premiere relance";
-    reason = `${missing.length} document(s) manquant(s) et aucune relance generee.`;
+    reason = `${missing.length} document(s) manquant(s) et aucune relance générée.`;
   } else if (missing.length) {
     actionType = "SEND_REMINDER";
     actionLabel = "Envoyer une relance";
@@ -192,7 +192,7 @@ export function buildOperationsPlan({
 
   const recoveryActions = [
     critical ? `Traiter ${critical} action(s) critique(s) en premier.` : null,
-    recommendations.some((item) => item.actionType === "REVIEW_DOCUMENT") ? "Controler les documents en attente avant de relancer les clients." : null,
+    recommendations.some((item) => item.actionType === "REVIEW_DOCUMENT") ? "Contrôler les documents en attente avant de relancer les clients." : null,
     recommendations.some((item) => item.actionType === "CALL_CLIENT" || item.actionType === "ESCALATE")
       ? "Appeler ou escalader les clients critiques avant les relances simples."
       : null,

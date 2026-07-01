@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireMutableFirmUser } from "@/lib/auth";
+import { loggedApiError } from "@/lib/error-logging";
 import { prisma } from "@/lib/prisma";
 import { requireFirmClientCollection, TenantAccessError } from "@/lib/tenant";
 import { recalculateClientCollectionStatus } from "@/lib/tva";
@@ -12,7 +13,7 @@ const schema = z.object({
 });
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
+  const user = await requireMutableFirmUser();
   const { id } = await params;
   const body = schema.safeParse(await request.json().catch(() => null));
   if (!body.success) return NextResponse.json({ error: "Statut invalide." }, { status: 400 });
@@ -21,7 +22,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     await requireFirmClientCollection(user.firmId, id);
   } catch (error) {
     if (error instanceof TenantAccessError) return NextResponse.json({ error: error.message }, { status: 404 });
-    throw error;
+    return loggedApiError(error, request, { firmId: user.firmId, userId: user.id });
   }
 
   if (body.data.requiredDocumentId && body.data.requiredDocumentStatus) {

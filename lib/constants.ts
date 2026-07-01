@@ -1,7 +1,7 @@
 export const defaultRequiredDocuments = [
   "Factures d'achat",
   "Factures de vente",
-  "Releve bancaire",
+  "Rélevé bancaire",
   "Justificatifs de caisse",
   "Notes de frais",
   "Avoirs",
@@ -12,7 +12,7 @@ export const workflowTemplates = [
   {
     type: "TVA_MONTHLY",
     label: "TVA mensuelle",
-    description: "Collecte TVA standard pour factures, releves et justificatifs.",
+    description: "Collecte TVA standard pour factures, rélevés et justificatifs.",
     documents: defaultRequiredDocuments
   },
   {
@@ -52,10 +52,10 @@ export const workflowTemplates = [
   {
     type: "ANNUAL_CLOSING",
     label: "Cloture annuelle",
-    description: "Documents de cloture, inventaire, banques, clients, fournisseurs et juridique.",
+    description: "Documents de clôture, inventaire, banques, clients, fournisseurs et juridique.",
     documents: [
       "Inventaire",
-      "Releves bancaires annuels",
+      "Rélevés bancaires annuels",
       "Etat clients",
       "Etat fournisseurs",
       "Immobilisations",
@@ -67,15 +67,15 @@ export const workflowTemplates = [
   },
   {
     type: "CLIENT_ONBOARDING",
-    label: "Onboarding client",
+    label: "Integration client",
     description: "Pieces d'identification et acces necessaires pour demarrer un nouveau client.",
     documents: ["ICE", "RC", "IF", "CNSS", "RIB", "Statuts", "CIN gerant", "Mandat cabinet", "Contact principal", "Acces documents"]
   },
   {
     type: "BANK_DOCUMENTS",
     label: "Documents bancaires",
-    description: "Releves, attestations et justificatifs bancaires.",
-    documents: ["Releves bancaires", "Avis de debit", "Avis de credit", "Justificatifs virements", "Attestations bancaires", "RIB"]
+    description: "Rélevés, attestations et justificatifs bancaires.",
+    documents: ["Rélevés bancaires", "Avis de debit", "Avis de credit", "Justificatifs virements", "Attestations bancaires", "RIB"]
   },
   {
     type: "LEGAL_DOCUMENTS",
@@ -140,30 +140,30 @@ export const allowedMimeTypes = new Set([
 
 export const allowedExtensions = new Set(["pdf", "jpg", "jpeg", "png", "xls", "xlsx", "doc", "docx"]);
 
-export const maxUploadSize = 10 * 1024 * 1024;
+export const maxUploadSize = Number(process.env.MAX_UPLOAD_SIZE_MB || 10) * 1024 * 1024;
 
 export const clientAcknowledgementText =
   "Je comprends que les documents manquants, incomplets ou envoyes en retard peuvent retarder le traitement de mon dossier.";
 
 export const clientPeriodConfirmationText =
-  "Je confirme que les documents deposes concernent bien la periode selectionnee.";
+  "Je confirme que les documents déposes concernent bien la période selectionnee.";
 
 export const clientCompletionConfirmationText =
-  "Je confirme avoir envoye tous les documents disponibles pour cette periode.";
+  "Je confirme avoir envoye tous les documents disponibles pour cette période.";
 
 export const clientUploadProofText = `${clientAcknowledgementText}\n${clientPeriodConfirmationText}\n${clientCompletionConfirmationText}`;
 
 export const clientEducationMessages = [
   {
     title: "Pourquoi utiliser ce lien ?",
-    body: "Ce portail permet a votre cabinet de suivre les pieces recues et les documents encore manquants."
+    body: "Ce portail permet a votre cabinet de suivre les pieces reçues et les documents encore manquants."
   },
   {
-    title: "Pourquoi l'echeance compte ?",
-    body: "Un depot tardif peut retarder le traitement de votre dossier."
+    title: "Pourquoi l'échéance compte ?",
+    body: "Un dépôt tardif peut retarder le traitement de votre dossier."
   },
   {
     title: "Qualite des fichiers",
-    body: "Envoyez des fichiers lisibles, dans la bonne periode, et evitez les photos floues ou les documents personnels."
+    body: "Envoyez des fichiers lisibles, dans la bonne période, et evitez les photos floues ou les documents personnels."
   }
 ];

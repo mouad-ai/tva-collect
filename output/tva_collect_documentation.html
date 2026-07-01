@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TVA Collect — Documentation Fonctionnelle Complète</title>
+  <style>
+    :root{--ink:#1a1a2e;--blue:#0f3460;--muted:#5f6b7a;--line:#d9e2ec;--soft:#f6f8fb;--accent:#1f7a8c;--warn:#b45309;--danger:#b91c1c;--ok:#047857}
+    *{box-sizing:border-box}
+    body{margin:0;background:#fff;color:#111827;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;line-height:1.55;font-size:13.5px}
+    .page{max-width:980px;margin:0 auto;padding:42px 52px}
+    .cover{min-height:100vh;display:flex;flex-direction:column;justify-content:center;background:linear-gradient(135deg,var(--ink),var(--blue));color:#fff;max-width:none;margin:0;padding:70px}
+    .cover .box{max-width:900px;margin:0 auto}
+    h1,h2,h3,h4{color:var(--ink);line-height:1.2;margin:0 0 12px}
+    .cover h1,.cover h2{color:#fff}
+    h1{font-size:42px} h2{font-size:28px;margin-top:8px} h3{font-size:21px;margin-top:28px} h4{font-size:16px;margin-top:18px}
+    p{margin:0 0 12px}.lead{font-size:18px;color:#e5edf8;max-width:760px}.muted{color:var(--muted)}
+    .meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:36px;max-width:720px}
+    .meta div{border:1px solid rgba(255,255,255,.28);border-radius:10px;padding:14px;background:rgba(255,255,255,.08)}
+    .toc{columns:2;column-gap:32px}.toc a{display:block;color:var(--blue);text-decoration:none;margin:0 0 8px;font-weight:700;break-inside:avoid}
+    .section{break-before:page;page-break-before:always}.domain{break-before:page;page-break-before:always}
+    table{width:100%;border-collapse:collapse;margin:12px 0 22px;break-inside:auto}
+    th,td{border:1px solid var(--line);padding:9px 10px;vertical-align:top}th{background:var(--ink);color:#fff;text-align:left;font-size:12px}td{background:#fff}
+    tr:nth-child(even) td{background:#fbfdff}.badge{display:inline-block;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:800;border:1px solid var(--line)}
+    .ok{color:var(--ok)}.warn{color:var(--warn)}.danger{color:var(--danger)}
+    ol{margin:8px 0 16px 22px;padding:0}li{margin:4px 0}
+    .note{background:var(--soft);border-left:4px solid var(--blue);padding:12px 14px;margin:12px 0 18px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.card{border:1px solid var(--line);border-radius:8px;padding:14px;background:#fff}
+    code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;background:#f1f5f9;padding:1px 4px;border-radius:4px}
+    .footer{position:fixed;left:0;right:0;bottom:0;text-align:center;color:#6b7280;font-size:10px;padding:7px 0;border-top:1px solid #eef2f7;background:#fff}
+    @page{size:A4;margin:14mm 12mm 17mm}@media print{body{font-size:11.5px}.page{padding:0;max-width:none}.cover{min-height:260mm;margin:-14mm -12mm -17mm;padding:35mm 20mm}.section,.domain{break-before:page;page-break-before:always}.toc{columns:2}a{color:inherit;text-decoration:none}table{page-break-inside:auto}tr{page-break-inside:avoid}.footer{display:block}}
+  </style>
+</head>
+<body>
+<div class="footer">TVA Collect — Documentation Interne — Confidentiel</div>
+
+<section class="cover" id="cover">
+  <div class="box">
+    <h1>TVA Collect</h1>
+    <h2>Documentation Fonctionnelle Complète</h2>
+    <p class="lead">Plateforme de collecte de documents et gestion clients pour cabinets comptables marocains.</p>
+    <div class="meta">
+      <div><strong>Version</strong><br>0.1.0 — dernière migration : 20260628140000</div>
+      <div><strong>Date</strong><br>29 juin 2026</div>
+      <div><strong>Produit</strong><br>SaaS B2B pour cabinets comptables, fiduciaires et équipes TVA.</div>
+      <div><strong>Confidentialité</strong><br>Documentation interne, destinée aux équipes produit, support et utilisateurs pilotes.</div>
+    </div>
+  </div>
+</section>
+
+<main class="page">
+  <section class="section" id="toc">
+    <h2>Table des matières</h2>
+    <nav class="toc">
+      <a href="#overview">1. Vue d'ensemble</a>
+      <a href="#roles">2. Rôles & permissions</a>
+      <a href="#features">3. Documentation des fonctionnalités</a>
+      <a href="#domain-public">Domaine — Site public & acquisition</a>
+      <a href="#domain-auth">Domaine — Authentification & sécurité</a>
+      <a href="#domain-tenant-provisioning">Domaine — Provisioning cabinets & invitations</a>
+      <a href="#domain-admin">Domaine — Administration SaaS</a>
+      <a href="#domain-dashboard">Domaine — Tableau de bord & activation</a>
+      <a href="#domain-clients">Domaine — Clients & profil fiscal</a>
+      <a href="#domain-collections">Domaine — Collectes & workflow documentaire</a>
+      <a href="#domain-upload">Domaine — Portail client de dépôt</a>
+      <a href="#domain-documents">Domaine — Documents & validation</a>
+      <a href="#domain-reminders">Domaine — Relances</a>
+      <a href="#domain-operations">Domaine — Work Queue & opérations</a>
+      <a href="#domain-proof">Domaine — Proof Vault & audit trail</a>
+      <a href="#domain-tva-readiness">Domaine — Préparation TVA</a>
+      <a href="#domain-filing">Domaine — Déclaration, paiement & preuves fiscales</a>
+      <a href="#domain-fiscal-audit">Domaine — Défense fiscale</a>
+      <a href="#domain-advisory">Domaine — TVA Advisory & Cashflow</a>
+      <a href="#domain-reports">Domaine — Rapports</a>
+      <a href="#domain-settings">Domaine — Paramètres cabinet</a>
+      <a href="#domain-recovery">Domaine — Corbeille & récupération</a>
+      <a href="#domain-ops-readiness">Domaine — Exploitation technique</a>
+      <a href="#navigation">4. Guide de navigation</a>
+      <a href="#glossary">5. Glossaire</a>
+      <a href="#faq">6. FAQ</a>
+      <a href="#ambiguities">Zones ambiguës ou non documentées</a>
+    </nav>
+  </section>
+
+  <section class="section" id="overview">
+    <h2>Section 1 — Vue d'ensemble</h2>
+    <h3>Qu'est-ce que TVA Collect ?</h3>
+    <p>TVA Collect est une application SaaS destinée aux cabinets comptables marocains. Elle centralise les clients, les collectes mensuelles ou trimestrielles, les documents attendus, les dépôts clients, les relances, les contrôles TVA, les preuves opérationnelles et le suivi manuel de déclaration/paiement.</p>
+    <p>L'objectif n'est pas de remplacer SIMPL-TVA ni la DGI, mais de préparer le dossier, réduire le chaos WhatsApp, suivre les pièces manquantes et garder une preuve exploitable de ce qui a été demandé, reçu, vérifié et relancé.</p>
+    <h3>Utilisateurs principaux</h3>
+    <table>
+      <tr><th>Utilisateur</th><th>Rôle métier</th><th>Usage principal</th></tr>
+      <tr><td>Root admin / ADMIN SaaS</td><td>Propriétaire TVA Collect</td><td>Gérer les cabinets, leads, événements et checklist de release.</td></tr>
+      <tr><td>Admin Cabinet / OWNER</td><td>Expert-comptable, dirigeant ou responsable cabinet</td><td>Configurer le cabinet, gérer clients/collectes, suivre TVA, rapports et facturation.</td></tr>
+      <tr><td>MANAGER</td><td>Responsable d'équipe</td><td>Piloter l'activité, valider, accéder à la facturation et restaurer les éléments supprimés.</td></tr>
+      <tr><td>ASSISTANT</td><td>Collaborateur cabinet</td><td>Exécuter les collectes, relancer, vérifier les documents, suivre les dossiers opérationnels.</td></tr>
+      <tr><td>READ_ONLY</td><td>Consultation interne</td><td>Lire les informations sans droits de gestion sensibles.</td></tr>
+      <tr><td>Client</td><td>Entreprise cliente du cabinet</td><td>Ouvrir un lien public sécurisé, confirmer les règles et déposer les fichiers demandés.</td></tr>
+    </table>
+    <h3>Workflow principal en langage simple</h3>
+    <ol>
+      <li>Le cabinet se connecte puis crée ou importe ses clients.</li>
+      <li>Le cabinet crée une collecte, par exemple <strong>TVA Juin 2026</strong>, et choisit les clients concernés.</li>
+      <li>TVA Collect génère un lien de dépôt unique par client et une liste de documents attendus.</li>
+      <li>L'assistant copie le lien ou une relance WhatsApp/email manuelle, puis l'envoie au client.</li>
+      <li>Le client ouvre <code>/upload/[token]</code>, vérifie la période, accepte les règles, choisit le type de document et dépose les fichiers.</li>
+      <li>Le cabinet voit les documents reçus, les classe, les marque valides ou invalides, et suit les pièces manquantes.</li>
+      <li>Quand le dossier est prêt, le cabinet saisit les montants TVA, vérifie le readiness, puis crée un dossier de filing.</li>
+      <li>Le cabinet suit manuellement la déclaration, le paiement, les références externes, et exporte les données CSV pour préparer les démarches DGI/SIMPL.</li>
+    </ol>
+  </section>
+
+  <section class="section" id="roles">
+    <h2>Section 2 — Rôles & permissions</h2>
+    <p class="note">Les rôles viennent de l'énumération <code>UserRole</code> dans Prisma : ADMIN, OWNER, MANAGER, ASSISTANT, READ_ONLY. L'ADMIN plateforme a <code>firmId = null</code>. Les clients ne créent jamais de compte utilisateur : ils utilisent uniquement un lien public <code>/upload/[token]</code>.</p>
+    <table><tr><th>Role</th><th>Description</th><th>Ce qu'il peut voir</th><th>Ce qu'il peut faire</th><th>Ce qu'il ne peut pas faire</th></tr>
+      <tr><td>ADMIN</td><td>Administrateur plateforme TVA Collect.</td><td>Zone <code>/admin</code>, cabinets, utilisateurs, invitations, leads, événements et release checklist.</td><td>Créer un cabinet et son OWNER, renvoyer/révoquer des invitations, suspendre/réactiver un cabinet, changer plan/statut, transférer ownership, générer un lien de configuration mot de passe, consulter les audits.</td><td>Ne peut pas utiliser <code>/app</code> comme utilisateur cabinet normal ; ne crée pas de comptes client.</td></tr>
+      <tr><td>OWNER</td><td>Propriétaire ou administrateur du cabinet.</td><td>Toute l'application cabinet sauf <code>/admin</code>.</td><td>Créer clients/collectes, gérer documents, relances, TVA, paramètres, facturation, corbeille, restauration, inviter l'équipe et transférer la propriété à un utilisateur actif du cabinet.</td><td>Ne peut pas accéder à l'administration SaaS globale ni créer un autre cabinet.</td></tr>
+      <tr><td>MANAGER</td><td>Responsable opérationnel du cabinet.</td><td>Pages cabinet, facturation, rapports, preuves, corbeille et page équipe.</td><td>Piloter les collectes, restaurer les éléments supprimés, accéder aux rapports/facturation, inviter MANAGER, ASSISTANT ou READ_ONLY.</td><td>Ne peut pas accéder à <code>/admin</code>, inviter ADMIN/OWNER ou transférer la propriété.</td></tr>
+      <tr><td>ASSISTANT</td><td>Collaborateur chargé de l'exécution.</td><td>Pages cabinet opérationnelles : tableau de bord, clients, collectes, documents, relances, work queue, TVA, rapports, preuves, paramètres visibles.</td><td>Relancer, classer les documents, saisir des statuts et traiter les dossiers.</td><td>Ne peut pas accéder à la facturation, à la corbeille de restauration, à l'administration SaaS ou aux invitations d'utilisateurs.</td></tr>
+      <tr><td>READ_ONLY</td><td>Utilisateur en consultation.</td><td>Pages cabinet accessibles en lecture.</td><td>Consulter les données accessibles.</td><td>Ne peut pas muter les données, inviter des utilisateurs, accéder à la facturation, à la corbeille ou à l'administration SaaS.</td></tr>
+      <tr><td>CLIENT</td><td>Utilisateur externe sans compte.</td><td>Uniquement son portail public via lien <code>/upload/[token]</code>.</td><td>Lire la demande, accepter les confirmations, choisir une obligation et déposer des fichiers.</td><td>Ne voit pas l'application cabinet, les autres clients, les IDs internes, les rapports ou l'admin.</td></tr>
+    </table>
+  </section>
+
+  <section class="section" id="features">
+    <h2>Section 3 — Documentation des fonctionnalités</h2>
+    <p>Le code ne contient pas de marqueurs explicites “Pack 0, Pack 1...” dans les dossiers. Les fonctionnalités sont donc regroupées par domaines fonctionnels, avec indication des migrations ou fichiers techniques principaux.</p>
+  </section>
+
+  <section class="domain" id="domain-public"><h3>Domaine — Site public & acquisition</h3>
+    <p><strong>Ce que ça fait :</strong> Les pages publiques présentent TVA Collect, la tarification, le contact et la demande de démo. Les leads sont enregistrés dans le CRM interne.</p>
+    <p><strong>Qui l'utilise :</strong> Prospect cabinet, ADMIN SaaS.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Aller sur <code>/</code>, <code>/pricing</code>, <code>/contact</code> ou <code>/demo</code>.</li><li>Remplir le formulaire de contact ou de démo.</li><li>Le lead est enregistré et devient visible dans <code>/admin/leads</code>.</li></ol>
+    <p><strong>Note technique :</strong> Pages <code>app/page.tsx</code>, <code>app/pricing/page.tsx</code>, <code>app/contact/page.tsx</code>, <code>app/demo/page.tsx</code> ; API <code>app/api/contact/route.ts</code> ; modèle <code>Lead</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-auth"><h3>Domaine — Authentification & sécurité</h3>
+    <p><strong>Ce que ça fait :</strong> Authentification par email/mot de passe, mots de passe hashés, cookie de session signé, expiration globale et timeout d'inactivité. Les connexions et uploads publics sont limités par des buckets persistants en base.</p>
+    <p><strong>Qui l'utilise :</strong> ADMIN, OWNER, MANAGER, ASSISTANT, READ_ONLY.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Aller sur <code>/login</code>.</li><li>Saisir email et mot de passe.</li><li>En cas d'échec répété, le système ralentit les tentatives et affiche un message générique.</li><li>Cliquer sur Déconnexion pour supprimer le cookie de session.</li></ol>
+    <p><strong>Validations :</strong> Secret obligatoire en production ; utilisateurs inactifs bloqués ; cookie httpOnly, sameSite lax et secure en production.</p>
+    <p><strong>Note technique :</strong> <code>lib/auth.ts</code>, <code>lib/rate-limit.ts</code>, <code>app/api/auth/login/route.ts</code>, <code>proxy.ts</code>, modèles <code>User</code>, <code>RateLimitBucket</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-tenant-provisioning"><h3>Domaine — Provisioning cabinets & invitations</h3>
+    <p><strong>Ce que ça fait :</strong> TVA Collect dispose d'un vrai flux SaaS multi-cabinets. Un ADMIN plateforme crée un cabinet et son premier OWNER ; le OWNER configure son mot de passe depuis une invitation, puis invite son équipe. Les clients restent des fiches <code>Client</code>, jamais des comptes <code>User</code>.</p>
+    <p><strong>Qui l'utilise :</strong> ADMIN pour créer et gérer les cabinets ; OWNER/MANAGER pour inviter l'équipe ; utilisateurs invités pour accepter leur lien.</p>
+    <h4>Comment l'utiliser côté ADMIN</h4>
+    <ol><li>Créer le premier ADMIN avec <code>npm run create-admin</code> si aucun compte plateforme n'existe.</li><li>Se connecter puis ouvrir <code>/admin/firms/new</code>.</li><li>Renseigner nom cabinet, ville, téléphone, email, plan, statut, dates de trial, nom owner et email owner.</li><li>Valider : le système crée <code>Firm</code>, crée un <code>User</code> OWNER avec <code>passwordHash = null</code>, crée un <code>UserInvite</code>, journalise l'action et affiche/log le lien d'invitation.</li><li>Depuis <code>/admin/firms/[id]</code>, l'ADMIN peut changer plan/statut, suspendre/réactiver, transférer owner et générer un nouveau lien password.</li></ol>
+    <h4>Comment l'utiliser côté OWNER/MANAGER</h4>
+    <ol><li>Ouvrir <code>/app/settings/team</code>.</li><li>Inviter un utilisateur avec nom, email et rôle MANAGER, ASSISTANT ou READ_ONLY.</li><li>Envoyer le lien affiché à l'utilisateur invité.</li><li>Le OWNER peut aussi transférer la propriété à un utilisateur actif du cabinet.</li></ol>
+    <h4>Comment accepter une invitation</h4>
+    <ol><li>Ouvrir <code>/invite/[token]</code>.</li><li>Saisir un mot de passe fort et le confirmer.</li><li>Le système refuse les tokens expirés, acceptés ou révoqués, hash le mot de passe et marque l'invitation acceptée.</li></ol>
+    <p><strong>Cycle de vie cabinet :</strong> <code>FirmStatus</code> contient TRIAL, ACTIVE, OVERDUE, SUSPENDED, CANCELLED. Si un cabinet est SUSPENDED ou CANCELLED, <code>/app</code> est bloqué sauf <code>/app/billing</code> et <code>/app/suspended</code>, et les uploads publics sont refusés.</p>
+    <p><strong>Note technique :</strong> <code>scripts/create-admin.ts</code>, <code>app/admin/firms/new/page.tsx</code>, <code>app/admin/invites/page.tsx</code>, <code>app/admin/users/page.tsx</code>, <code>app/invite/[token]/page.tsx</code>, <code>app/app/settings/team/page.tsx</code>, <code>lib/invites.ts</code>, <code>lib/email.ts</code>, modèles <code>Firm</code>, <code>User</code>, <code>UserInvite</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-admin"><h3>Domaine — Administration SaaS</h3>
+    <p><strong>Ce que ça fait :</strong> La zone admin donne une vue propriétaire sur les cabinets, utilisateurs, invitations, clients, documents, stockage, leads et événements.</p>
+    <p><strong>Qui l'utilise :</strong> ADMIN uniquement.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Se connecter avec un utilisateur de rôle ADMIN.</li><li>Aller à <code>/admin</code>.</li><li>Consulter le dashboard, la liste des cabinets, un cabinet détail, les utilisateurs, les invitations, les leads et les événements.</li><li>Utiliser <code>/admin/firms/new</code> pour provisionner un cabinet payant.</li><li>Mettre à jour les leads depuis <code>/admin/leads</code>.</li></ol>
+    <p><strong>Note technique :</strong> <code>app/admin/layout.tsx</code>, <code>app/admin/page.tsx</code>, <code>app/admin/firms/*</code>, <code>app/admin/users/page.tsx</code>, <code>app/admin/invites/page.tsx</code>, <code>app/admin/leads/page.tsx</code>, <code>app/admin/events/page.tsx</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-dashboard"><h3>Domaine — Tableau de bord & activation</h3>
+    <p><strong>Ce que ça fait :</strong> Le tableau de bord montre les KPI, l'activation du cabinet, les actions du jour, les alertes critiques, les uploads récents et les recommandations d'adoption.</p>
+    <p><strong>Qui l'utilise :</strong> OWNER, MANAGER, ASSISTANT, READ_ONLY.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Aller à <code>/app</code>.</li><li>Suivre la checklist : profil cabinet, logo, clients, collecte, lien, premier document, premier rapport.</li><li>Cliquer sur les CTA pour ouvrir clients, collectes, documents ou rapports.</li><li>Lire les alertes critiques pour prioriser la journée.</li></ol>
+    <p><strong>Note technique :</strong> <code>app/app/page.tsx</code>, <code>lib/adoption.ts</code>, modèles <code>Client</code>, <code>CollectionPeriod</code>, <code>UploadedDocument</code>, <code>ReminderLog</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-clients"><h3>Domaine — Clients & profil fiscal</h3>
+    <p><strong>Ce que ça fait :</strong> Le cabinet crée, recherche, importe et consulte ses clients. Chaque fiche client affiche le profil, l'historique des collectes, le score comportemental et un profil fiscal TVA.</p>
+    <p><strong>Qui l'utilise :</strong> OWNER, MANAGER, ASSISTANT, READ_ONLY.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Menu <strong>Clients</strong> ou <code>/app/clients</code>.</li><li>Créer un client avec société, contact, téléphone, email, ICE, IF, ville et notes.</li><li>Importer des clients par CSV depuis le bloc d'import.</li><li>Cliquer sur un client pour modifier ses informations, voir son comportement et ouvrir son profil fiscal.</li><li>Depuis le profil fiscal, renseigner ICE, IF, RC, CNSS, fréquence TVA, régime, niveau de risque et responsable dossier.</li></ol>
+    <p><strong>Contraintes :</strong> Les clients supprimés passent en corbeille ; les données sont filtrées par <code>firmId</code>.</p>
+    <p><strong>Note technique :</strong> <code>app/app/clients/*</code>, <code>app/api/clients/*</code>, <code>components/ClientImportForm.tsx</code>, modèles <code>Client</code>, <code>ClientFiscalProfile</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-collections"><h3>Domaine — Collectes & workflow documentaire</h3>
+    <p><strong>Ce que ça fait :</strong> Les collectes organisent les demandes documentaires par période, workflow et client. Elles créent des dossiers clients avec un token public et une checklist de documents requis.</p>
+    <p><strong>Qui l'utilise :</strong> OWNER, MANAGER, ASSISTANT.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Menu <strong>Collectes TVA</strong> ou <code>/app/collections</code>.</li><li>Créer une collecte : nom, type de workflow, mois, année, clients à inclure.</li><li>Ouvrir la collecte pour voir les clients, liens, documents manquants, statut, risque et notes internes.</li><li>Copier un lien de dépôt ou ouvrir le portail client.</li><li>Ajouter d'autres clients à la collecte si nécessaire.</li><li>Changer le statut : brouillon, active ou clôturée.</li></ol>
+    <p><strong>Workflows disponibles :</strong> TVA mensuelle, TVA trimestrielle, CNSS mensuelle, paie, clôture annuelle, documents bancaires, juridiques, onboarding client, documents employés, fournisseurs, custom.</p>
+    <p><strong>Note technique :</strong> <code>app/app/collections/*</code>, <code>app/api/collections/*</code>, <code>lib/constants.ts</code>, modèles <code>CollectionPeriod</code>, <code>ClientCollection</code>, <code>RequiredDocument</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-upload"><h3>Domaine — Portail client de dépôt</h3>
+    <p><strong>Ce que ça fait :</strong> Le client dépose ses documents via un lien public tokenisé. Le portail affiche le cabinet, le client, la période, les obligations, les règles de confiance et l'historique des fichiers reçus.</p>
+    <p><strong>Qui l'utilise :</strong> Client externe ; cabinet pour vérification.</p>
+    <h4>Comment l'utiliser côté client</h4>
+    <ol><li>Ouvrir le lien envoyé par le cabinet : <code>/upload/[token]</code>.</li><li>Lire la demande, la période et les documents attendus.</li><li>Choisir le type de document, ajouter les fichiers, saisir un nom/commentaire facultatif.</li><li>Cocher les confirmations obligatoires : retard, période, documents disponibles.</li><li>Cliquer sur <strong>Déposer les documents</strong>.</li></ol>
+    <p><strong>Sécurité :</strong> Le lien est refusé s'il est expiré, désactivé, verrouillé, supprimé ou si la collecte n'est pas active. Les uploads sont limités par IP et token, validés par extension/MIME/taille et reçoivent un scan local CLEAN avec provider NONE.</p>
+    <p><strong>Note technique :</strong> <code>app/upload/[token]/page.tsx</code>, <code>components/UploadForm.tsx</code>, <code>app/api/public/upload/[token]/route.ts</code>, <code>lib/storage.ts</code>, <code>lib/file-security.ts</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-documents"><h3>Domaine — Documents & validation</h3>
+    <p><strong>Ce que ça fait :</strong> Les fichiers reçus sont listés, filtrés, classés par document requis et contrôlés par qualité : à vérifier, valide, mauvais document, illisible, doublon, page manquante ou hors TVA.</p>
+    <p><strong>Qui l'utilise :</strong> OWNER, MANAGER, ASSISTANT, READ_ONLY pour consultation.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Menu <strong>Documents</strong>.</li><li>Filtrer par client ou collecte.</li><li>Choisir une classification dans la liste des documents attendus.</li><li>Choisir le statut de contrôle et ajouter un commentaire interne.</li><li>Télécharger un fichier si son scan sécurité autorise le téléchargement.</li></ol>
+    <p><strong>Note technique :</strong> <code>app/app/documents/page.tsx</code>, <code>app/api/documents/*</code>, modèle <code>UploadedDocument</code>, <code>DocumentSecurityScan</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-reminders"><h3>Domaine — Relances</h3>
+    <p><strong>Ce que ça fait :</strong> TVA Collect génère des messages WhatsApp ou email à copier, avec les documents manquants et le lien de dépôt. L'application garde un historique des relances générées.</p>
+    <p><strong>Qui l'utilise :</strong> OWNER, MANAGER, ASSISTANT.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Menu <strong>Relances</strong> ou bouton Relance dans une collecte.</li><li>Choisir WhatsApp ou email.</li><li>Copier le message généré et l'envoyer manuellement au client.</li><li>Consulter l'historique dans <code>/app/reminders</code>.</li></ol>
+    <p><strong>Important :</strong> L'application ne se connecte pas à l'API WhatsApp et n'envoie pas d'email réel ; elle prépare le message et journalise la génération.</p>
+    <p><strong>Note technique :</strong> <code>components/ReminderButton.tsx</code>, <code>app/api/client-collections/[id]/reminders/route.ts</code>, <code>lib/tva.ts</code>, modèle <code>ReminderLog</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-operations"><h3>Domaine — Work Queue & opérations</h3>
+    <p><strong>Ce que ça fait :</strong> La file de travail calcule les missions du jour : relancer, appeler, revoir un document, demander un re-upload, clôturer, attendre ou escalader.</p>
+    <p><strong>Qui l'utilise :</strong> OWNER, MANAGER, ASSISTANT.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Menu <strong>File de travail</strong>.</li><li>Lire le plan “Operations Brain”.</li><li>Traiter les cartes Matin, Après-midi et Avant de partir.</li><li>Utiliser les boutons de relance ou ouvrir le dossier concerné.</li></ol>
+    <p><strong>Note technique :</strong> <code>app/app/work-queue/page.tsx</code>, <code>lib/operations-brain.ts</code>, <code>lib/client-compliance.ts</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-proof"><h3>Domaine — Proof Vault & audit trail</h3>
+    <p><strong>Ce que ça fait :</strong> Le Proof Vault expose la timeline d'événements opérationnels : création client, création collecte, lien ouvert, règles acceptées, document déposé, document revu, relance, verrouillage, restauration, etc.</p>
+    <p><strong>Qui l'utilise :</strong> OWNER, MANAGER, ASSISTANT, READ_ONLY.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Menu <strong>Preuves</strong>.</li><li>Filtrer par client ou type d'événement.</li><li>Lire la chronologie avec date, source, acteur et description.</li><li>Ouvrir la collecte liée si disponible.</li></ol>
+    <p><strong>Note technique :</strong> <code>app/app/proof-vault/page.tsx</code>, <code>lib/operational-events.ts</code>, modèle <code>OperationalEvent</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-tva-readiness"><h3>Domaine — Préparation TVA</h3>
+    <p><strong>Ce que ça fait :</strong> Cette zone calcule un score de readiness TVA avant déclaration : documents manquants, documents non revus, documents rejetés, saisies TVA manquantes ou suspectes, TVA nette estimée.</p>
+    <p><strong>Qui l'utilise :</strong> OWNER, MANAGER, ASSISTANT.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Menu <strong>Préparation TVA</strong>.</li><li>Ouvrir un dossier client.</li><li>Saisir les entrées TVA manuelles : achat, vente, frais ou avoir.</li><li>Lier une entrée à un document reçu si utile.</li><li>Changer le statut de préparation : collecting, review, ready to declare, declared, archived, blocked.</li><li>Verrouiller le dépôt client quand la préparation démarre ; rouvrir avec une raison si nécessaire.</li><li>Exporter les entrées TVA CSV.</li></ol>
+    <p><strong>Note technique :</strong> <code>app/app/tva-readiness/*</code>, <code>lib/tva-readiness.ts</code>, modèles <code>TvaReadinessCheck</code>, <code>TvaAmountEntry</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-filing"><h3>Domaine — Déclaration, paiement & preuves fiscales</h3>
+    <p><strong>Ce que ça fait :</strong> Le filing suit manuellement l'après-préparation : dossier de déclaration TVA, statut externe, référence, paiement dû/payé, méthode, échéances et reçus fiscaux.</p>
+    <p><strong>Qui l'utilise :</strong> OWNER, MANAGER, ASSISTANT.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Menu <strong>Déclaration TVA</strong>.</li><li>Créer un dossier filing depuis une période client.</li><li>Ouvrir le dossier et vérifier les blocages : manquants, non revus, rejetés.</li><li>Verrouiller la période si la déclaration est en préparation.</li><li>Saisir le statut de soumission externe, référence et notes.</li><li>Saisir le paiement : statut, montant dû, montant payé, date, méthode et référence.</li></ol>
+    <p><strong>Note technique :</strong> <code>app/app/tva-filing/*</code>, <code>lib/tva-filing.ts</code>, modèles <code>TvaFilingCase</code>, <code>TvaSubmission</code>, <code>TvaPayment</code>, <code>FiscalReceipt</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-fiscal-audit"><h3>Domaine — Défense fiscale</h3>
+    <p><strong>Ce que ça fait :</strong> Le module Fiscal Audits suit les contrôles, demandes d'information, notices, demandes de preuves et brouillons de réponse.</p>
+    <p><strong>Qui l'utilise :</strong> OWNER, MANAGER, ASSISTANT.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Menu <strong>Défense fiscale</strong>.</li><li>Créer un dossier audit/contrôle avec client, type, sévérité, filing lié, titre et résumé.</li><li>Ouvrir le dossier pour ajouter une notice, une demande de preuve ou un brouillon de réponse.</li><li>Suivre les échéances et statuts jusqu'à résolution ou clôture.</li><li>Consulter la timeline de preuves liée au client.</li></ol>
+    <p><strong>Note technique :</strong> <code>app/app/fiscal-audits/*</code>, <code>lib/fiscal-audit.ts</code>, modèles <code>FiscalAuditCase</code>, <code>TaxAuthorityNotice</code>, <code>FiscalEvidenceRequest</code>, <code>AuditResponseDraft</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-advisory"><h3>Domaine — TVA Advisory & Cashflow</h3>
+    <p><strong>Ce que ça fait :</strong> Ce tableau consolide l'exposition TVA du portefeuille : TVA nette estimée, montants restants, échéances proches, paiements en retard, confiance des données et recommandations.</p>
+    <p><strong>Qui l'utilise :</strong> OWNER, MANAGER.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Menu <strong>Cashflow TVA</strong>.</li><li>Lire les KPI : TVA ouverte, reste à préparer, échéances 7 jours, score risque.</li><li>Identifier les clients critiques ou à confiance faible.</li><li>Cliquer sur un filing pour agir.</li><li>Lire les recommandations : missing data, paiement, déductible à récupérer, audit.</li></ol>
+    <p><strong>Note technique :</strong> <code>app/app/tva-portfolio-exposure/page.tsx</code>, <code>lib/tva-advisory.ts</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-reports"><h3>Domaine — Rapports</h3>
+    <p><strong>Ce que ça fait :</strong> Les rapports affichent documents manquants, relances, documents invalides, clients à risque, meilleurs clients et progression des collectes. Les collectes peuvent être exportées en CSV.</p>
+    <p><strong>Qui l'utilise :</strong> OWNER, MANAGER, ASSISTANT, READ_ONLY.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Menu <strong>Rapports</strong>.</li><li>Lire les KPI et tableaux client.</li><li>Cliquer sur un client ou une collecte pour ouvrir le détail.</li><li>Cliquer CSV sur une collecte pour exporter la progression.</li></ol>
+    <p><strong>Note technique :</strong> <code>app/app/reports/page.tsx</code>, <code>app/api/collections/[id]/export.csv/route.ts</code>, <code>app/api/client-collections/[id]/tva-entries.csv/route.ts</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-settings"><h3>Domaine — Paramètres cabinet</h3>
+    <p><strong>Ce que ça fait :</strong> Le cabinet configure son nom, ville, téléphone, email, logo, documents requis par défaut, modèle de relance, pays fiscal, devise, fréquence TVA, échéances, taux et régimes.</p>
+    <p><strong>Qui l'utilise :</strong> OWNER, MANAGER, ASSISTANT pour les réglages opérationnels ; OWNER/MANAGER pour la gestion d'équipe.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Menu <strong>Paramètres</strong>.</li><li>Mettre à jour profil cabinet, logo et modèle de relance.</li><li>Ouvrir <strong>Configuration fiscale</strong>.</li><li>Définir pays, devise, fréquence, jour déclaration, jour paiement.</li><li>Ajouter des taux TVA et régimes fiscaux.</li></ol>
+    <p><strong>Note technique :</strong> <code>app/app/settings/*</code>, <code>app/app/settings/team/page.tsx</code>, modèles <code>Firm</code>, <code>User</code>, <code>UserInvite</code>, <code>FiscalConfig</code>, <code>TvaRate</code>, <code>FiscalRegime</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-recovery"><h3>Domaine — Corbeille & récupération</h3>
+    <p><strong>Ce que ça fait :</strong> Les clients, documents et collectes supprimés sont marqués avec <code>deletedAt</code> et peuvent être restaurés depuis la corbeille par les rôles autorisés.</p>
+    <p><strong>Qui l'utilise :</strong> OWNER, MANAGER.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Menu <strong>Corbeille</strong>.</li><li>Consulter les clients, collectes et documents supprimés.</li><li>Cliquer <strong>Restaurer</strong> sur l'élément voulu.</li><li>L'élément réapparaît dans les pages normales et un événement de restauration est journalisé.</li></ol>
+    <p><strong>Note technique :</strong> <code>app/app/trash/page.tsx</code>, actions <code>restoreClientAction</code>, <code>restoreCollectionAction</code>, <code>restoreUploadedDocumentAction</code>, champs <code>deletedAt</code>.</p>
+  </section>
+
+  <section class="domain" id="domain-ops-readiness"><h3>Domaine — Exploitation technique</h3>
+    <p><strong>Ce que ça fait :</strong> Le sprint de durcissement ajoute endpoint santé, logs d'erreur, Dockerfile, documentation backup/restore, scan sécurité documentaire, rate limiting persistant et tests.</p>
+    <p><strong>Qui l'utilise :</strong> ADMIN, équipe technique, support.</p>
+    <h4>Comment l'utiliser</h4>
+    <ol><li>Vérifier l'état avec <code>/api/health</code>.</li><li>Lancer <code>npm test</code>, <code>npm run lint</code>, <code>npm run build</code>.</li><li>Déployer avec <code>Dockerfile</code> et migrations Prisma.</li><li>Utiliser <code>docs/backup-restore.md</code> pour sauvegarde/restauration Postgres et uploads.</li></ol>
+    <p><strong>Note technique :</strong> <code>app/api/health/route.ts</code>, <code>lib/error-logging.ts</code>, <code>lib/rate-limit.ts</code>, <code>Dockerfile</code>, <code>docs/backup-restore.md</code>, modèles <code>ErrorLog</code>, <code>RateLimitBucket</code>.</p>
+  </section>
+
+  <section class="section" id="navigation">
+    <h2>Section 4 — Guide de navigation</h2>
+    <h3>Navigation cabinet</h3>
+    <table><tr><th>Menu</th><th>URL</th><th>Rôles qui voient</th><th>But</th></tr>
+      <tr><td>Tableau de bord</td><td>/app</td><td>Tous utilisateurs cabinet</td><td>Vue d'ensemble, activation, alertes, activité récente.</td></tr>
+      <tr><td>Clients</td><td>/app/clients</td><td>Tous utilisateurs cabinet</td><td>Créer, importer, rechercher et consulter les clients.</td></tr>
+      <tr><td>Collectes TVA</td><td>/app/collections</td><td>Tous utilisateurs cabinet</td><td>Créer des périodes et suivre les dossiers clients.</td></tr>
+      <tr><td>Documents</td><td>/app/documents</td><td>Tous utilisateurs cabinet</td><td>Filtrer, classer, contrôler et télécharger les fichiers.</td></tr>
+      <tr><td>Préparation TVA</td><td>/app/tva-readiness</td><td>Tous utilisateurs cabinet</td><td>Calcul readiness, saisies TVA, verrouillage.</td></tr>
+      <tr><td>Risques TVA</td><td>/app/tva-risk-register</td><td>Tous utilisateurs cabinet</td><td>Registre des risques calculés depuis les dossiers TVA.</td></tr>
+      <tr><td>Déclaration TVA</td><td>/app/tva-filing</td><td>Tous utilisateurs cabinet</td><td>Suivi manuel déclaration, soumission et paiement.</td></tr>
+      <tr><td>Cashflow TVA</td><td>/app/tva-portfolio-exposure</td><td>Tous utilisateurs cabinet</td><td>Exposition, échéances et recommandations TVA.</td></tr>
+      <tr><td>Défense fiscale</td><td>/app/fiscal-audits</td><td>Tous utilisateurs cabinet</td><td>Contrôles, notices, preuves et réponses.</td></tr>
+      <tr><td>Relances</td><td>/app/reminders</td><td>Tous utilisateurs cabinet</td><td>Clients à relancer et historique.</td></tr>
+      <tr><td>File de travail</td><td>/app/work-queue</td><td>Tous utilisateurs cabinet</td><td>Missions quotidiennes priorisées.</td></tr>
+      <tr><td>Rapports</td><td>/app/reports</td><td>Tous utilisateurs cabinet</td><td>Rapports opérationnels et exports CSV.</td></tr>
+      <tr><td>Preuves</td><td>/app/proof-vault</td><td>Tous utilisateurs cabinet</td><td>Timeline d'événements opérationnels.</td></tr>
+      <tr><td>Facturation</td><td>/app/billing</td><td>OWNER, MANAGER</td><td>Plan, statut cabinet, quotas, stockage, demande d'upgrade. Reste accessible si le cabinet est suspendu.</td></tr>
+      <tr><td>Corbeille</td><td>/app/trash</td><td>OWNER, MANAGER</td><td>Restaurer clients, collectes et documents supprimés.</td></tr>
+      <tr><td>Paramètres</td><td>/app/settings</td><td>Tous utilisateurs cabinet</td><td>Profil cabinet, documents par défaut, relance et fiscal.</td></tr>
+      <tr><td>Équipe</td><td>/app/settings/team</td><td>OWNER, MANAGER</td><td>Inviter MANAGER, ASSISTANT, READ_ONLY ; renvoyer/révoquer invitations ; transférer ownership pour OWNER.</td></tr>
+      <tr><td>Suspension</td><td>/app/suspended</td><td>Utilisateurs cabinet suspendu/cancelled</td><td>Page d'information quand le cabinet est suspendu ou annulé.</td></tr>
+      <tr><td>Aide</td><td>/app/help</td><td>Tous utilisateurs cabinet</td><td>Aide intégrée et questions de base.</td></tr>
+    </table>
+    <h3>Navigation admin SaaS</h3>
+    <table><tr><th>Menu</th><th>URL</th><th>But</th></tr>
+      <tr><td>Admin</td><td>/admin</td><td>Dashboard global : cabinets, clients, documents, stockage, revenus manuels.</td></tr>
+      <tr><td>Cabinets</td><td>/admin/firms</td><td>Liste des cabinets, usage et activité.</td></tr>
+      <tr><td>Nouveau cabinet</td><td>/admin/firms/new</td><td>Créer un cabinet, son OWNER et son lien d'invitation.</td></tr>
+      <tr><td>Détail cabinet</td><td>/admin/firms/[id]</td><td>Profil cabinet, utilisateurs, collections, documents, notes et événements.</td></tr>
+      <tr><td>Utilisateurs</td><td>/admin/users</td><td>Voir les ADMIN plateforme et utilisateurs cabinets, activer/désactiver les comptes cabinet.</td></tr>
+      <tr><td>Invitations</td><td>/admin/invites</td><td>Suivre les invitations, renvoyer un lien ou révoquer une invitation.</td></tr>
+      <tr><td>Leads</td><td>/admin/leads</td><td>CRM des prospects et suivi commercial.</td></tr>
+      <tr><td>Events</td><td>/admin/events</td><td>Journal des événements opérationnels.</td></tr>
+      <tr><td>Release</td><td>/admin/release-checklist</td><td>Checklist de recette finale.</td></tr>
+    </table>
+    <h3>Navigation client externe</h3>
+    <table><tr><th>Page</th><th>URL</th><th>But</th></tr><tr><td>Portail dépôt</td><td>/upload/[token]</td><td>Voir la demande, confirmer les règles et déposer les documents. Refusé si le cabinet est suspendu ou annulé.</td></tr><tr><td>Invitation utilisateur</td><td>/invite/[token]</td><td>Configurer le mot de passe d'un utilisateur cabinet invité.</td></tr></table>
+  </section>
+
+  <section class="section" id="glossary">
+    <h2>Section 5 — Glossaire</h2>
+    <table><tr><th>Terme</th><th>Définition</th></tr>
+      <tr><td>TVA</td><td>Taxe sur la Valeur Ajoutée. TVA Collect aide à préparer les documents et montants nécessaires au suivi TVA.</td></tr>
+      <tr><td>DGI</td><td>Direction Générale des Impôts. Autorité fiscale marocaine ; TVA Collect ne s'y connecte pas directement.</td></tr>
+      <tr><td>SIMPL-TVA</td><td>Portail de déclaration TVA de l'administration fiscale. L'application prépare les preuves et exports, mais ne déclare pas automatiquement.</td></tr>
+      <tr><td>CGI</td><td>Code Général des Impôts. Référence juridique fiscale marocaine.</td></tr>
+      <tr><td>Prorata de déduction</td><td>Part de TVA récupérable lorsque toute la TVA d'achat n'est pas déductible.</td></tr>
+      <tr><td>Régime débits</td><td>Régime où la TVA devient exigible à la facturation/débit selon le cas applicable.</td></tr>
+      <tr><td>Régime encaissements</td><td>Régime où la TVA devient exigible lors de l'encaissement.</td></tr>
+      <tr><td>Déclaration</td><td>Étape externe de dépôt officiel de la TVA ; suivie manuellement dans TVA Collect.</td></tr>
+      <tr><td>Période fiscale</td><td>Mois, trimestre ou année concerné par une collecte ou déclaration.</td></tr>
+      <tr><td>Cabinet</td><td>Cabinet comptable ou fiduciaire utilisateur de TVA Collect.</td></tr>
+      <tr><td>Fiduciaire</td><td>Structure qui accompagne les entreprises dans comptabilité, fiscalité et obligations administratives.</td></tr>
+      <tr><td>Dossier</td><td>Ensemble des documents, statuts, notes et preuves pour un client et une période.</td></tr>
+      <tr><td>Pièce justificative</td><td>Document qui prouve une opération : facture, relevé, reçu, note de frais, avoir.</td></tr>
+      <tr><td>Collecte</td><td>Campagne de demande de documents pour une période et un workflow.</td></tr>
+      <tr><td>Readiness</td><td>Score interne indiquant si le dossier TVA semble prêt à être préparé ou déclaré.</td></tr>
+      <tr><td>Filing</td><td>Dossier de suivi manuel de la déclaration, de la soumission externe et du paiement TVA.</td></tr>
+      <tr><td>Proof Vault</td><td>Historique des preuves opérationnelles : actions, dépôts, relances et décisions.</td></tr>
+      <tr><td>Token de dépôt</td><td>Lien unique permettant à un client d'envoyer ses fichiers sans compte.</td></tr>
+    </table>
+  </section>
+
+  <section class="section" id="faq">
+    <h2>Section 6 — FAQ</h2>
+    <h3>1. Comment ajouter un nouveau client ?</h3><p>Allez dans <strong>Clients</strong>, remplissez le formulaire “Nouveau client”, puis cliquez sur Nouveau client.</p>
+    <h3>2. Puis-je importer plusieurs clients ?</h3><p>Oui, via le bloc d'import CSV dans <strong>Clients</strong>. Le code prend en charge création/mise à jour et erreurs simples.</p>
+    <h3>3. Comment envoyer une demande de documents ?</h3><p>Créez une collecte, ajoutez les clients, copiez le lien de dépôt ou générez une relance, puis envoyez le message manuellement.</p>
+    <h3>4. Mon client n'a pas reçu l'email de demande, que faire ?</h3><p>TVA Collect ne fait pas d'envoi email réel. Copiez le message email/WhatsApp généré et envoyez-le depuis votre outil habituel.</p>
+    <h3>5. Le client a déposé un mauvais document, que faire ?</h3><p>Dans Documents, changez le statut de contrôle en Mauvais document, Illisible, Doublon, Page manquante ou Hors TVA, puis relancez le client.</p>
+    <h3>6. Puis-je empêcher un client d'ajouter de nouveaux fichiers ?</h3><p>Oui. Dans Préparation TVA ou Filing, verrouillez le dossier client. Le portail public refusera les nouveaux dépôts.</p>
+    <h3>7. Les liens de dépôt expirent-ils ?</h3><p>Oui, les tokens possèdent une date d'expiration configurée par <code>UPLOAD_TOKEN_TTL_DAYS</code>. Ils peuvent aussi être désactivés.</p>
+    <h3>8. Comment exporter les documents pour la DGI ?</h3><p>L'application exporte des CSV de suivi et d'entrées TVA. Elle ne produit pas encore de ZIP complet DGI ni de dépôt direct SIMPL.</p>
+    <h3>9. Puis-je modifier une déclaration déjà soumise ?</h3><p>Le module Filing permet de modifier le statut, la référence et les notes de soumission. Il s'agit d'un suivi interne, pas d'une modification automatique sur SIMPL.</p>
+    <h3>10. Comment savoir si un dossier est prêt ?</h3><p>Ouvrez Préparation TVA. Le score readiness affiche les blocages, alertes, montants TVA et statut de préparation.</p>
+    <h3>11. Comment récupérer un client ou document supprimé ?</h3><p>Les rôles OWNER ou MANAGER ouvrent Corbeille, puis cliquent Restaurer.</p>
+    <h3>12. Où voir l'historique des actions ?</h3><p>Dans Proof Vault, filtrez par client ou type d'événement.</p>
+    <h3>13. Les fichiers sont-ils analysés contre les virus ?</h3><p>Le modèle de scan existe. En local, provider NONE marque les fichiers propres après validation type/taille. Un scanner réel reste à brancher en production.</p>
+    <h3>14. Qui peut accéder à la facturation ?</h3><p>OWNER et MANAGER. ASSISTANT, READ_ONLY et ADMIN plateforme ne voient pas le menu Facturation cabinet.</p>
+    <h3>15. Comment créer un nouveau cabinet payant ?</h3><p>Un ADMIN plateforme ouvre <code>/admin/firms/new</code>, crée le cabinet et son OWNER. Le système génère ensuite un lien <code>/invite/[token]</code> pour que le OWNER configure son mot de passe.</p>
+    <h3>16. Un assistant peut-il inviter d'autres utilisateurs ?</h3><p>Non. Seuls OWNER et MANAGER peuvent inviter MANAGER, ASSISTANT ou READ_ONLY depuis <code>/app/settings/team</code>.</p>
+    <h3>17. Que se passe-t-il si un cabinet est suspendu ?</h3><p>Les pages opérationnelles <code>/app</code> sont bloquées sauf <code>/app/billing</code> et <code>/app/suspended</code>. Les liens publics de dépôt refusent aussi les uploads.</p>
+    <h3>18. TVA Collect remplace-t-il le cabinet comptable ?</h3><p>Non. C'est un outil d'organisation, de preuve et de préparation. Les décisions fiscales et déclarations officielles restent sous responsabilité du cabinet.</p>
+  </section>
+
+  <section class="section" id="ambiguities">
+    <h2>Zones ambiguës ou non documentées</h2>
+    <ul>
+      <li>Le provisioning SaaS existe : ADMIN crée cabinet + OWNER, OWNER/MANAGER invitent l'équipe, et les clients restent sans compte. L'envoi email réel reste abstrait : en développement les liens sont loggés, en production un provider doit être configuré.</li>
+      <li>La facturation est affichée manuellement ; il n'existe pas de paiement en ligne ni de vraie gestion d'abonnement persistante complète.</li>
+      <li>Les exports ZIP, PDF avancés, OCR, IA, DGI/SIMPL API et WhatsApp API ne sont pas implémentés.</li>
+      <li>Les jobs de nettoyage orphelins existent comme stub/dry-run ; pas de cron automatique identifié.</li>
+      <li>La documentation de “packs” n'est pas représentée dans le code par des dossiers ou commentaires. Le regroupement ci-dessus suit donc les domaines fonctionnels et les migrations.</li>
+      <li>Le build Next/Turbopack signale encore un avertissement non bloquant sur le traçage de <code>lib/storage.ts</code>.</li>
+    </ul>
+    <p><strong>Résumé génération :</strong> 6 sections principales, 20 domaines documentés, 6 rôles documentés, 20 familles de fonctionnalités documentées. Mise à jour provisioning : 29 juin 2026.</p>
+  </section>
+</main>
+</body>
+</html>

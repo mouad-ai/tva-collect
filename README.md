@@ -9,7 +9,7 @@ TVA Collect is a focused B2B SaaS MVP for Moroccan accounting firms. It helps a 
 - PostgreSQL
 - Prisma ORM
 - Tailwind CSS
-- Simple signed-cookie credentials auth
+- Signed-cookie credentials auth with role checks and session expiry
 - Local file storage abstraction for MVP uploads
 
 ## Setup
@@ -49,8 +49,22 @@ Open http://localhost:3000.
 
 ## Demo Login
 
-- Email: `demo@tvacollect.ma`
-- Password: `password123`
+- SaaS Admin: `demo@tvacollect.ma` / `password123`
+- Cabinet Owner: `owner@cabinet-demo.ma` / `password123`
+
+For a real environment, create the first platform admin manually:
+
+```bash
+npm run create-admin
+```
+
+Before putting real client files into production, run the production gate from the production environment:
+
+```bash
+npm run production:check
+```
+
+Full launch sequence: `docs/production-launch-runbook.md`.
 
 ## Main Routes
 
@@ -62,16 +76,36 @@ Open http://localhost:3000.
 - `/app/clients` clients
 - `/app/collections` collection periods
 - `/app/documents` uploaded documents
+- `/app/trash` soft-deleted recovery
+- `/app/tva-readiness` TVA preparation readiness
+- `/app/tva-risk-register` TVA risk register
+- `/app/tva-filing` TVA filing and payment tracking
+- `/app/tva-portfolio-exposure` TVA advisory and cashflow exposure
+- `/app/fiscal-audits` fiscal audit defense
 - `/app/settings` firm settings
+- `/app/settings/team` cabinet team invitations
+- `/app/settings/fiscal-config` fiscal TVA configuration
+- `/admin/firms/new` create cabinet + owner
+- `/admin/users` platform user management
+- `/admin/invites` invite tracking
+- `/invite/[token]` password setup page
+- `/admin/release-checklist` final release checklist
 - `/upload/[token]` public client upload page
+- `/api/health` app/database health check
 
 ## Completed MVP Features
 
-- Demo accountant login with hashed password
+- SaaS admin and cabinet owner login with hashed passwords
+- Tenant provisioning: admin creates firm + owner invite
 - Firm-scoped clients CRUD
 - Monthly TVA collection periods
 - Add clients to collection periods
 - Secure random upload token per client collection
+- Upload token expiry/disable fields
+- Role-based admin and billing access checks
+- Soft delete and restore for key records
+- Document security scan foundation for uploaded files
+- Health endpoint and production Dockerfile
 - Public upload page without client account
 - Local file uploads with type and size validation
 - Required document checklist and missing/received tracking
@@ -91,18 +125,62 @@ Open http://localhost:3000.
 - WhatsApp Business API
 - OCR and invoice parsing
 - DGI integration
-- S3/MinIO production storage
 - ZIP download of all files
-- Complex team roles
 - Client account portal
 
 ## Known Limitations
 
-- Uploads are stored locally under `uploads/`.
 - Reminder messages are copied manually; no real notification is sent.
-- The upload token does not expire yet.
 - There is no ZIP export in this MVP.
 - The status logic is intentionally simple and document-level classification is manual.
+- Malware scanning is a local `NONE` provider foundation; production should wire ClamAV or an external scanner.
+- Login/upload rate limits are stored in PostgreSQL. For very high traffic, move them to Redis or another purpose-built shared store.
+- Uploads support `UPLOAD_STORAGE=local` and basic S3-compatible `UPLOAD_STORAGE=s3`.
+- Local uploads are scoped under `uploads/`; use S3-compatible storage before real client files.
+
+## Security Environment
+
+Production must set `AUTH_SECRET` or `NEXTAUTH_SECRET`; the app fails safely without one in production.
+
+Do not deploy real client files with `dev-secret-change-me`, `password123`, demo passwords, or local-only upload storage.
+
+Before final deployment, choose the domain and DNS setup from [`docs/domain-dns-strategy.md`](docs/domain-dns-strategy.md). Cheapest clean path: buy `.com` first, use Cloudflare DNS, deploy the app on `app.tvacollect.com`, and buy `.ma` later.
+
+Recommended self-hosted stack is documented in [`docs/vps-docker-minio-deployment.md`](docs/vps-docker-minio-deployment.md): VPS + Docker Compose + PostgreSQL + Nginx + private MinIO storage.
+
+Minimum production `.env`:
+
+```env
+NODE_ENV=production
+DATABASE_URL=postgresql://...
+AUTH_SECRET=very-long-random-secret
+NEXTAUTH_SECRET=very-long-random-secret
+NEXTAUTH_URL=https://app.tvacollect.ma
+APP_URL=https://app.tvacollect.ma
+
+UPLOAD_STORAGE=s3
+S3_ENDPOINT=https://...
+S3_BUCKET=...
+S3_ACCESS_KEY=...
+S3_SECRET_KEY=...
+S3_REGION=us-east-1
+
+EMAIL_PROVIDER=smtp
+SMTP_HOST=...
+SMTP_PORT=587
+SMTP_USER=...
+SMTP_PASSWORD=...
+SMTP_FROM=noreply@tvacollect.ma
+
+ADMIN_EMAIL=your@email.com
+```
+
+Session and upload token controls:
+
+- `SESSION_MAX_AGE_SECONDS`
+- `SESSION_IDLE_TIMEOUT_SECONDS`
+- `UPLOAD_TOKEN_TTL_DAYS`
+- `MAX_UPLOAD_SIZE_MB`
 
 ## Useful Commands
 
@@ -110,7 +188,50 @@ Open http://localhost:3000.
 npm run dev
 npm run build
 npm run lint
+npm test
+npm run release:check
+npm run create-admin
 npx prisma migrate dev
+npx prisma migrate deploy
 npx prisma db seed
 docker compose up -d
 ```
+
+Backup and restore notes are in [`docs/backup-restore.md`](docs/backup-restore.md).
+
+## Final Release Check
+
+Before showing TVA Collect to a real cabinet, run:
+
+```bash
+npm run create-admin
+npx prisma migrate deploy
+npm run release:check
+```
+
+Critical blockers that must be green before real production:
+
+- Safe SaaS `ADMIN` exists with `firmId = null`.
+- `ADMIN` creates firm + owner from `/admin/firms/new`.
+- Owner accepts invite and invites assistants from `/app/settings/team`.
+- RBAC blocks assistant/read-only access to billing/admin.
+- Session expiry and login rate limiting are configured.
+- Upload token expiry is enabled.
+- Suspended/cancelled firms cannot use app operations or public uploads.
+- Tenant isolation tests pass.
+- Soft delete/recovery works from `/app/trash`.
+- `/api/health` is healthy.
+- Database and upload backup/restore strategy is documented and tested.
+
+Then verify the manual flow:
+
+1. Login as `demo@tvacollect.ma` and verify `/admin/firms`.
+2. Login as `owner@cabinet-demo.ma`.
+3. Create or import clients.
+4. Create a TVA collection and copy one public upload link.
+5. Upload files from `/upload/[token]`.
+6. Review/classify documents.
+7. Open `/app/tva-readiness`, add TVA amount entries, and verify readiness.
+8. Create a filing case from `/app/tva-filing`.
+9. Export TVA entries and collection reports.
+10. Check `/admin/release-checklist`.

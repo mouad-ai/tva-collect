@@ -2,7 +2,7 @@ import { AlertTriangle, CheckCircle2, Clock, FileSearch, PhoneCall, Send, Shield
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ReminderButton } from "@/components/ReminderButton";
-import { requireUser } from "@/lib/auth";
+import { requireFirmUser } from "@/lib/auth";
 import { buildClientComplianceProfile } from "@/lib/client-compliance";
 import { buildOperationsPlan, type OperationRecommendation } from "@/lib/operations-brain";
 import { prisma } from "@/lib/prisma";
@@ -13,6 +13,13 @@ const confidenceTone = {
   Medium: "border-amber-200 bg-amber-50 text-amber-900",
   High: "border-orange-200 bg-orange-50 text-orange-900",
   Critical: "border-red-200 bg-red-50 text-red-800"
+};
+
+const confidenceLabel = {
+  Low: "Faible",
+  Medium: "Moyenne",
+  High: "Forte",
+  Critical: "Critique"
 };
 
 const actionIcon: Record<string, ReactNode> = {
@@ -33,12 +40,12 @@ function MissionCard({ item }: { item: OperationRecommendation }) {
     <div className="rounded-md border border-border p-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Link href={item.href} className="font-black">{item.clientName}</Link>
+          <Link href={item.href} className="font-extrabold">{item.clientName}</Link>
           <div className="mt-1 text-sm text-muted">{item.collectionName}</div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-black", confidenceTone[item.confidence])}>
-            {item.confidence}
+            {confidenceLabel[item.confidence]}
           </span>
           <span className="rounded-full border border-border px-2.5 py-1 text-xs font-black">P{item.priority}</span>
         </div>
@@ -76,7 +83,7 @@ function MissionSection({ title, items, empty }: { title: string; items: Operati
 }
 
 export default async function WorkQueuePage() {
-  const user = await requireUser();
+  const user = await requireFirmUser();
   const activeClientCollections = await prisma.clientCollection.findMany({
     where: { firmId: user.firmId, collectionPeriod: { status: "ACTIVE" } },
     include: {
@@ -113,17 +120,17 @@ export default async function WorkQueuePage() {
   const capacityHours = Math.floor(plan.dailyCapacityMinutes / 60);
 
   return (
-    <div className="grid gap-6">
+    <div className="content-stack">
       <div>
-        <h1 className="text-2xl font-black">Operations du jour</h1>
-        <p className="text-sm text-muted">Plan quotidien calcule depuis les echeances, documents, relances et risques client.</p>
+        <h1 className="text-2xl font-extrabold tracking-tight">Operations du jour</h1>
+        <p className="text-sm text-muted">Plan quotidien calcule depuis les échéances, documents, relances et risques client.</p>
       </div>
 
       <section className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
         <div className="card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-primary">
             <AlertTriangle size={16} />
-            Operations Brain
+            Cerveau operations
           </div>
           <h2 className="mt-2 text-xl font-black">Ce qui doit se passer aujourd&apos;hui</h2>
           <div className="mt-4 grid gap-2">
@@ -135,14 +142,14 @@ export default async function WorkQueuePage() {
             ))}
             {!plan.recoveryActions.length ? (
               <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm font-bold text-emerald-800">
-                Aucun risque operationnel fort detecte aujourd&apos;hui.
+                Aucun risque opérationnel fort detecte aujourd&apos;hui.
               </div>
             ) : null}
           </div>
         </div>
 
         <div className={cn("rounded-lg border p-4", plan.overloadMinutes ? "border-red-200 bg-red-50 text-red-900" : "border-emerald-200 bg-emerald-50 text-emerald-900")}>
-          <div className="text-sm font-bold">Workload reality check</div>
+          <div className="text-sm font-bold">Contrôle de charge reel</div>
           <div className="mt-2 text-3xl font-black">{workloadHours}h{String(workloadMinutes).padStart(2, "0")}</div>
           <p className="mt-1 text-sm">Capacite estimee: {capacityHours}h / jour.</p>
           {plan.overloadMinutes ? (
@@ -152,11 +159,11 @@ export default async function WorkQueuePage() {
           )}
           <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
             <div className="rounded-md border border-white/60 bg-white/60 p-3">
-              <div className="font-black">{plan.recommendations.length}</div>
+              <div className="font-extrabold">{plan.recommendations.length}</div>
               <div>actions</div>
             </div>
             <div className="rounded-md border border-white/60 bg-white/60 p-3">
-              <div className="font-black">{plan.critical}</div>
+              <div className="font-extrabold">{plan.critical}</div>
               <div>critiques</div>
             </div>
           </div>
@@ -166,8 +173,9 @@ export default async function WorkQueuePage() {
       <section className="grid gap-4 xl:grid-cols-3">
         <MissionSection title="Matin" items={plan.grouped.morning} empty="Aucune mission forte pour ce matin." />
         <MissionSection title="Apres-midi" items={plan.grouped.afternoon} empty="Aucune relance prioritaire pour l'apres-midi." />
-        <MissionSection title="Avant de partir" items={plan.grouped.endOfDay} empty="Aucun dossier pret a cloturer." />
+        <MissionSection title="Avant de partir" items={plan.grouped.endOfDay} empty="Aucun dossier pret a clôturer." />
       </section>
     </div>
   );
 }
+

@@ -18,17 +18,17 @@ export default async function AdminDashboardPage() {
   return (
     <div className="grid gap-6">
       <div>
-        <h1 className="text-2xl font-black">Admin dashboard</h1>
-        <p className="text-sm text-muted">Vue interne SaaS: firmes, usage, leads et activite.</p>
+        <h1 className="text-2xl font-black">Tableau de bord admin</h1>
+        <p className="text-sm text-muted">Vue interne SaaS: cabinets, usage, prospects et activite.</p>
       </div>
 
       <section className="grid gap-4 md:grid-cols-5">
         {[
-          ["Firms", firms],
-          ["Users", users],
+          ["Cabinets", firms],
+          ["Utilisateurs", users],
           ["Clients", clients],
           ["Documents", documents.length],
-          ["Leads", leads]
+          ["Prospects", leads]
         ].map(([label, value]) => (
           <div key={label} className="card p-4">
             <div className="text-sm font-bold text-muted">{label}</div>
@@ -42,13 +42,13 @@ export default async function AdminDashboardPage() {
         <div className="mt-2 text-3xl font-black">{formatBytes(storage)}</div>
       </section>
 
-      <section className="card overflow-hidden">
+      <section className="card min-w-0 overflow-hidden">
         <div className="flex items-center justify-between border-b border-border p-4">
           <h2 className="font-black">Activite recente</h2>
-          <Link href="/admin/events" className="btn">Voir events</Link>
+          <Link href="/admin/events" className="btn">Voir evenements</Link>
         </div>
-        <div className="overflow-x-auto">
-          <table>
+        <div className="table-wrap">
+          <table className="data-table">
             <thead>
               <tr>
                 <th>Date</th>

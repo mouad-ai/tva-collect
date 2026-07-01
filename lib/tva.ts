@@ -19,6 +19,11 @@ export function generateUploadToken() {
   return `cl_${randomUUID().replaceAll("-", "")}${randomUUID().slice(0, 8)}`;
 }
 
+export function uploadTokenExpiryDate(now = new Date()) {
+  const days = Number(process.env.UPLOAD_TOKEN_TTL_DAYS || 90);
+  return new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
 export function statusLabel(status: ClientCollectionStatus) {
   return {
     NOT_STARTED: "Non commence",
@@ -32,7 +37,7 @@ export function collectionStatusLabel(status: string) {
   return {
     DRAFT: "Brouillon",
     ACTIVE: "Active",
-    CLOSED: "Fermee"
+    CLOSED: "Fermée"
   }[status] || status;
 }
 
@@ -44,21 +49,25 @@ export function generateReminderMessage(input: ReminderInput, channel: ReminderC
   const workflowLabel = workflowTemplateFromType(input.workflowType).label;
   const link = uploadUrl(input.uploadToken);
 
-  if (input.template && channel === "WHATSAPP") {
-    return input.template
-      .replaceAll("[Client]", input.clientName)
-      .replaceAll("[Month Year]", monthYear)
-      .replaceAll("[Workflow]", workflowLabel)
-      .replaceAll("[Missing documents]", missing)
-      .replaceAll("[Upload Link]", link)
-      .replaceAll("[Firm Name]", input.firmName);
-  }
+    if (input.template && channel === "WHATSAPP") {
+      return input.template
+        .replaceAll("[Client]", input.clientName)
+        .replaceAll("[Month Year]", monthYear)
+        .replaceAll("[Mois annee]", monthYear)
+        .replaceAll("[Workflow]", workflowLabel)
+        .replaceAll("[Missing documents]", missing)
+        .replaceAll("[Documents manquants]", missing)
+        .replaceAll("[Upload Link]", link)
+        .replaceAll("[Lien dépôt]", link)
+        .replaceAll("[Firm Name]", input.firmName)
+        .replaceAll("[Nom cabinet]", input.firmName);
+    }
 
   if (channel === "EMAIL") {
-    return `Bonjour ${input.clientName},\n\nPetit rappel pour ${workflowLabel} ${monthYear}.\n\nIl nous manque encore les documents suivants :\n\n${missing}\n\nMerci de les deposer ici :\n${link}\n\nCordialement,\nCabinet ${input.firmName}`;
+    return `Bonjour ${input.clientName},\n\nPetit rappel pour ${workflowLabel} ${monthYear}.\n\nIl nous manque encore les documents suivants :\n\n${missing}\n\nMerci de les déposer ici :\n${link}\n\nCordialement,\nCabinet ${input.firmName}`;
   }
 
-  return `Bonjour ${input.clientName},\n\nPetit rappel pour ${workflowLabel} ${monthYear}.\n\nIl nous manque encore les documents suivants :\n\n${missing}\n\nMerci de les deposer ici :\n${link}\n\nCabinet ${input.firmName}`;
+  return `Bonjour ${input.clientName},\n\nPetit rappel pour ${workflowLabel} ${monthYear}.\n\nIl nous manque encore les documents suivants :\n\n${missing}\n\nMerci de les déposer ici :\n${link}\n\nCabinet ${input.firmName}`;
 }
 
 export async function recalculateClientCollectionStatus(clientCollectionId: string) {
@@ -66,7 +75,7 @@ export async function recalculateClientCollectionStatus(clientCollectionId: stri
     where: { id: clientCollectionId },
     include: {
       requiredDocuments: true,
-      uploadedDocuments: true
+      uploadedDocuments: { where: { deletedAt: null } }
     }
   });
 
@@ -131,7 +140,7 @@ export function daysUntilWorkflowDeadline(workflowType: string | null | undefine
 export function deadlineCountdownLabel(daysRemaining: number) {
   if (daysRemaining > 1) return `${daysRemaining} jours restants`;
   if (daysRemaining === 1) return "Demain";
-  if (daysRemaining === 0) return "Echeance aujourd'hui";
+  if (daysRemaining === 0) return "Échéance aujourd'hui";
   if (daysRemaining === -1) return "1 jour en retard";
   return `${Math.abs(daysRemaining)} jours en retard`;
 }
@@ -142,7 +151,7 @@ export function deadlineRiskLabel(risk: DeadlineRisk) {
   return {
     LOW: "Risque faible",
     MEDIUM: "Risque moyen",
-    HIGH: "Risque eleve",
+    HIGH: "Risque élevé",
     CRITICAL: "Critique"
   }[risk];
 }
@@ -183,7 +192,7 @@ export function clientCloseRisk({
   uploadCount: number;
 }): { risk: DeadlineRisk; nextAction: string } {
   if (status === ClientCollectionStatus.COMPLETE && invalidDocumentsCount === 0) {
-    return { risk: "LOW", nextAction: "Pret a cloturer" };
+    return { risk: "LOW", nextAction: "Prêt a clôturer" };
   }
 
   if (invalidDocumentsCount > 0) {
@@ -201,5 +210,5 @@ export function clientCloseRisk({
     return { risk, nextAction: "Demander les pieces manquantes" };
   }
 
-  return { risk: "MEDIUM", nextAction: "Verifier les derniers depots" };
+  return { risk: "MEDIUM", nextAction: "Vérifier les derniers dépôts" };
 }

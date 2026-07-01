@@ -1,6 +1,13 @@
 .next
 node_modules
 .env
+.env.*
+!.env.example
+!deploy/.env.production.example
 uploads/*
 !uploads/.gitkeep
+deploy/certbot/conf/*
+deploy/certbot/www/*
+!deploy/certbot/conf/.gitkeep
+!deploy/certbot/www/.gitkeep
 coverage

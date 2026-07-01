@@ -21,6 +21,6 @@ export function csvEscape(value: unknown) {
 }
 
 export function uploadUrl(token: string) {
-  const base = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  const base = process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
   return `${base}/upload/${token}`;
 }

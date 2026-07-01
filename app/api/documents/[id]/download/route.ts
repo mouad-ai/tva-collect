@@ -1,17 +1,25 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireFirmUser } from "@/lib/auth";
+import { loggedApiError } from "@/lib/error-logging";
+import { assertDocumentDownloadAllowed } from "@/lib/file-security";
 import { readLocalUpload } from "@/lib/storage";
 import { requireFirmDocument, TenantAccessError } from "@/lib/tenant";
 
-export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const user = await requireFirmUser();
   const { id } = await params;
   let document;
   try {
     document = await requireFirmDocument(user.firmId, id);
   } catch (error) {
     if (error instanceof TenantAccessError) return NextResponse.json({ error: error.message }, { status: 404 });
-    throw error;
+    return loggedApiError(error, request, { firmId: user.firmId, userId: user.id });
+  }
+
+  try {
+    assertDocumentDownloadAllowed(document.securityScan);
+  } catch {
+    return NextResponse.json({ error: "Ce fichier est bloque par le contrôle de securite." }, { status: 403 });
   }
 
   try {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireMutableFirmUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const rowSchema = z.object({
@@ -22,7 +22,7 @@ function clean(value?: string | null) {
 }
 
 export async function POST(request: Request) {
-  const user = await requireUser();
+  const user = await requireMutableFirmUser();
   const body = schema.safeParse(await request.json().catch(() => null));
   if (!body.success) {
     return NextResponse.json({ created: 0, updated: 0, skipped: 0, errors: ["Fichier invalide."] }, { status: 400 });
@@ -72,3 +72,4 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ created, updated, skipped, errors });
 }
+

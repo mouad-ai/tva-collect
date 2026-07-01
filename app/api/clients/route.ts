@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireFirmUser, requireMutableFirmUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const clientSchema = z.object({
@@ -15,11 +15,12 @@ const clientSchema = z.object({
 });
 
 export async function GET(request: Request) {
-  const user = await requireUser();
+  const user = await requireFirmUser();
   const search = new URL(request.url).searchParams.get("search") || "";
   const clients = await prisma.client.findMany({
     where: {
       firmId: user.firmId,
+      deletedAt: null,
       OR: search
         ? [
             { companyName: { contains: search, mode: "insensitive" } },
@@ -34,7 +35,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const user = await requireUser();
+  const user = await requireMutableFirmUser();
   const body = clientSchema.safeParse(await request.json().catch(() => null));
   if (!body.success) return NextResponse.json({ error: "Client invalide." }, { status: 400 });
   const client = await prisma.client.create({
@@ -46,3 +47,4 @@ export async function POST(request: Request) {
   });
   return NextResponse.json(client, { status: 201 });
 }
+

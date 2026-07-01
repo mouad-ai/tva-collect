@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireMutableFirmUser } from "@/lib/auth";
 import { requiredDocumentsFromFirm, workflowTemplateFromType } from "@/lib/constants";
+import { loggedApiError } from "@/lib/error-logging";
 import { prisma } from "@/lib/prisma";
 import { requireFirmCollection, TenantAccessError } from "@/lib/tenant";
-import { generateUploadToken } from "@/lib/tva";
+import { generateUploadToken, uploadTokenExpiryDate } from "@/lib/tva";
 
 const schema = z.object({
   clientIds: z.array(z.string()).min(1)
 });
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
+  const user = await requireMutableFirmUser();
   const { id } = await params;
   const body = schema.safeParse(await request.json().catch(() => null));
   if (!body.success) return NextResponse.json({ error: "Clients invalides." }, { status: 400 });
@@ -20,9 +21,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     await requireFirmCollection(user.firmId, id);
   } catch (error) {
     if (error instanceof TenantAccessError) return NextResponse.json({ error: error.message }, { status: 404 });
-    throw error;
+    return loggedApiError(error, request, { firmId: user.firmId, userId: user.id });
   }
-  const collection = await prisma.collectionPeriod.findFirst({ where: { id, firmId: user.firmId } });
+  const collection = await prisma.collectionPeriod.findFirst({ where: { id, firmId: user.firmId, deletedAt: null } });
   if (!collection) return NextResponse.json({ error: "Collecte introuvable." }, { status: 404 });
   const requiredDocuments =
     collection.workflowType === "TVA_MONTHLY" || collection.workflowType === "TVA_QUARTERLY"
@@ -30,7 +31,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       : [...workflowTemplateFromType(collection.workflowType).documents];
 
   const clients = await prisma.client.findMany({
-    where: { id: { in: body.data.clientIds }, firmId: user.firmId }
+    where: { id: { in: body.data.clientIds }, firmId: user.firmId, deletedAt: null }
   });
   if (clients.length !== body.data.clientIds.length) {
     return NextResponse.json({ error: "Un ou plusieurs clients sont introuvables pour ce cabinet." }, { status: 404 });
@@ -46,6 +47,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         clientId: client.id,
         collectionPeriodId: id,
         uploadToken: generateUploadToken(),
+        uploadTokenExpiresAt: uploadTokenExpiryDate(),
         requiredDocuments: {
           create: requiredDocuments.map((name) => ({ firmId: user.firmId, name, isRequired: true }))
         }

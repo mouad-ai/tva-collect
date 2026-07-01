@@ -1,11 +1,11 @@
 import { ReminderChannel } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireMutableFirmUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateReminderMessage, missingDocuments } from "@/lib/tva";
 
 export async function POST(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
+  const user = await requireMutableFirmUser();
   const { id } = await params;
   const collection = await prisma.collectionPeriod.findFirst({
     where: { id, firmId: user.firmId },
@@ -46,8 +46,8 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
     });
 
     blocks.push([
-      `Client: ${item.client.companyName}`,
-      `Phone: ${item.client.phone || "-"}`,
+      `Client : ${item.client.companyName}`,
+      `Téléphone : ${item.client.phone || "-"}`,
       "",
       message
     ].join("\n"));

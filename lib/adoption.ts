@@ -28,6 +28,7 @@ export type AdoptionSnapshot = {
   firstMonthTargets: { label: string; value: number | string; target: number | string; done: boolean }[];
   adoptionRisk: {
     level: "Healthy" | "Watch" | "At risk";
+    label: string;
     reason: string;
     action: string;
   };
@@ -43,59 +44,65 @@ function clamp(value: number) {
 }
 
 function adoptionLabel(score: number) {
-  if (score >= 85) return "Embedded";
-  if (score >= 65) return "Strong adoption";
-  if (score >= 40) return "Partial adoption";
-  if (score >= 20) return "Onboarding";
-  return "Not adopted";
+  if (score >= 85) return "Adoption installée";
+  if (score >= 65) return "Adoption forte";
+  if (score >= 40) return "Adoption partielle";
+  if (score >= 20) return "Configuration";
+  return "Non adopté";
 }
 
 function transformationLevel(input: AdoptionInput): AdoptionSnapshot["level"] {
   if (input.exportedReports > 0 && input.closedCollections > 0 && input.documentsUploaded >= 50) {
-    return { number: 5, name: "Operating System", description: "Le cabinet utilise TVA Collect pour piloter, prouver et exporter." };
+    return { number: 5, name: "Système opérationnel", description: "Le cabinet utilise TVA Collect pour piloter, prouver et exporter." };
   }
   if (input.exportedReports > 0 || input.closedCollections > 0) {
-    return { number: 4, name: "Proof & Reports", description: "Le cabinet commence a produire de la preuve et des rapports." };
+    return { number: 4, name: "Preuves et rapports", description: "Le cabinet commence à produire de la preuve et des rapports." };
   }
   if (input.remindersGenerated > 0 && input.documentsUploaded > 0) {
-    return { number: 3, name: "Team Execution", description: "Le travail quotidien commence a passer par l'application." };
+    return { number: 3, name: "Exécution équipe", description: "Le travail quotidien commence à passer par l'application." };
   }
   if (input.uploadLinks > 0) {
-    return { number: 2, name: "Collection Control", description: "Les liens de depot et le suivi des documents sont en place." };
+    return { number: 2, name: "Contrôle collecte", description: "Les liens de dépôt et le suivi des documents sont en place." };
   }
-  return { number: 1, name: "Setup", description: "Le cabinet configure la base: profil, clients et premiere collecte." };
+  return { number: 1, name: "Configuration", description: "Le cabinet configure la base : profil, clients et première collecte." };
 }
 
 function nextStep(input: AdoptionInput): AdoptionSnapshot["nextStep"] {
   if (input.clients < 20) return { label: "Importer au moins 20 clients", href: "/app/clients", cta: "Importer clients" };
-  if (!input.totalCollections) return { label: "Creer la premiere collecte", href: "/app/collections", cta: "Creer collecte" };
-  if (input.uploadLinks < 10) return { label: "Ajouter des clients a la collecte", href: "/app/collections", cta: "Generer liens" };
-  if (input.documentsUploaded < 10) return { label: "Envoyer les liens et recevoir les premiers depots", href: "/app/collections", cta: "Lancer clients" };
-  if (input.remindersGenerated < 5) return { label: "Generer les premieres relances", href: "/app/reminders", cta: "Relancer" };
+  if (!input.totalCollections) return { label: "Créer la première collecte", href: "/app/collections", cta: "Créer collecte" };
+  if (input.uploadLinks < 10) return { label: "Ajouter des clients à la collecte", href: "/app/collections", cta: "Générer liens" };
+  if (input.documentsUploaded < 10) return { label: "Envoyer les liens et recevoir les premiers dépôts", href: "/app/collections", cta: "Lancer clients" };
+  if (input.remindersGenerated < 5) return { label: "Générer les premières relances", href: "/app/reminders", cta: "Relancer" };
   if (!input.exportedReports) return { label: "Exporter le premier rapport", href: "/app/reports", cta: "Exporter" };
-  if (!input.closedCollections) return { label: "Cloturer une collecte proprement", href: "/app/collections", cta: "Voir collectes" };
-  return { label: "Installer l'habitude du Work Queue", href: "/app/work-queue", cta: "Voir mission" };
+  if (!input.closedCollections) return { label: "Clôturer une collecte proprement", href: "/app/collections", cta: "Voir collectes" };
+  return { label: "Installer l'habitude de la file de travail", href: "/app/work-queue", cta: "Voir mission" };
 }
+
+const riskLabels: Record<AdoptionSnapshot["adoptionRisk"]["level"], string> = {
+  Healthy: "Sain",
+  Watch: "À surveiller",
+  "At risk": "À risque"
+};
 
 export function buildAdoptionSnapshot(input: AdoptionInput): AdoptionSnapshot {
   const milestones = [
-    { label: "Premier cabinet configure", done: true },
-    { label: "10 clients importes", done: input.clients >= 10 },
-    { label: "Premiere collecte creee", done: input.totalCollections > 0 },
-    { label: "10 liens de depot generes", done: input.uploadLinks >= 10 },
-    { label: "Premier document recu", done: input.documentsUploaded > 0 },
-    { label: "50 documents collectes", done: input.documentsUploaded >= 50 },
-    { label: "Premier rapport exporte", done: input.exportedReports > 0 },
-    { label: "Premiere collecte cloturee", done: input.closedCollections > 0 }
+    { label: "Premier cabinet configuré", done: true },
+    { label: "10 clients importés", done: input.clients >= 10 },
+    { label: "Première collecte créée", done: input.totalCollections > 0 },
+    { label: "10 liens de dépôt générés", done: input.uploadLinks >= 10 },
+    { label: "Premier document reçu", done: input.documentsUploaded > 0 },
+    { label: "50 documents collectés", done: input.documentsUploaded >= 50 },
+    { label: "Premier rapport exporté", done: input.exportedReports > 0 },
+    { label: "Première collecte clôturée", done: input.closedCollections > 0 }
   ];
   const firstMonthTargets = [
-    { label: "Clients importes", value: input.clients, target: 20, done: input.clients >= 20 },
-    { label: "Collecte lancee", value: input.totalCollections ? "oui" : "non", target: "oui", done: input.totalCollections > 0 },
-    { label: "Liens generes", value: input.uploadLinks, target: 10, done: input.uploadLinks >= 10 },
-    { label: "Documents recus", value: input.documentsUploaded, target: 10, done: input.documentsUploaded >= 10 },
-    { label: "Relances generees", value: input.remindersGenerated, target: 5, done: input.remindersGenerated >= 5 },
-    { label: "Rapport exporte", value: input.exportedReports ? "oui" : "non", target: "oui", done: input.exportedReports > 0 },
-    { label: "Collecte cloturee", value: input.closedCollections ? "oui" : "non", target: "oui", done: input.closedCollections > 0 }
+    { label: "Clients importés", value: input.clients, target: 20, done: input.clients >= 20 },
+    { label: "Collecte lancée", value: input.totalCollections ? "oui" : "non", target: "oui", done: input.totalCollections > 0 },
+    { label: "Liens générés", value: input.uploadLinks, target: 10, done: input.uploadLinks >= 10 },
+    { label: "Documents reçus", value: input.documentsUploaded, target: 10, done: input.documentsUploaded >= 10 },
+    { label: "Relances générées", value: input.remindersGenerated, target: 5, done: input.remindersGenerated >= 5 },
+    { label: "Rapport exporté", value: input.exportedReports ? "oui" : "non", target: "oui", done: input.exportedReports > 0 },
+    { label: "Collecte clôturée", value: input.closedCollections ? "oui" : "non", target: "oui", done: input.closedCollections > 0 }
   ];
   const score = clamp(
     (input.clients >= 20 ? 15 : input.clients * 0.7) +
@@ -107,14 +114,22 @@ export function buildAdoptionSnapshot(input: AdoptionInput): AdoptionSnapshot {
       (input.exportedReports > 0 ? 10 : 0) +
       (input.closedCollections > 0 ? 13 : 0)
   );
-  const risk =
+  const riskLevel: AdoptionSnapshot["adoptionRisk"]["level"] =
     input.totalCollections === 0
-      ? { level: "At risk" as const, reason: "Aucune collecte n'a encore ete creee.", action: "Aider le cabinet a lancer une premiere collecte." }
+      ? "At risk"
       : input.documentsUploaded === 0 && input.uploadLinks > 0
-        ? { level: "Watch" as const, reason: "Des liens existent mais aucun client n'a encore depose.", action: "Envoyer le message de lancement et relancer les liens non ouverts." }
+        ? "Watch"
         : input.clients >= 20 && input.uploadLinks < 10
-          ? { level: "Watch" as const, reason: "Les clients sont importes mais les liens ne sont pas encore assez diffuses.", action: "Lancer la campagne de migration client." }
-          : { level: "Healthy" as const, reason: "Le cabinet progresse dans l'adoption.", action: "Continuer la routine: liens, relances, controles, exports." };
+          ? "Watch"
+          : "Healthy";
+  const risk =
+    riskLevel === "At risk"
+      ? { level: riskLevel, reason: "Aucune collecte n'a encore été créée.", action: "Aider le cabinet à lancer une première collecte." }
+      : riskLevel === "Watch" && input.documentsUploaded === 0
+        ? { level: riskLevel, reason: "Des liens existent mais aucun client n'a encore déposé.", action: "Envoyer le message de lancement et relancer les liens non ouverts." }
+        : riskLevel === "Watch"
+          ? { level: riskLevel, reason: "Les clients sont importés mais les liens ne sont pas encore assez diffusés.", action: "Lancer la campagne de migration client." }
+          : { level: riskLevel, reason: "Le cabinet progresse dans l'adoption.", action: "Continuer la routine : liens, relances, contrôles, exports." };
 
   const savedMinutes =
     input.remindersGenerated * 4 +
@@ -132,11 +147,11 @@ export function buildAdoptionSnapshot(input: AdoptionInput): AdoptionSnapshot {
     nextStep: nextStep(input),
     milestones,
     firstMonthTargets,
-    adoptionRisk: risk,
+    adoptionRisk: { ...risk, label: riskLabels[risk.level] },
     value: {
       estimatedTimeSavedHours,
       estimatedValueMad,
-      story: `Ce mois-ci, TVA Collect a aide votre cabinet a collecter ${input.documentsUploaded} document(s), generer ${input.remindersGenerated} relance(s), detecter ${input.missingDocumentsDetected} document(s) manquant(s) et economiser environ ${estimatedTimeSavedHours}h de suivi manuel.`
+      story: `Ce mois-ci, TVA Collect a aidé votre cabinet à collecter ${input.documentsUploaded} document(s), générer ${input.remindersGenerated} relance(s), détecter ${input.missingDocumentsDetected} document(s) manquant(s) et économiser environ ${estimatedTimeSavedHours}h de suivi manuel.`
     }
   };
 }

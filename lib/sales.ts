@@ -13,16 +13,16 @@ type SalesLead = {
 };
 
 export const leadStages = [
-  { value: "NEW", label: "New" },
-  { value: "CONTACTED", label: "Contacted" },
-  { value: "QUALIFIED", label: "Qualified" },
-  { value: "DEMO_SCHEDULED", label: "Demo scheduled" },
-  { value: "DEMO_DONE", label: "Demo done" },
-  { value: "PILOT_PROPOSED", label: "Pilot proposed" },
-  { value: "PILOT_ACTIVE", label: "Pilot active" },
-  { value: "WON", label: "Won" },
-  { value: "LOST", label: "Lost" },
-  { value: "NURTURE", label: "Nurture" }
+  { value: "NEW", label: "Nouveau" },
+  { value: "CONTACTED", label: "Contacte" },
+  { value: "QUALIFIED", label: "Qualifie" },
+  { value: "DEMO_SCHEDULED", label: "Demo planifiee" },
+  { value: "DEMO_DONE", label: "Demo realisee" },
+  { value: "PILOT_PROPOSED", label: "Pilote propose" },
+  { value: "PILOT_ACTIVE", label: "Pilote actif" },
+  { value: "WON", label: "Gagne" },
+  { value: "LOST", label: "Perdu" },
+  { value: "NURTURE", label: "A nourrir" }
 ];
 
 export const planPrices = {
@@ -49,12 +49,12 @@ export function leadQualification(lead: SalesLead) {
   if (assistants >= 3) score += 15;
   else if (assistants >= 1) score += 8;
   if (textIncludes(text, ["whatsapp", "relance", "retard", "manquant", "perdu", "chaos", "excel"])) score += 20;
-  if (textIncludes(text, ["urgent", "deadline", "echeance", "tva"])) score += 10;
+  if (textIncludes(text, ["urgent", "deadline", "échéance", "tva"])) score += 10;
   if (lead.painLevel === "HIGH") score += 15;
   if (lead.painLevel === "LOW") score -= 8;
   if (textIncludes(text, ["gratuit", "free", "dgi", "facturation complete", "comptabilite complete"])) score -= 20;
   score = Math.max(0, Math.min(100, Math.round(score)));
-  const label = score >= 80 ? "Hot" : score >= 65 ? "Good" : score >= 45 ? "Medium" : score >= 25 ? "Weak" : "Bad fit";
+  const label = score >= 80 ? "Tres chaud" : score >= 65 ? "Bon" : score >= 45 ? "Moyen" : score >= 25 ? "Faible" : "Peu adapte";
   const tone =
     score >= 65
       ? "border-emerald-200 bg-emerald-50 text-emerald-800"
@@ -70,12 +70,12 @@ export function pricingRecommendation(lead: SalesLead) {
   if (clients > 100 || assistants > 3) {
     return {
       plan: "Premium",
-      price: "Custom",
+      price: "Sur mesure",
       setupFee: lead.expectedSetupFee || 5000,
-      reason: "Volume eleve, besoin probable de multi-utilisateurs, workflow avance ou accompagnement premium."
+      reason: "Volume élevé, besoin probable de multi-utilisateurs, workflow avance ou accompagnement premium."
     };
   }
-  if (clients > 30 || assistants > 1 || textIncludes(lead.currentWorkflow, ["cnss", "paie", "cloture", "multi"])) {
+  if (clients > 30 || assistants > 1 || textIncludes(lead.currentWorkflow, ["cnss", "paie", "clôture", "multi"])) {
     return {
       plan: "Pro",
       price: "1 999 MAD/mois",
@@ -87,7 +87,7 @@ export function pricingRecommendation(lead: SalesLead) {
     plan: "Starter",
     price: "999 MAD/mois",
     setupFee: lead.expectedSetupFee || 1000,
-    reason: "Bon demarrage pour piloter une premiere collecte TVA avec un petit portefeuille."
+    reason: "Bon démarrage pour piloter une premiere collecte TVA avec un petit portefeuille."
   };
 }
 
@@ -110,17 +110,18 @@ export function demoScriptForLead(lead: SalesLead) {
 
 export function salesFollowUpMessage(lead: SalesLead & { name?: string | null; firmName?: string | null }) {
   const pricing = pricingRecommendation(lead);
+  const plan = pricing.plan === "Starter" ? "Démarrage" : pricing.plan;
   const name = lead.name || "Bonjour";
   if (lead.stage === "DEMO_SCHEDULED") {
-    return `${name}, merci pour votre demande. Pendant la demo, je vous montrerai comment passer des relances WhatsApp au suivi controle des documents TVA.`;
+    return `${name}, merci pour votre demande. Pendant la demo, je vous montrerai comment passer des relances WhatsApp au suivi contrôle des documents TVA.`;
   }
   if (lead.stage === "PILOT_PROPOSED" || lead.stage === "PILOT_ACTIVE") {
-    return `${name}, je vous propose de mesurer le pilote sur 30 jours: clients importes, documents recus, relances generees et temps gagne. Offre recommandee ensuite: ${pricing.plan}.`;
+    return `${name}, je vous propose de mesurer le pilote sur 30 jours: clients importes, documents reçus, relances générées et temps gagne. Offre recommandee ensuite: ${plan}.`;
   }
   if (lead.stage === "DEMO_DONE") {
-    return `${name}, suite a notre demo, le meilleur prochain pas est un pilote payant avec ${pricing.setupFee} MAD de setup et le plan ${pricing.plan}.`;
+    return `${name}, suite a notre demo, le meilleur prochain pas est un pilote payant avec ${pricing.setupFee} MAD de mise en place et le plan ${plan}.`;
   }
-  return `${name}, TVA Collect aide votre cabinet a centraliser les depots, suivre les manquants et reduire les relances WhatsApp. On peut demarrer avec un pilote controle.`;
+  return `${name}, TVA Collect aide votre cabinet a centraliser les dépôts, suivre les manquants et reduire les relances WhatsApp. On peut demarrer avec un pilote contrôle.`;
 }
 
 export function isFollowUpOverdue(lead: SalesLead, now = new Date()) {

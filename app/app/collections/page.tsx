@@ -1,8 +1,14 @@
 import { Plus } from "lucide-react";
+import { CollectionStatus, Prisma, WorkflowType } from "@prisma/client";
 import Link from "next/link";
 import { createCollectionAction } from "@/app/actions";
+import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
+import { PaginationControls } from "@/components/PaginationControls";
+import { PendingSubmitButton } from "@/components/PendingSubmitButton";
+import { SearchFilterForm } from "@/components/SearchFilterForm";
 import { StatusBadge } from "@/components/StatusBadge";
-import { requireUser } from "@/lib/auth";
+import { requireFirmUser } from "@/lib/auth";
 import { monthNames, workflowTemplateFromType, workflowTemplates } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { collectionCloseRisk, deadlineCountdownLabel, deadlineRiskLabel, daysUntilWorkflowDeadline, workflowDeadline } from "@/lib/tva";
@@ -15,29 +21,44 @@ const riskTone = {
   CRITICAL: "border-red-200 bg-red-50 text-red-700"
 };
 
-export default async function CollectionsPage() {
-  const user = await requireUser();
-  const [collections, clients] = await Promise.all([
+export default async function CollectionsPage({ searchParams }: { searchParams: Promise<{ search?: string; status?: string; workflowType?: string; page?: string; limit?: string; sort?: string }> }) {
+  const user = await requireFirmUser();
+  const params = await searchParams;
+  const page = Math.max(1, Number(params.page || 1));
+  const limit = [10, 25, 50].includes(Number(params.limit)) ? Number(params.limit) : 10;
+  const status = params.status && Object.values(CollectionStatus).includes(params.status as CollectionStatus) ? (params.status as CollectionStatus) : undefined;
+  const workflowType = params.workflowType && Object.values(WorkflowType).includes(params.workflowType as WorkflowType) ? (params.workflowType as WorkflowType) : undefined;
+  const where: Prisma.CollectionPeriodWhereInput = {
+    firmId: user.firmId,
+    deletedAt: null,
+    status,
+    workflowType,
+    name: params.search ? { contains: params.search, mode: "insensitive" as const } : undefined
+  };
+  const [collections, total, clients] = await Promise.all([
     prisma.collectionPeriod.findMany({
-      where: { firmId: user.firmId },
-      include: { clientCollections: { include: { uploadedDocuments: true } } },
-      orderBy: [{ year: "desc" }, { month: "desc" }]
+      where,
+      include: { clientCollections: { where: { deletedAt: null }, include: { uploadedDocuments: { where: { deletedAt: null } } } } },
+      orderBy: params.sort === "name" ? { name: "asc" } : [{ year: "desc" }, { month: "desc" }],
+      skip: (page - 1) * limit,
+      take: limit
     }),
-    prisma.client.findMany({ where: { firmId: user.firmId }, orderBy: { companyName: "asc" } })
+    prisma.collectionPeriod.count({ where }),
+    prisma.client.findMany({ where: { firmId: user.firmId, deletedAt: null }, orderBy: { companyName: "asc" } })
   ]);
 
   return (
-    <div className="grid gap-6">
-      <div>
-        <h1 className="text-2xl font-black">Collectes</h1>
-        <p className="text-sm text-muted">Creez une periode de travail et envoyez les liens de depot.</p>
-      </div>
+    <div className="content-stack">
+      <PageHeader
+        title="Collectes TVA"
+        description="Créez une période de travail, ajoutez vos clients et envoyez les liens de dépôt."
+      />
 
-      <section className="card p-4">
-        <h2 className="mb-4 font-black">Nouvelle collecte</h2>
+      <section className="card p-5">
+        <h2 className="mb-4 font-extrabold">Nouvelle collecte</h2>
         <form action={createCollectionAction} className="grid gap-4">
           <div className="grid gap-4 md:grid-cols-[1fr_190px_150px_150px_auto] md:items-end">
-            <label>Nom<input name="name" placeholder="TVA Juillet 2026" required /></label>
+            <label>Nom <span className="required-mark">*</span><input name="name" placeholder="TVA Juillet 2026" required /></label>
             <label>
               Type
               <select name="workflowType" defaultValue="TVA_MONTHLY">
@@ -47,8 +68,8 @@ export default async function CollectionsPage() {
               </select>
             </label>
             <label>Mois<select name="month" defaultValue="6">{monthNames.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}</select></label>
-            <label>Annee<input name="year" type="number" defaultValue="2026" required /></label>
-            <button className="btn btn-primary"><Plus size={16} /> Creer</button>
+            <label>Annee <span className="required-mark">*</span><input name="year" type="number" defaultValue="2026" required /></label>
+            <PendingSubmitButton><Plus size={16} /> Creer</PendingSubmitButton>
           </div>
           {clients.length ? (
             <div>
@@ -63,26 +84,47 @@ export default async function CollectionsPage() {
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted">Ajoutez ou importez des clients avant de generer les liens en masse.</p>
+            <p className="text-sm text-muted">Ajoutez ou importez des clients avant de générer les liens en masse.</p>
           )}
         </form>
       </section>
 
-      <section className="card overflow-hidden">
+      <section className="card min-w-0 overflow-hidden">
         <div className="border-b border-border p-4">
-          <h2 className="font-black">Periodes</h2>
+          <h2 className="font-extrabold">Périodes</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table>
+        {/* UX-FIX: collections table uses URL filters and pagination. */}
+        <SearchFilterForm
+          searchPlaceholder="Rechercher collecte"
+          filters={[
+            { name: "status", label: "Statut", value: params.status, options: [{ value: "", label: "Tous" }, { value: "DRAFT", label: "Brouillon" }, { value: "ACTIVE", label: "Active" }, { value: "CLOSED", label: "Fermée" }] },
+            { name: "workflowType", label: "Workflow", value: params.workflowType, options: [{ value: "", label: "Tous" }, ...workflowTemplates.map((template) => ({ value: template.type, label: template.label }))] },
+            { name: "sort", label: "Tri", value: params.sort, options: [{ value: "", label: "Période récente" }, { value: "name", label: "Nom" }] }
+          ]}
+        />
+        <PaginationControls total={total} page={page} limit={limit} searchParams={params} />
+        {!collections.length ? (
+          <div className="p-4">
+            <EmptyState
+              icon={Plus}
+              title="Aucune collecte TVA"
+              description="Créez une collecte mensuelle ou trimestrielle pour générer les liens de dépôt clients."
+              actionHref="/app/clients"
+              actionLabel="Vérifier les clients"
+            />
+          </div>
+        ) : (
+        <div className="table-wrap">
+          <table className="data-table">
             <thead>
               <tr>
-                <th>Periode</th>
+                <th>Période</th>
                 <th>Workflow</th>
                 <th>Mois</th>
                 <th>Clients</th>
                 <th>Complets</th>
-                <th>A traiter</th>
-                <th>Echeance</th>
+                <th>À traiter</th>
+                <th>Échéance</th>
                 <th>Risque</th>
                 <th>Statut</th>
               </tr>
@@ -104,18 +146,22 @@ export default async function CollectionsPage() {
                 });
                 return (
                   <tr key={collection.id}>
-                    <td><Link className="font-bold" href={`/app/collections/${collection.id}`}>{collection.name}</Link></td>
-                    <td>{workflowTemplateFromType(collection.workflowType).label}</td>
-                    <td>{monthNames[collection.month - 1]} {collection.year}</td>
-                    <td>{collection.clientCollections.length}</td>
-                    <td>{complete}</td>
-                    <td>{missing}</td>
                     <td>
-                      <div className="font-bold">{deadlineCountdownLabel(daysRemaining)}</div>
+                      <Link className="font-semibold hover:text-primary" href={`/app/collections/${collection.id}`}>
+                        {collection.name}
+                      </Link>
+                    </td>
+                    <td>{workflowTemplateFromType(collection.workflowType).label}</td>
+                    <td className="num">{monthNames[collection.month - 1]} {collection.year}</td>
+                    <td className="num">{collection.clientCollections.length}</td>
+                    <td className="num">{complete}</td>
+                    <td className="num">{missing}</td>
+                    <td>
+                      <div className="font-medium whitespace-nowrap">{deadlineCountdownLabel(daysRemaining)}</div>
                       <div className="text-xs text-muted">{formatDate(deadline)}</div>
                     </td>
                     <td>
-                      <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-bold", riskTone[risk])}>
+                      <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-bold whitespace-nowrap", riskTone[risk])}>
                         {deadlineRiskLabel(risk)}
                       </span>
                     </td>
@@ -123,13 +169,13 @@ export default async function CollectionsPage() {
                   </tr>
                 );
               })}
-              {!collections.length ? (
-                <tr><td colSpan={9} className="text-muted">Aucune collecte creee.</td></tr>
-              ) : null}
             </tbody>
           </table>
         </div>
+        )}
+        <PaginationControls total={total} page={page} limit={limit} searchParams={params} />
       </section>
     </div>
   );
 }
+

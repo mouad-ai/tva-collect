@@ -8,25 +8,28 @@ export class TenantAccessError extends Error {
 }
 
 export async function requireFirmClient(firmId: string, clientId: string) {
-  const client = await prisma.client.findFirst({ where: { id: clientId, firmId } });
+  const client = await prisma.client.findFirst({ where: { id: clientId, firmId, deletedAt: null } });
   if (!client) throw new TenantAccessError("Client introuvable.");
   return client;
 }
 
 export async function requireFirmCollection(firmId: string, collectionId: string) {
-  const collection = await prisma.collectionPeriod.findFirst({ where: { id: collectionId, firmId } });
+  const collection = await prisma.collectionPeriod.findFirst({ where: { id: collectionId, firmId, deletedAt: null } });
   if (!collection) throw new TenantAccessError("Collecte introuvable.");
   return collection;
 }
 
 export async function requireFirmClientCollection(firmId: string, clientCollectionId: string) {
-  const clientCollection = await prisma.clientCollection.findFirst({ where: { id: clientCollectionId, firmId } });
+  const clientCollection = await prisma.clientCollection.findFirst({ where: { id: clientCollectionId, firmId, deletedAt: null } });
   if (!clientCollection) throw new TenantAccessError("Dossier introuvable.");
   return clientCollection;
 }
 
 export async function requireFirmDocument(firmId: string, documentId: string) {
-  const document = await prisma.uploadedDocument.findFirst({ where: { id: documentId, firmId } });
+  const document = await prisma.uploadedDocument.findFirst({
+    where: { id: documentId, firmId, deletedAt: null },
+    include: { securityScan: true, clientCollection: { select: { clientId: true, collectionPeriodId: true } } }
+  });
   if (!document) throw new TenantAccessError("Document introuvable.");
   return document;
 }

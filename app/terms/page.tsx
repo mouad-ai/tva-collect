@@ -11,7 +11,7 @@ export default function TermsPage() {
             TVA Collect est un outil de collecte et suivi documentaire pour cabinets comptables. Le cabinet reste responsable de la validation comptable, fiscale et juridique des informations traitees.
           </p>
           <p className="mt-3">
-            Les clients doivent transmettre des documents lisibles, complets et lies a la periode indiquee. Les documents tardifs ou incomplets peuvent retarder le traitement du dossier.
+            Les clients doivent transmettre des documents lisibles, complets et lies a la période indiquee. Les documents tardifs ou incomplets peuvent retarder le traitement du dossier.
           </p>
           <p className="mt-3">
             L&apos;application ne remplace pas le jugement professionnel du cabinet et ne realise pas de declaration fiscale automatiquement.

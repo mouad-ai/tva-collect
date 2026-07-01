@@ -1,5 +1,9 @@
+import { Prisma } from "@prisma/client";
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { EmptyState } from "@/components/EmptyState";
+import { PaginationControls } from "@/components/PaginationControls";
+import { SearchFilterForm } from "@/components/SearchFilterForm";
+import { requireFirmUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 function formatDateTime(value: Date) {
@@ -9,11 +13,24 @@ function formatDateTime(value: Date) {
 export default async function ProofVaultPage({
   searchParams
 }: {
-  searchParams: Promise<{ clientId?: string; eventType?: string }>;
+  searchParams: Promise<{ search?: string; clientId?: string; eventType?: string; page?: string; limit?: string }>;
 }) {
-  const user = await requireUser();
+  const user = await requireFirmUser();
   const params = await searchParams;
-  const [clients, eventTypes, events] = await Promise.all([
+  const page = Math.max(1, Number(params.page || 1));
+  const limit = [10, 25, 50, 100].includes(Number(params.limit)) ? Number(params.limit) : 25;
+  const search = params.search?.trim();
+  const where: Prisma.OperationalEventWhereInput = {
+    firmId: user.firmId,
+    clientId: params.clientId || undefined,
+    eventType: params.eventType || undefined,
+    OR: search ? [
+      { eventTitle: { contains: search, mode: "insensitive" } },
+      { eventDescription: { contains: search, mode: "insensitive" } },
+      { source: { contains: search, mode: "insensitive" } }
+    ] : undefined
+  };
+  const [clients, eventTypes, events, total] = await Promise.all([
     prisma.client.findMany({ where: { firmId: user.firmId }, orderBy: { companyName: "asc" } }),
     prisma.operationalEvent.findMany({
       where: { firmId: user.firmId },
@@ -22,50 +39,39 @@ export default async function ProofVaultPage({
       select: { eventType: true }
     }),
     prisma.operationalEvent.findMany({
-      where: {
-        firmId: user.firmId,
-        clientId: params.clientId || undefined,
-        eventType: params.eventType || undefined
-      },
+      where,
       orderBy: { occurredAt: "desc" },
-      take: 100
-    })
+      skip: (page - 1) * limit,
+      take: limit
+    }),
+    prisma.operationalEvent.count({ where })
   ]);
   const clientById = new Map(clients.map((client) => [client.id, client.companyName]));
 
   return (
-    <div className="grid gap-6">
+    <div className="content-stack">
       <div>
-        <h1 className="text-2xl font-black">Proof Vault</h1>
-        <p className="text-sm text-muted">Historique operationnel: demandes, relances, depots, controles et decisions.</p>
+        <h1 className="text-2xl font-extrabold tracking-tight">Coffre de preuves</h1>
+        <p className="text-sm text-muted">Historique opérationnel: demandes, relances, dépôts, contrôles et decisions.</p>
       </div>
 
       <section className="card p-4">
-        <form className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
-          <label>
-            Client
-            <select name="clientId" defaultValue={params.clientId || ""}>
-              <option value="">Tous les clients</option>
-              {clients.map((client) => <option key={client.id} value={client.id}>{client.companyName}</option>)}
-            </select>
-          </label>
-          <label>
-            Type d&apos;evenement
-            <select name="eventType" defaultValue={params.eventType || ""}>
-              <option value="">Tous les types</option>
-              {eventTypes.map((item) => <option key={item.eventType} value={item.eventType}>{item.eventType}</option>)}
-            </select>
-          </label>
-          <button className="btn">Filtrer</button>
-        </form>
+        <SearchFilterForm
+          searchPlaceholder="Rechercher preuve, source, detail"
+          filters={[
+            { name: "clientId", label: "Client", value: params.clientId, options: [{ value: "", label: "Tous les clients" }, ...clients.map((client) => ({ value: client.id, label: client.companyName }))] },
+            { name: "eventType", label: "Type", value: params.eventType, options: [{ value: "", label: "Tous les types" }, ...eventTypes.map((item) => ({ value: item.eventType, label: item.eventType }))] }
+          ]}
+        />
       </section>
 
-      <section className="card overflow-hidden">
+      <section className="card min-w-0 overflow-hidden">
         <div className="border-b border-border p-4">
-          <h2 className="font-black">Timeline de preuve</h2>
+          <h2 className="font-extrabold">Timeline de preuve</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table>
+        <PaginationControls total={total} page={page} limit={limit} searchParams={params} />
+        <div className="table-wrap">
+          <table className="data-table">
             <thead>
               <tr>
                 <th>Date</th>
@@ -104,12 +110,14 @@ export default async function ProofVaultPage({
                 </tr>
               ))}
               {!events.length ? (
-                <tr><td colSpan={6} className="text-muted">Aucun evenement trouve. Les prochains depots, relances et controles apparaitront ici.</td></tr>
+                <tr><td colSpan={6}><EmptyState title="Aucun evenement trouve" description="Les prochains dépôts, relances et contrôles apparaitront ici." /></td></tr>
               ) : null}
             </tbody>
           </table>
         </div>
+        <PaginationControls total={total} page={page} limit={limit} searchParams={params} />
       </section>
     </div>
   );
 }
+
