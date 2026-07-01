@@ -94,13 +94,13 @@ async function main() {
   add("NEXTAUTH_SECRET strong", strong("NEXTAUTH_SECRET"), env("NEXTAUTH_SECRET") ? `${env("NEXTAUTH_SECRET").length} chars` : "missing");
   add("APP_URL https", validProductionUrl("APP_URL"), env("APP_URL") || "missing");
   add("NEXTAUTH_URL https", validProductionUrl("NEXTAUTH_URL"), env("NEXTAUTH_URL") || "missing");
-  add("UPLOAD_STORAGE s3", env("UPLOAD_STORAGE").toLowerCase() === "s3", env("UPLOAD_STORAGE") || "missing");
+  add("UPLOAD_STORAGE s3-compatible", env("UPLOAD_STORAGE").toLowerCase() === "s3", env("UPLOAD_STORAGE") || "missing");
   for (const name of ["S3_ENDPOINT", "S3_BUCKET", "S3_ACCESS_KEY", "S3_SECRET_KEY"]) {
     add(`${name} configured`, required(name), env(name) ? "configured" : "missing");
   }
   if (env("MINIO_ROOT_USER") || env("MINIO_ROOT_PASSWORD")) {
     add(
-      "S3 app credentials are not MinIO root credentials",
+      "MinIO app credentials are not root credentials",
       env("S3_ACCESS_KEY") !== env("MINIO_ROOT_USER") && env("S3_SECRET_KEY") !== env("MINIO_ROOT_PASSWORD"),
       "app user must be separate from root user"
     );

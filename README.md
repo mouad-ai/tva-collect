@@ -135,8 +135,8 @@ Full launch sequence: `docs/production-launch-runbook.md`.
 - The status logic is intentionally simple and document-level classification is manual.
 - Malware scanning is a local `NONE` provider foundation; production should wire ClamAV or an external scanner.
 - Login/upload rate limits are stored in PostgreSQL. For very high traffic, move them to Redis or another purpose-built shared store.
-- Uploads support `UPLOAD_STORAGE=local` and basic S3-compatible `UPLOAD_STORAGE=s3`.
-- Local uploads are scoped under `uploads/`; use S3-compatible storage before real client files.
+- Uploads support `UPLOAD_STORAGE=local` and S3-compatible `UPLOAD_STORAGE=s3`; production is designed for private MinIO.
+- Local uploads are scoped under `uploads/`; use MinIO/S3-compatible storage before real client files.
 
 ## Security Environment
 
@@ -159,11 +159,13 @@ NEXTAUTH_URL=https://app.tvacollect.ma
 APP_URL=https://app.tvacollect.ma
 
 UPLOAD_STORAGE=s3
-S3_ENDPOINT=https://...
-S3_BUCKET=...
-S3_ACCESS_KEY=...
-S3_SECRET_KEY=...
+S3_ENDPOINT=http://minio:9000
+S3_BUCKET=tvacollect-uploads
+S3_ACCESS_KEY=tvacollect-app
+S3_SECRET_KEY=very-long-minio-app-user-secret
 S3_REGION=us-east-1
+MINIO_ROOT_USER=very-long-minio-root-user
+MINIO_ROOT_PASSWORD=very-long-minio-root-password
 
 EMAIL_PROVIDER=smtp
 SMTP_HOST=...
