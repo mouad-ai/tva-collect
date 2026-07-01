@@ -369,6 +369,10 @@ export async function acceptInviteAndSetPassword(token: string, formData: FormDa
 export async function requestPasswordReset(formData: FormData) {
   const email = text(formData, "email")?.toLowerCase();
   if (!email) redirect("/forgot-password?sent=1");
+  if (!process.env.DATABASE_URL) {
+    console.error("DATABASE_URL is required for password reset requests.");
+    redirect("/forgot-password?sent=1");
+  }
 
   const ip = await actionIp();
   const [byIp, byEmail] = await Promise.all([
