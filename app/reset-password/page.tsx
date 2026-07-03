@@ -10,20 +10,19 @@ const errors: Record<string, string> = {
   invalid: "Ce lien est invalide, expire ou deja utilise."
 };
 
-export default async function ResetPasswordPage({
-  params,
+export default async function ResetPasswordQueryPage({
   searchParams
 }: {
-  params: Promise<{ token: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ token?: string; error?: string }>;
 }) {
-  const { token } = await params;
-  const { error } = await searchParams;
-  const reset = await prisma.passwordResetToken.findUnique({
-    where: { tokenHash: hashPasswordResetToken(token) },
-    include: { user: true }
-  });
-  const invalid = !reset || !isPasswordResetUsable(reset) || !reset.user.isActive;
+  const { token = "", error } = await searchParams;
+  const reset = token
+    ? await prisma.passwordResetToken.findUnique({
+        where: { tokenHash: hashPasswordResetToken(token) },
+        include: { user: true }
+      })
+    : null;
+  const invalid = !token || !reset || !isPasswordResetUsable(reset) || !reset.user.isActive;
 
   return (
     <main className="mx-auto grid min-h-screen max-w-lg content-center px-4 py-10">
@@ -42,7 +41,6 @@ export default async function ResetPasswordPage({
               Nouveau mot de passe pour <strong>{reset.user.email}</strong>.
             </p>
             {error ? <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">{errors[error] || errors.invalid}</p> : null}
-            {/* UX-FIX: reset password fields include show/hide controls. */}
             <PasswordField name="password" label="Mot de passe" />
             <PasswordField name="confirmPassword" label="Confirmer le mot de passe" />
             <button className="btn btn-primary">Enregistrer le mot de passe</button>

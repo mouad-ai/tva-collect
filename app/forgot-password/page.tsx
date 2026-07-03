@@ -19,7 +19,7 @@ export default async function ForgotPasswordPage({
 
         {sent ? (
           <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm font-bold text-emerald-800">
-            Si ce compte existe, un lien de reinitialisation a été envoye.
+            If an account exists with this email, a reset link has been sent.
           </div>
         ) : null}
         {error === "email" ? (

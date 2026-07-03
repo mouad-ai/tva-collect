@@ -105,9 +105,15 @@ async function main() {
       "app user must be separate from root user"
     );
   }
-  add("EMAIL_PROVIDER smtp", env("EMAIL_PROVIDER") === "smtp", env("EMAIL_PROVIDER") || "missing");
-  for (const name of ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM"]) {
-    add(`${name} configured`, required(name), env(name) ? "configured" : "missing");
+  add("EMAIL_PROVIDER configured", ["resend", "smtp"].includes(env("EMAIL_PROVIDER")), env("EMAIL_PROVIDER") || "missing");
+  if (env("EMAIL_PROVIDER") === "resend") {
+    add("EMAIL_FROM configured", required("EMAIL_FROM"), env("EMAIL_FROM") || "missing");
+    add("RESEND_API_KEY configured", required("RESEND_API_KEY"), env("RESEND_API_KEY") ? "configured" : "missing");
+  }
+  if (env("EMAIL_PROVIDER") === "smtp") {
+    for (const name of ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM"]) {
+      add(`${name} configured`, required(name), env(name) ? "configured" : "missing");
+    }
   }
   add("ADMIN_EMAIL configured", required("ADMIN_EMAIL"), env("ADMIN_EMAIL") || "missing");
 
