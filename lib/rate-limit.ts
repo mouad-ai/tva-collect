@@ -1,5 +1,19 @@
 import { prisma } from "@/lib/prisma";
 
+function isMissingRateLimitTable(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "P2021" &&
+    "meta" in error &&
+    typeof error.meta === "object" &&
+    error.meta !== null &&
+    "table" in error.meta &&
+    String(error.meta.table).includes("RateLimitBucket")
+  );
+}
+
 export async function rateLimit({
   key,
   limit,
@@ -26,6 +40,12 @@ export async function rateLimit({
       where: { key },
       data: { attempts: { increment: 1 } }
     });
+  }).catch((error) => {
+    if (isMissingRateLimitTable(error)) {
+      console.warn("RateLimitBucket table is missing; allowing request without persistent rate limit.");
+      return { attempts: 1, resetAt };
+    }
+    throw error;
   });
 
   return {
