@@ -134,6 +134,9 @@ async function main() {
     check(`api:${route}`, response.ok, `${response.status}`);
   }
 
+  const notificationsSeen = await authed(owner.cookie, "/api/notifications/seen", { method: "POST" });
+  check("notifications-seen-api", notificationsSeen.ok, `${notificationsSeen.status}`);
+
   const smokeClientName = `ZZ Smoke Client ${stamp}`;
   const createClient = await jsonAuthed(owner.cookie, "/api/clients", {
     companyName: smokeClientName,

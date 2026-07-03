@@ -122,7 +122,7 @@ export function hasAnyRole(user: { role: UserRole }, roles: UserRole[]) {
 }
 
 export function canAccessBilling(role: UserRole) {
-  return role === UserRole.OWNER;
+  return role === UserRole.OWNER || role === UserRole.MANAGER;
 }
 
 export function canManageTeam(role: UserRole) {
