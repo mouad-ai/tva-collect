@@ -65,7 +65,7 @@ The smoke test logs in as both SaaS admin and cabinet owner, checks core pages, 
 | Health endpoint | Working | Local HTTP check passed |
 | Local upload storage | Working | Public upload smoke test passed |
 | S3/MinIO storage abstraction | Present, needs provider test | Code path exists but was not tested against live MinIO/S3 credentials |
-| SMTP email abstraction | Present, needs provider test | Dev logging exists; real SMTP delivery requires provider credentials |
+| Email delivery abstraction | Present, needs provider test | Dev logging exists; real Resend or SMTP delivery requires provider credentials |
 | Backup strategy docs | Present | Operational restore still requires VPS execution/drill |
 
 ## Feature Domains
@@ -99,7 +99,7 @@ These are not blockers for demo/internal testing, but they should be handled bef
 
 | Area | Status | Risk |
 | --- | --- | --- |
-| Real SMTP delivery | Not fully verified | Needs SMTP provider credentials and a real email delivery test |
+| Real email delivery | Not fully verified | Needs Resend or SMTP provider credentials and a real email delivery test |
 | Real MinIO/S3 upload/download | Not fully verified | Needs production object storage test with private files |
 | Nginx + TLS + domain | Not fully verified | Needs VPS deployment and certificate issuance |
 | Backup/restore | Documented only | Needs a real restore drill |
@@ -116,7 +116,7 @@ These are not blockers for demo/internal testing, but they should be handled bef
 
 1. Run `npm run smoke:functional` after every significant change.
 2. Deploy to a staging VPS using Docker Compose.
-3. Configure real `APP_URL`, `AUTH_SECRET`, PostgreSQL, SMTP, and MinIO/S3 credentials.
+3. Configure real `APP_URL`, `AUTH_SECRET`, PostgreSQL, Resend or SMTP, and MinIO/S3 credentials.
 4. Upload and download a real private test file through MinIO/S3.
 5. Send a real invite email and password reset email.
 6. Test `/upload/[token]` on a phone with slow network.
@@ -127,4 +127,4 @@ These are not blockers for demo/internal testing, but they should be handled bef
 
 The current codebase passes local build, schema, migration, automated security tests, and a broad functional smoke test. It is suitable for demo/internal testing and a controlled staging pilot.
 
-Do not treat it as fully production-proven until SMTP, MinIO/S3, Nginx/TLS, backup/restore, and real mobile upload behavior are tested on the actual VPS environment.
+Do not treat it as fully production-proven until Resend or SMTP, MinIO/S3, Nginx/TLS, backup/restore, and real mobile upload behavior are tested on the actual VPS environment.

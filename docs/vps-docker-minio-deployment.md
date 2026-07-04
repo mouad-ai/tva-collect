@@ -125,7 +125,8 @@ NEXTAUTH_URL
 MINIO_ROOT_USER
 MINIO_ROOT_PASSWORD
 S3_BUCKET
-SMTP_*
+RESEND_API_KEY
+EMAIL_FROM
 ADMIN_EMAIL
 ```
 
@@ -160,7 +161,7 @@ docker compose --env-file .env.production -f docker-compose.prod.yml up -d --bui
 Run migrations:
 
 ```bash
-docker compose --env-file .env.production -f docker-compose.prod.yml exec app npx prisma migrate deploy
+docker compose --env-file .env.production -f docker-compose.prod.yml exec app node node_modules/prisma/build/index.js migrate deploy
 ```
 
 Create first SaaS admin:
@@ -195,8 +196,8 @@ The app uses:
 UPLOAD_STORAGE=s3
 S3_ENDPOINT=http://minio:9000
 S3_BUCKET=tvacollect-uploads
-S3_ACCESS_KEY=${MINIO_ROOT_USER}
-S3_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+S3_ACCESS_KEY=tvacollect-app
+S3_SECRET_KEY=separate-long-app-s3-password
 ```
 
 ## Backups
@@ -226,7 +227,7 @@ Also keep off-server backups. VPS disk backups alone are not enough.
 cd /opt/tva-collect
 git pull
 docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
-docker compose --env-file .env.production -f docker-compose.prod.yml exec app npx prisma migrate deploy
+docker compose --env-file .env.production -f docker-compose.prod.yml exec app node node_modules/prisma/build/index.js migrate deploy
 docker compose --env-file .env.production -f docker-compose.prod.yml exec app npm run release:check
 ```
 

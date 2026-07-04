@@ -144,28 +144,28 @@ export async function sendInviteEmail(input: { to: string; name?: string | null;
 export async function sendPasswordResetEmail(input: { to: string; name?: string | null; resetLink: string }) {
   return sendEmail({
     to: input.to,
-    subject: "Reset your TVA Collect password",
+    subject: "Réinitialisation de votre mot de passe TVA Collect",
     html: `<div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto;">
-  <h2>Reset your TVA Collect password</h2>
+  <h2>Réinitialisation de votre mot de passe TVA Collect</h2>
 
-  <p>Hello,</p>
+  <p>Bonjour${input.name ? ` ${input.name}` : ""},</p>
 
-  <p>We received a request to reset your TVA Collect password.</p>
+  <p>Nous avons reçu une demande de réinitialisation de votre mot de passe TVA Collect.</p>
 
   <p>
     <a href="${input.resetLink}"
        style="display:inline-block;padding:12px 18px;background:#111827;color:#ffffff;text-decoration:none;border-radius:8px;">
-      Reset password
+      Réinitialiser mon mot de passe
     </a>
   </p>
 
-  <p>This link expires in 30 minutes.</p>
+  <p>Ce lien expire dans 30 minutes.</p>
 
-  <p>If you did not request this, you can safely ignore this email.</p>
+  <p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.</p>
 
-  <p>If the button does not work, copy and paste this link:</p>
+  <p>Si le bouton ne fonctionne pas, copiez-collez ce lien dans votre navigateur :</p>
   <p>${input.resetLink}</p>
 </div>`,
-    text: `Hello,\n\nWe received a request to reset your TVA Collect password.\n\nReset your password: ${input.resetLink}\n\nThis link expires in 30 minutes.\n\nIf you did not request this, you can safely ignore this email.\n`
+    text: `Bonjour${input.name ? ` ${input.name}` : ""},\n\nNous avons reçu une demande de réinitialisation de votre mot de passe TVA Collect.\n\nRéinitialiser votre mot de passe : ${input.resetLink}\n\nCe lien expire dans 30 minutes.\n\nSi vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.\n`
   });
 }

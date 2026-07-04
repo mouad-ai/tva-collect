@@ -13,8 +13,9 @@ Mandatory rules:
 - `APP_URL` and `NEXTAUTH_URL` must be real HTTPS URLs.
 - `UPLOAD_STORAGE=s3`.
 - MinIO/S3 variables must be real and private.
-- `EMAIL_PROVIDER=smtp`.
-- SMTP variables must be real.
+- `EMAIL_PROVIDER=resend` is recommended for launch.
+- `RESEND_API_KEY` and `EMAIL_FROM` must be real and the sending domain must be verified.
+- SMTP is still supported as an alternate provider if `EMAIL_PROVIDER=smtp` and all `SMTP_*` variables are configured.
 - `ADMIN_EMAIL` must be your SaaS admin email.
 
 Generate secrets:
@@ -56,7 +57,7 @@ MinIO notes:
 The app container runs:
 
 ```bash
-npx prisma migrate deploy
+node node_modules/prisma/build/index.js migrate deploy
 npm run start
 ```
 
@@ -142,7 +143,7 @@ TVA Collect is production-ready only when:
 
 - `npm run production:check` passes in the production container.
 - `/api/health` is healthy over HTTPS.
-- SMTP sends invite and reset emails.
+- Resend or SMTP sends invite and reset emails.
 - MinIO/S3 upload and download works with private files.
 - Backup and restore has been tested.
 - SaaS ADMIN can create firm + owner.

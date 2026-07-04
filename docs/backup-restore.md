@@ -50,7 +50,7 @@ Use provider-native lifecycle rules for old temporary exports, but never purge a
 - Stop writes or put the app in maintenance mode.
 - Restore PostgreSQL backup.
 - Restore upload storage.
-- Run `npx prisma migrate deploy`.
+- Run `node node_modules/prisma/build/index.js migrate deploy`.
 - Start the app.
 - Check `/api/health`.
 - Verify login, document list, public upload page, and one protected download.

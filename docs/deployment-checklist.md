@@ -49,12 +49,9 @@ S3_ACCESS_KEY=...
 S3_SECRET_KEY=...
 S3_REGION=us-east-1
 
-EMAIL_PROVIDER=smtp
-SMTP_HOST=...
-SMTP_PORT=587
-SMTP_USER=...
-SMTP_PASSWORD=...
-SMTP_FROM=noreply@tvacollect.ma
+EMAIL_PROVIDER=resend
+EMAIL_FROM="TVA Collect <no-reply@tvacollect.com>"
+RESEND_API_KEY=re_...
 
 ADMIN_EMAIL=your@email.com
 ADMIN_NAME="TVA Collect Admin"
@@ -75,10 +72,10 @@ For the recommended VPS stack, follow [`docs/vps-docker-minio-deployment.md`](vp
 1. Configure production `.env`.
 2. Provision PostgreSQL.
 3. Provision S3-compatible object storage and backup/replication.
-4. Configure SMTP.
+4. Configure Resend email delivery, or SMTP if you choose `EMAIL_PROVIDER=smtp`.
 5. Run `npm install`.
 6. Run `npx prisma generate`.
-7. Run `npx prisma migrate deploy`.
+7. Run `node node_modules/prisma/build/index.js migrate deploy`.
 8. Run `npm run create-admin`.
 9. Run `npm run release:check`.
 10. Start with `npm run start` behind HTTPS reverse proxy.
