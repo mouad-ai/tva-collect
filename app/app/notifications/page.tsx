@@ -3,6 +3,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { PaginationControls } from "@/components/PaginationControls";
 import { SearchFilterForm } from "@/components/SearchFilterForm";
 import { requireFirmUser } from "@/lib/auth";
+import { markNotificationsSeen } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 
@@ -28,21 +29,16 @@ export default async function NotificationsPage({
     prisma.operationalEvent.count({ where }),
     prisma.operationalEvent.findMany({ where: { firmId: user.firmId }, distinct: ["eventType"], select: { eventType: true }, orderBy: { eventType: "asc" } })
   ]);
-  await prisma.userNotificationState.upsert({
-    where: { userId: user.id },
-    create: { userId: user.id, firmId: user.firmId, lastSeenAt: new Date() },
-    update: { firmId: user.firmId, lastSeenAt: new Date() }
-  });
+  await markNotificationsSeen(user.id, user.firmId);
 
   return (
     <div className="content-stack">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight">Notifications</h1>
-        <p className="text-sm text-muted">Activite recente du cabinet: dépôts, relances, validations et operations importantes.</p>
+        <p className="text-sm text-muted">Activite recente du cabinet: depots, relances, validations et operations importantes.</p>
       </div>
 
       <section className="card min-w-0 overflow-hidden">
-        {/* UX-FIX: notification bell now opens paginated activity notifications. */}
         <SearchFilterForm
           searchPlaceholder="Rechercher une notification"
           filters={[{ name: "type", label: "Type", value: params.type, options: [{ value: "", label: "Tous" }, ...eventTypes.map((item) => ({ value: item.eventType, label: item.eventType }))] }]}
@@ -50,7 +46,7 @@ export default async function NotificationsPage({
         <PaginationControls total={total} page={page} limit={limit} searchParams={params} />
         {!events.length ? (
           <div className="p-4">
-            <EmptyState icon={Bell} title="Aucune notification" description="Les nouveaux dépôts, relances et actions importantes apparaitront ici." />
+            <EmptyState icon={Bell} title="Aucune notification" description="Les nouveaux depots, relances et actions importantes apparaitront ici." />
           </div>
         ) : (
           <div className="grid divide-y divide-border">

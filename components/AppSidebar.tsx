@@ -2,7 +2,6 @@
 
 import {
   BarChart3,
-  Bell,
   ClipboardList,
   CreditCard,
   FileText,
@@ -24,18 +23,18 @@ const nav = [
   { href: "/app/clients", label: "Clients", icon: Users },
   { href: "/app/collections", label: "Collectes TVA", icon: FolderKanban },
   { href: "/app/documents", label: "Documents", icon: FileText },
-  { href: "/app/tva-readiness", label: "Préparation TVA", icon: ClipboardList },
+  { href: "/app/tva-readiness", label: "Preparation TVA", icon: ClipboardList },
   { href: "/app/tva-risk-register", label: "Risques TVA", icon: FileWarning },
-  { href: "/app/tva-filing", label: "Déclaration TVA", icon: ShieldCheck },
-  { href: "/app/tva-portfolio-exposure", label: "Trésorerie TVA", icon: CreditCard },
-  { href: "/app/fiscal-audits", label: "Défense fiscale", icon: FileWarning },
+  { href: "/app/tva-filing", label: "Declaration TVA", icon: ShieldCheck },
+  { href: "/app/tva-portfolio-exposure", label: "Tresorerie TVA", icon: CreditCard },
+  { href: "/app/fiscal-audits", label: "Defense fiscale", icon: FileWarning },
   { href: "/app/reminders", label: "Relances", icon: MailCheck },
   { href: "/app/work-queue", label: "File de travail", icon: ClipboardList },
   { href: "/app/reports", label: "Rapports", icon: BarChart3 },
   { href: "/app/proof-vault", label: "Preuves", icon: ShieldCheck },
   { href: "/app/billing", label: "Facturation", icon: CreditCard, billingOnly: true },
   { href: "/app/trash", label: "Corbeille", icon: Trash2 },
-  { href: "/app/settings", label: "Paramètres", icon: Settings },
+  { href: "/app/settings", label: "Parametres", icon: Settings },
   { href: "/app/help", label: "Aide", icon: LifeBuoy }
 ];
 

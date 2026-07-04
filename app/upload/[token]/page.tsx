@@ -54,7 +54,9 @@ export default async function PublicUploadPage({ params }: { params: Promise<{ t
       : "Confirmer que tous les documents disponibles ont été déposes.";
 
   const unavailableReason =
-    item.collectionPeriod.status !== "ACTIVE"
+    item.firm.status === "SUSPENDED" || item.firm.status === "CANCELLED"
+      ? "Ce portail est temporairement indisponible. Veuillez contacter votre cabinet."
+      : item.collectionPeriod.status !== "ACTIVE"
       ? "Cette collecte n'est pas ouverte aux dépôts pour le moment. Veuillez contacter votre cabinet."
       : item.isLocked
         ? "Cette période TVA est verrouillee apres review. Veuillez contacter votre cabinet avant tout nouveau dépôt."
