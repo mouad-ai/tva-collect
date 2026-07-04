@@ -21,9 +21,10 @@ export function inviteUrl(token: string) {
 }
 
 export function passwordStrengthError(password: string) {
-  if (password.length < 10) return "Le mot de passe doit contenir au moins 10 caracteres.";
+  if (password.length < 12) return "Le mot de passe doit contenir au moins 12 caracteres.";
   if (!/[a-z]/.test(password)) return "Le mot de passe doit contenir une lettre minuscule.";
   if (!/[A-Z]/.test(password)) return "Le mot de passe doit contenir une lettre majuscule.";
   if (!/[0-9]/.test(password)) return "Le mot de passe doit contenir un chiffre.";
+  if (!/[^A-Za-z0-9]/.test(password)) return "Le mot de passe doit contenir un caractere special.";
   return null;
 }

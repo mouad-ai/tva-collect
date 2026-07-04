@@ -9,13 +9,13 @@ export function hashPasswordResetToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
-export function passwordResetExpiresAt(hours = 1) {
-  return new Date(Date.now() + hours * 60 * 60 * 1000);
+export function passwordResetExpiresAt(minutes = 30) {
+  return new Date(Date.now() + minutes * 60 * 1000);
 }
 
 export function passwordResetUrl(token: string) {
   const baseUrl = process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
-  return `${baseUrl.replace(/\/$/, "")}/reset-password/${token}`;
+  return `${baseUrl.replace(/\/$/, "")}/reset-password?token=${encodeURIComponent(token)}`;
 }
 
 export function isPasswordResetUsable(input: { expiresAt: Date; usedAt?: Date | null }, now = new Date()) {

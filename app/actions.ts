@@ -437,15 +437,15 @@ export async function requestPasswordReset(formData: FormData) {
 export async function resetPasswordWithToken(token: string, formData: FormData) {
   const password = text(formData, "password") || "";
   const confirmPassword = text(formData, "confirmPassword") || "";
-  if (password !== confirmPassword) redirect(`/reset-password/${token}?error=mismatch`);
+  if (password !== confirmPassword) redirect(`/reset-password?token=${encodeURIComponent(token)}&error=mismatch`);
   const strengthError = passwordStrengthError(password);
-  if (strengthError) redirect(`/reset-password/${token}?error=weak`);
+  if (strengthError) redirect(`/reset-password?token=${encodeURIComponent(token)}&error=weak`);
 
   const reset = await prisma.passwordResetToken.findUnique({
     where: { tokenHash: hashPasswordResetToken(token) },
     include: { user: true }
   });
-  if (!reset || !isPasswordResetUsable(reset) || !reset.user.isActive) redirect(`/reset-password/${token}?error=invalid`);
+  if (!reset || !isPasswordResetUsable(reset) || !reset.user.isActive) redirect(`/reset-password?token=${encodeURIComponent(token)}&error=invalid`);
 
   await prisma.$transaction([
     prisma.user.update({

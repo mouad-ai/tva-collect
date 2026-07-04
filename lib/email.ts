@@ -1,10 +1,12 @@
 import net from "node:net";
 import tls from "node:tls";
+import { sendEmail as sendProviderEmail } from "@/lib/email/send-email";
 
 type EmailInput = {
   to: string;
   subject: string;
   text: string;
+  html?: string;
 };
 
 function requireEnv(name: string) {
@@ -115,12 +117,14 @@ async function sendSmtpEmail(input: EmailInput) {
 }
 
 export async function sendEmail(input: EmailInput) {
-  const provider = process.env.EMAIL_PROVIDER;
-  if (process.env.NODE_ENV !== "production") {
-    console.log(`[dev-email] To: ${input.to}`);
-    console.log(`[dev-email] Subject: ${input.subject}`);
-    console.log(`[dev-email] ${input.text}`);
-    return { sent: false, logged: true };
+  const provider = process.env.EMAIL_PROVIDER || "console";
+  if (provider === "console" || provider === "resend") {
+    return sendProviderEmail({
+      to: input.to,
+      subject: input.subject,
+      html: input.html || `<pre>${input.text.replace(/[&<>]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[char] || char)}</pre>`,
+      text: input.text
+    });
   }
   if (!provider) {
     throw new Error("EMAIL_PROVIDER is required in production before sending email.");
@@ -140,7 +144,28 @@ export async function sendInviteEmail(input: { to: string; name?: string | null;
 export async function sendPasswordResetEmail(input: { to: string; name?: string | null; resetLink: string }) {
   return sendEmail({
     to: input.to,
-    subject: "Reinitialisation mot de passe TVA Collect",
-    text: `Bonjour ${input.name || ""},\n\nVous avez demande la reinitialisation de votre mot de passe TVA Collect.\nCe lien expire dans 1 heure : ${input.resetLink}\n\nSi vous n'etes pas a l'origine de cette demande, ignorez ce message.\n`
+    subject: "Reset your TVA Collect password",
+    html: `<div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto;">
+  <h2>Reset your TVA Collect password</h2>
+
+  <p>Hello,</p>
+
+  <p>We received a request to reset your TVA Collect password.</p>
+
+  <p>
+    <a href="${input.resetLink}"
+       style="display:inline-block;padding:12px 18px;background:#111827;color:#ffffff;text-decoration:none;border-radius:8px;">
+      Reset password
+    </a>
+  </p>
+
+  <p>This link expires in 30 minutes.</p>
+
+  <p>If you did not request this, you can safely ignore this email.</p>
+
+  <p>If the button does not work, copy and paste this link:</p>
+  <p>${input.resetLink}</p>
+</div>`,
+    text: `Hello,\n\nWe received a request to reset your TVA Collect password.\n\nReset your password: ${input.resetLink}\n\nThis link expires in 30 minutes.\n\nIf you did not request this, you can safely ignore this email.\n`
   });
 }
