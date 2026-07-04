@@ -9,11 +9,12 @@ const nav = [
   { href: "/admin", label: "Admin", icon: BarChart3 },
   { href: "/admin/firms", label: "Cabinets", icon: Building2 },
   { href: "/admin/billing", label: "Facturation", icon: CreditCard },
-  { href: "/admin/invoices", label: "Factures", icon: CreditCard },
+  { href: "/admin/subscriptions", label: "Abonnements", icon: CreditCard },
+  { href: "/admin/billing-events", label: "Webhooks", icon: ClipboardList },
   { href: "/admin/users", label: "Utilisateurs", icon: Users },
   { href: "/admin/invites", label: "Invitations", icon: MailCheck },
   { href: "/admin/leads", label: "Prospects", icon: Users },
-  { href: "/admin/events", label: "Événements", icon: ClipboardList },
+  { href: "/admin/events", label: "Evenements", icon: ClipboardList },
   { href: "/admin/release-checklist", label: "Recette", icon: Rocket }
 ];
 

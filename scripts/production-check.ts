@@ -115,6 +115,18 @@ async function main() {
       add(`${name} configured`, required(name), env(name) ? "configured" : "missing");
     }
   }
+  add("BILLING_PROVIDER Lemon Squeezy", env("BILLING_PROVIDER") === "LEMON_SQUEEZY", env("BILLING_PROVIDER") || "missing");
+  for (const name of ["LEMONSQUEEZY_API_KEY", "LEMONSQUEEZY_STORE_ID", "LEMONSQUEEZY_WEBHOOK_SECRET"]) {
+    add(`${name} configured`, required(name), env(name) ? "configured" : "missing");
+  }
+  for (const name of [
+    "LEMONSQUEEZY_STARTER_MONTHLY_VARIANT_ID",
+    "LEMONSQUEEZY_STARTER_YEARLY_VARIANT_ID",
+    "LEMONSQUEEZY_PRO_MONTHLY_VARIANT_ID",
+    "LEMONSQUEEZY_PRO_YEARLY_VARIANT_ID"
+  ]) {
+    add(`${name} configured`, required(name), env(name) ? "configured" : "missing");
+  }
   add("ADMIN_EMAIL configured", required("ADMIN_EMAIL"), env("ADMIN_EMAIL") || "missing");
 
   try {

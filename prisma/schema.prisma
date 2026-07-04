@@ -62,15 +62,21 @@ enum FirmStatus {
   ACTIVE
   OVERDUE
   SUSPENDED
+  CANCELLED_BUT_ACTIVE
   CANCELLED
 }
 
 enum SubscriptionStatus {
   TRIALING
+  TRIAL
   ACTIVE
   PAST_DUE
+  OVERDUE
+  UNPAID
   SUSPENDED
+  CANCELLED_BUT_ACTIVE
   CANCELLED
+  EXPIRED
 }
 
 enum InvoiceStatus {
@@ -946,6 +952,8 @@ model SubscriptionPlan {
   code                  String             @unique
   name                  String
   monthlyPriceMad       Int
+  monthlyPriceUsd       Int?
+  yearlyPriceUsd        Int?
   clientLimit           Int?
   userLimit             Int?
   storageLimitMb        Int?
@@ -954,6 +962,8 @@ model SubscriptionPlan {
   hasAdvancedReports    Boolean            @default(false)
   hasWhiteLabel         Boolean            @default(false)
   hasWorkflowBuilder    Boolean            @default(false)
+  lemonMonthlyVariantId String?
+  lemonYearlyVariantId  String?
   isActive              Boolean            @default(true)
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
@@ -961,25 +971,59 @@ model SubscriptionPlan {
 }
 
 model FirmSubscription {
-  id                 String             @id @default(cuid())
-  firmId             String
-  firm               Firm               @relation(fields: [firmId], references: [id], onDelete: Cascade)
-  planId             String
-  plan               SubscriptionPlan   @relation(fields: [planId], references: [id], onDelete: Restrict)
-  status             SubscriptionStatus
-  startedAt          DateTime
-  trialEndsAt        DateTime?
-  currentPeriodStart DateTime
-  currentPeriodEnd   DateTime
-  cancelledAt        DateTime?
-  suspendedAt        DateTime?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  invoices           BillingInvoice[]
+  id                      String             @id @default(cuid())
+  firmId                  String
+  firm                    Firm               @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  planId                  String
+  plan                    SubscriptionPlan   @relation(fields: [planId], references: [id], onDelete: Restrict)
+  provider                String             @default("LEMON_SQUEEZY")
+  lemonCustomerId         String?
+  lemonOrderId            String?
+  lemonSubscriptionId     String?            @unique
+  lemonProductId          String?
+  lemonVariantId          String?
+  lemonSubscriptionItemId String?
+  lemonStatus             String?
+  status                  SubscriptionStatus
+  startedAt               DateTime
+  trialEndsAt             DateTime?
+  currentPeriodStart      DateTime
+  currentPeriodEnd        DateTime
+  renewsAt                DateTime?
+  endsAt                  DateTime?
+  cardBrand               String?
+  cardLastFour            String?
+  customerPortalUrl       String?
+  updatePaymentMethodUrl  String?
+  cancelledAt             DateTime?
+  suspendedAt             DateTime?
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+  invoices                BillingInvoice[]
 
+  @@unique([firmId])
   @@index([firmId])
   @@index([firmId, status])
   @@index([planId])
+  @@index([lemonVariantId])
+}
+
+model BillingEvent {
+  id              String    @id @default(cuid())
+  provider        String    @default("LEMON_SQUEEZY")
+  eventName       String
+  externalEventId String?   @unique
+  firmId          String?
+  subscriptionId  String?
+  payload         Json
+  processedAt     DateTime?
+  processingError String?   @db.Text
+  createdAt       DateTime  @default(now())
+
+  @@index([firmId])
+  @@index([subscriptionId])
+  @@index([eventName])
+  @@index([createdAt])
 }
 
 model BillingInvoice {

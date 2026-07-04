@@ -27,6 +27,7 @@ async function main() {
   await prisma.userInvite.deleteMany();
   await prisma.user.deleteMany();
   await prisma.lead.deleteMany();
+  await prisma.billingEvent.deleteMany();
   await prisma.billingReceipt.deleteMany();
   await prisma.paymentProof.deleteMany();
   await prisma.billingInvoice.deleteMany();

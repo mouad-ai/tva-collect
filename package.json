@@ -7,7 +7,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint .",
-    "test": "node tests/security.test.mjs",
+    "test": "tsx --test tests/*.ts && node tests/security.test.mjs",
     "smoke:functional": "tsx scripts/functional-smoke.ts",
     "production:check": "tsx scripts/production-check.ts",
     "release:check": "prisma validate && npm run lint && npm run build",

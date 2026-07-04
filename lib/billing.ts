@@ -26,7 +26,7 @@ export class BillingEnforcementError extends Error {
 
 export class BillingSchemaUnavailableError extends Error {
   constructor() {
-    super("Le module facturation n'est pas initialisé. Exécutez: npx prisma migrate deploy && npx prisma generate, puis redémarrez le serveur.");
+    super("Le module facturation n'est pas initialise. Executez: npx prisma migrate deploy && npx prisma generate, puis redemarrez le serveur.");
   }
 }
 
@@ -53,8 +53,10 @@ const defaultPlans: Array<Omit<SubscriptionPlan, "createdAt" | "updatedAt">> = [
   {
     id: "plan_starter",
     code: "STARTER",
-    name: "Démarrage",
+    name: "Starter",
     monthlyPriceMad: 999,
+    monthlyPriceUsd: 99,
+    yearlyPriceUsd: 990,
     clientLimit: 30,
     userLimit: 1,
     storageLimitMb: 5120,
@@ -63,6 +65,8 @@ const defaultPlans: Array<Omit<SubscriptionPlan, "createdAt" | "updatedAt">> = [
     hasAdvancedReports: false,
     hasWhiteLabel: false,
     hasWorkflowBuilder: false,
+    lemonMonthlyVariantId: process.env.LEMONSQUEEZY_STARTER_MONTHLY_VARIANT_ID || null,
+    lemonYearlyVariantId: process.env.LEMONSQUEEZY_STARTER_YEARLY_VARIANT_ID || null,
     isActive: true
   },
   {
@@ -70,6 +74,8 @@ const defaultPlans: Array<Omit<SubscriptionPlan, "createdAt" | "updatedAt">> = [
     code: "PRO",
     name: "Pro",
     monthlyPriceMad: 1999,
+    monthlyPriceUsd: 199,
+    yearlyPriceUsd: 1990,
     clientLimit: 100,
     userLimit: 3,
     storageLimitMb: 20480,
@@ -78,6 +84,8 @@ const defaultPlans: Array<Omit<SubscriptionPlan, "createdAt" | "updatedAt">> = [
     hasAdvancedReports: true,
     hasWhiteLabel: false,
     hasWorkflowBuilder: false,
+    lemonMonthlyVariantId: process.env.LEMONSQUEEZY_PRO_MONTHLY_VARIANT_ID || null,
+    lemonYearlyVariantId: process.env.LEMONSQUEEZY_PRO_YEARLY_VARIANT_ID || null,
     isActive: true
   },
   {
@@ -85,6 +93,8 @@ const defaultPlans: Array<Omit<SubscriptionPlan, "createdAt" | "updatedAt">> = [
     code: "PREMIUM",
     name: "Premium",
     monthlyPriceMad: 4999,
+    monthlyPriceUsd: null,
+    yearlyPriceUsd: null,
     clientLimit: null,
     userLimit: null,
     storageLimitMb: null,
@@ -93,6 +103,8 @@ const defaultPlans: Array<Omit<SubscriptionPlan, "createdAt" | "updatedAt">> = [
     hasAdvancedReports: true,
     hasWhiteLabel: true,
     hasWorkflowBuilder: true,
+    lemonMonthlyVariantId: process.env.LEMONSQUEEZY_PREMIUM_MONTHLY_VARIANT_ID || null,
+    lemonYearlyVariantId: process.env.LEMONSQUEEZY_PREMIUM_YEARLY_VARIANT_ID || null,
     isActive: true
   }
 ];
@@ -100,12 +112,12 @@ const defaultPlans: Array<Omit<SubscriptionPlan, "createdAt" | "updatedAt">> = [
 export function invoiceStatusLabel(status: InvoiceStatus | string) {
   const labels: Record<string, string> = {
     DRAFT: "Brouillon",
-    ISSUED: "Émise",
-    UNPAID: "Impayée",
+    ISSUED: "Emise",
+    UNPAID: "Impayee",
     PAYMENT_PROOF_SUBMITTED: "Preuve soumise",
-    PAID: "Payée",
+    PAID: "Payee",
     OVERDUE: "En retard",
-    CANCELLED: "Annulée"
+    CANCELLED: "Annulee"
   };
   return labels[String(status)] || String(status);
 }
@@ -121,10 +133,15 @@ export function invoiceStatusTone(status: InvoiceStatus | string) {
 export function subscriptionStatusLabel(status: SubscriptionStatus | string) {
   const labels: Record<string, string> = {
     TRIALING: "Essai",
+    TRIAL: "Essai",
     ACTIVE: "Actif",
     PAST_DUE: "Paiement en retard",
+    OVERDUE: "Paiement en retard",
+    UNPAID: "Impayee",
     SUSPENDED: "Suspendu",
-    CANCELLED: "Annulé"
+    CANCELLED_BUT_ACTIVE: "Annule - actif jusqu'a fin periode",
+    CANCELLED: "Annule",
+    EXPIRED: "Expire"
   };
   return labels[String(status)] || String(status);
 }
@@ -132,8 +149,8 @@ export function subscriptionStatusLabel(status: SubscriptionStatus | string) {
 export function billingPaymentMethodLabel(method: BillingPaymentMethod | string) {
   const labels: Record<string, string> = {
     BANK_TRANSFER: "Virement bancaire",
-    CASH: "Espèces",
-    CHEQUE: "Chèque",
+    CASH: "Especes",
+    CHEQUE: "Cheque",
     ONLINE_CARD: "Carte en ligne",
     OTHER: "Autre"
   };
@@ -166,6 +183,8 @@ export async function ensureSubscriptionPlans() {
       update: {
         name: plan.name,
         monthlyPriceMad: plan.monthlyPriceMad,
+        monthlyPriceUsd: plan.monthlyPriceUsd,
+        yearlyPriceUsd: plan.yearlyPriceUsd,
         clientLimit: plan.clientLimit,
         userLimit: plan.userLimit,
         storageLimitMb: plan.storageLimitMb,
@@ -174,6 +193,8 @@ export async function ensureSubscriptionPlans() {
         hasAdvancedReports: plan.hasAdvancedReports,
         hasWhiteLabel: plan.hasWhiteLabel,
         hasWorkflowBuilder: plan.hasWorkflowBuilder,
+        lemonMonthlyVariantId: plan.lemonMonthlyVariantId,
+        lemonYearlyVariantId: plan.lemonYearlyVariantId,
         isActive: plan.isActive
       },
       create: plan
@@ -192,22 +213,21 @@ export async function getPlatformBillingSettings() {
     update: {},
     create: {
       id: "default",
-      bankName: process.env.BILLING_BANK_NAME || "Banque à configurer",
-      accountHolder: process.env.BILLING_ACCOUNT_HOLDER || "TVA Collect SARL",
-      rib: process.env.BILLING_RIB || "000000000000000000000000",
+      bankName: process.env.BILLING_BANK_NAME || "Paiement gere par Lemon Squeezy",
+      accountHolder: process.env.BILLING_ACCOUNT_HOLDER || "TVA Collect",
+      rib: process.env.BILLING_RIB || null,
       iban: process.env.BILLING_IBAN || null,
-      paymentInstructions: process.env.BILLING_INSTRUCTIONS || "Merci d'effectuer le virement en indiquant la référence facture dans le libellé.",
-      supportEmail: process.env.BILLING_SUPPORT_EMAIL || "billing@tvacollect.ma",
-      supportWhatsapp: process.env.BILLING_SUPPORT_WHATSAPP || "+212 600 00 00 00"
+      paymentInstructions: process.env.BILLING_INSTRUCTIONS || "Les paiements, factures et recus sont geres par Lemon Squeezy.",
+      supportEmail: process.env.BILLING_SUPPORT_EMAIL || "support@tvacollect.ma",
+      supportWhatsapp: process.env.BILLING_SUPPORT_WHATSAPP || null
     }
   });
 }
 
 export async function getPlanByCode(code: string) {
   await ensureSubscriptionPlans();
-  const normalized = code.toUpperCase();
   return prisma.subscriptionPlan.findFirst({
-    where: { code: normalized, isActive: true }
+    where: { code: code.toUpperCase(), isActive: true }
   });
 }
 
@@ -220,10 +240,7 @@ export async function ensureFirmSubscription(
   const plan = await getPlanByCode(planCode);
   if (!plan) throw new Error(`Plan ${planCode} introuvable.`);
 
-  const existing = await db.firmSubscription.findFirst({
-    where: { firmId, status: { in: [SubscriptionStatus.TRIALING, SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE] } },
-    orderBy: { createdAt: "desc" }
-  });
+  const existing = await db.firmSubscription.findUnique({ where: { firmId } });
   if (existing) return existing;
 
   const now = new Date();
@@ -235,7 +252,8 @@ export async function ensureFirmSubscription(
     data: {
       firmId,
       planId: plan.id,
-      status: isTrial ? SubscriptionStatus.TRIALING : SubscriptionStatus.ACTIVE,
+      provider: "LEMON_SQUEEZY",
+      status: isTrial ? SubscriptionStatus.TRIAL : SubscriptionStatus.ACTIVE,
       startedAt: now,
       trialEndsAt,
       currentPeriodStart: now,
@@ -247,14 +265,21 @@ export async function ensureFirmSubscription(
 
 export async function getActiveFirmSubscription(firmId: string) {
   await ensureSubscriptionPlans();
-  return prisma.firmSubscription.findFirst({
-    where: {
-      firmId,
-      status: { in: [SubscriptionStatus.TRIALING, SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE, SubscriptionStatus.SUSPENDED] }
-    },
-    include: { plan: true },
-    orderBy: { createdAt: "desc" }
+  return prisma.firmSubscription.findUnique({
+    where: { firmId },
+    include: { plan: true }
   });
+}
+
+export async function getFirmUsage(firmId: string) {
+  const [clients, users, activeCollections, documents] = await Promise.all([
+    prisma.client.count({ where: { firmId, deletedAt: null } }),
+    prisma.user.count({ where: { firmId, isActive: true, role: { not: "ADMIN" } } }),
+    prisma.collectionPeriod.count({ where: { firmId, deletedAt: null, status: "ACTIVE" } }),
+    prisma.uploadedDocument.findMany({ where: { firmId, deletedAt: null }, select: { size: true } })
+  ]);
+  const storageBytes = documents.reduce((sum, document) => sum + document.size, 0);
+  return { clients, users, activeCollections, storageBytes, files: documents.length };
 }
 
 export async function getFirmBillingSnapshot(firmId: string) {
@@ -267,17 +292,6 @@ export async function getFirmBillingSnapshot(firmId: string) {
   if (!firm) throw new Error("Cabinet introuvable.");
   const plan = subscription?.plan || (await getPlanByCode(firm.plan));
   return { firm, subscription, plan, settings, usage };
-}
-
-export async function getFirmUsage(firmId: string) {
-  const [clients, users, activeCollections, documents] = await Promise.all([
-    prisma.client.count({ where: { firmId, deletedAt: null } }),
-    prisma.user.count({ where: { firmId, isActive: true, role: { not: "ADMIN" } } }),
-    prisma.collectionPeriod.count({ where: { firmId, deletedAt: null, status: "ACTIVE" } }),
-    prisma.uploadedDocument.findMany({ where: { firmId, deletedAt: null }, select: { size: true } })
-  ]);
-  const storageBytes = documents.reduce((sum, document) => sum + document.size, 0);
-  return { clients, users, activeCollections, storageBytes, files: documents.length };
 }
 
 export async function nextInvoiceNumber(tx: Prisma.TransactionClient = prisma) {
@@ -314,61 +328,15 @@ export async function syncBillingLifecycle(firmId: string, now = new Date()) {
     return syncBillingLifecycle(firmId, now);
   }
 
-  const openInvoices = await prisma.billingInvoice.findMany({
-    where: {
-      firmId,
-      status: { in: [InvoiceStatus.UNPAID, InvoiceStatus.ISSUED, InvoiceStatus.PAYMENT_PROOF_SUBMITTED, InvoiceStatus.OVERDUE] }
-    },
-    orderBy: { dueDate: "asc" }
-  });
-
-  for (const invoice of openInvoices) {
-    const overdueDays = -daysBetween(now, invoice.dueDate);
-    if (overdueDays > 0 && invoice.status !== InvoiceStatus.PAYMENT_PROOF_SUBMITTED) {
-      await prisma.billingInvoice.update({
-        where: { id: invoice.id },
-        data: { status: InvoiceStatus.OVERDUE }
-      });
-    }
-    if (overdueDays >= BILLING_SUSPENSION_DAYS && firm.status !== FirmStatus.SUSPENDED) {
-      await prisma.firm.update({
-        where: { id: firmId },
-        data: {
-          status: FirmStatus.SUSPENDED,
-          suspendedAt: now,
-          suspendedReason: "Suspension automatique pour facture impayée au-delà de 15 jours."
-        }
-      });
-      await prisma.firmSubscription.update({
-        where: { id: subscription.id },
-        data: { status: SubscriptionStatus.SUSPENDED, suspendedAt: now }
-      });
-    } else if (overdueDays >= BILLING_GRACE_WARNING_DAYS && firm.status === FirmStatus.ACTIVE) {
-      await prisma.firm.update({ where: { id: firmId }, data: { status: FirmStatus.OVERDUE } });
-      await prisma.firmSubscription.update({
-        where: { id: subscription.id },
-        data: { status: SubscriptionStatus.PAST_DUE }
-      });
-    }
-  }
-
-  if (
-    subscription.status === SubscriptionStatus.TRIALING &&
-    subscription.trialEndsAt &&
-    subscription.trialEndsAt < now &&
-    !openInvoices.some((invoice) => invoice.status === InvoiceStatus.PAID)
-  ) {
-    await prisma.firmSubscription.update({
-      where: { id: subscription.id },
-      data: { status: SubscriptionStatus.PAST_DUE }
-    });
+  if ((subscription.status === SubscriptionStatus.TRIAL || subscription.status === SubscriptionStatus.TRIALING) && subscription.trialEndsAt && subscription.trialEndsAt < now) {
+    await prisma.firmSubscription.update({ where: { id: subscription.id }, data: { status: SubscriptionStatus.OVERDUE } });
     if (firm.status === FirmStatus.TRIAL || firm.status === FirmStatus.ACTIVE) {
       await prisma.firm.update({ where: { id: firmId }, data: { status: FirmStatus.OVERDUE } });
     }
   }
 }
 
-function planHasFeature(plan: SubscriptionPlan | null | undefined, feature: PlanFeature) {
+export function planHasFeature(plan: SubscriptionPlan | null | undefined, feature: PlanFeature) {
   if (!plan) return false;
   if (feature === "ZIP_EXPORT") return plan.hasZipExport;
   if (feature === "ADVANCED_REPORTS") return plan.hasAdvancedReports;
@@ -377,26 +345,43 @@ function planHasFeature(plan: SubscriptionPlan | null | undefined, feature: Plan
   return false;
 }
 
+export async function requireActiveSubscription(firmId: string) {
+  const snapshot = await getFirmBillingSnapshot(firmId);
+  const allowedFirmStatuses: FirmStatus[] = [FirmStatus.TRIAL, FirmStatus.ACTIVE, FirmStatus.OVERDUE, FirmStatus.CANCELLED_BUT_ACTIVE];
+  const allowedSubscriptionStatuses: SubscriptionStatus[] = [
+    SubscriptionStatus.TRIAL,
+    SubscriptionStatus.TRIALING,
+    SubscriptionStatus.ACTIVE,
+    SubscriptionStatus.OVERDUE,
+    SubscriptionStatus.PAST_DUE,
+    SubscriptionStatus.CANCELLED_BUT_ACTIVE
+  ];
+  const allowedFirm = allowedFirmStatuses.includes(snapshot.firm.status);
+  const allowedSubscription = !snapshot.subscription || allowedSubscriptionStatuses.includes(snapshot.subscription.status);
+  if (!allowedFirm || !allowedSubscription) {
+    throw new BillingEnforcementError("SUBSCRIPTION_INACTIVE", "Abonnement inactif ou suspendu.");
+  }
+}
+
 export async function requirePlanFeature(firmId: string, feature: PlanFeature) {
   if (!billingSchemaReady()) return;
+  await requireActiveSubscription(firmId);
   const snapshot = await getFirmBillingSnapshot(firmId);
   if (!planHasFeature(snapshot.plan, feature)) {
-    throw new BillingEnforcementError(
-      "PLAN_FEATURE",
-      "Cette fonctionnalité nécessite un plan supérieur. Contactez la facturation pour upgrader."
-    );
+    throw new BillingEnforcementError("PLAN_FEATURE", "Cette fonctionnalite necessite un plan superieur.");
   }
 }
 
 export async function requireWithinLimit(firmId: string, limit: PlanLimit) {
   if (!billingSchemaReady()) return;
+  await requireActiveSubscription(firmId);
   const snapshot = await getFirmBillingSnapshot(firmId);
   const plan = snapshot.plan;
   const usage = snapshot.usage;
-  if (!plan) throw new BillingEnforcementError("PLAN_MISSING", "Aucun plan actif n'est configuré pour ce cabinet.");
+  if (!plan) throw new BillingEnforcementError("PLAN_MISSING", "Aucun plan actif n'est configure pour ce cabinet.");
 
   if (limit === "CLIENTS" && plan.clientLimit != null && usage.clients >= plan.clientLimit) {
-    throw new BillingEnforcementError("CLIENT_LIMIT", `Limite clients atteinte (${plan.clientLimit}). Passez au plan Pro pour continuer.`);
+    throw new BillingEnforcementError("CLIENT_LIMIT", `Limite clients atteinte (${plan.clientLimit}).`);
   }
   if (limit === "USERS" && plan.userLimit != null && usage.users >= plan.userLimit) {
     throw new BillingEnforcementError("USER_LIMIT", `Limite utilisateurs atteinte (${plan.userLimit}).`);
@@ -404,11 +389,8 @@ export async function requireWithinLimit(firmId: string, limit: PlanLimit) {
   if (limit === "ACTIVE_COLLECTIONS" && plan.activeCollectionLimit != null && usage.activeCollections >= plan.activeCollectionLimit) {
     throw new BillingEnforcementError("COLLECTION_LIMIT", `Limite de collectes actives atteinte (${plan.activeCollectionLimit}).`);
   }
-  if (limit === "STORAGE" && plan.storageLimitMb != null) {
-    const limitBytes = plan.storageLimitMb * 1024 * 1024;
-    if (usage.storageBytes >= limitBytes) {
-      throw new BillingEnforcementError("STORAGE_LIMIT", `Limite de stockage atteinte (${plan.storageLimitMb} Mo).`);
-    }
+  if (limit === "STORAGE" && plan.storageLimitMb != null && usage.storageBytes >= plan.storageLimitMb * 1024 * 1024) {
+    throw new BillingEnforcementError("STORAGE_LIMIT", `Limite de stockage atteinte (${plan.storageLimitMb} Mo).`);
   }
 }
 
@@ -473,27 +455,15 @@ export async function markInvoicePaid(input: {
       }
     });
 
-    const periodStart = paidAt;
-    const periodEnd = addMonths(paidAt, 1);
     if (invoice.subscriptionId) {
       await tx.firmSubscription.update({
         where: { id: invoice.subscriptionId },
-        data: {
-          status: SubscriptionStatus.ACTIVE,
-          currentPeriodStart: periodStart,
-          currentPeriodEnd: periodEnd,
-          suspendedAt: null
-        }
+        data: { status: SubscriptionStatus.ACTIVE, suspendedAt: null }
       });
     }
     await tx.firm.update({
       where: { id: invoice.firmId },
-      data: {
-        status: FirmStatus.ACTIVE,
-        suspendedAt: null,
-        suspendedReason: null,
-        cancelledAt: null
-      }
+      data: { status: FirmStatus.ACTIVE, suspendedAt: null, suspendedReason: null, cancelledAt: null }
     });
     return invoice;
   });

@@ -1,23 +1,15 @@
-import { BarChart3, Bell, CircleHelp, LogOut, Search } from "lucide-react";
+import { CircleHelp, LogOut, Search } from "lucide-react";
 import { UserRole } from "@prisma/client";
 import Link from "next/link";
 import { AppSidebar } from "@/components/AppSidebar";
+import { NotificationBell } from "@/components/NotificationBell";
 import { hasAnyRole, requireFirmUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getUnreadNotificationCount } from "@/lib/notifications";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireFirmUser();
   const canUseBilling = hasAnyRole(user, [UserRole.OWNER, UserRole.MANAGER]);
-  const notificationState = await prisma.userNotificationState.findUnique({
-    where: { userId: user.id },
-    select: { lastSeenAt: true }
-  });
-  const unreadNotifications = await prisma.operationalEvent.count({
-    where: {
-      firmId: user.firmId,
-      occurredAt: notificationState ? { gt: notificationState.lastSeenAt } : undefined
-    }
-  });
+  const unreadNotifications = await getUnreadNotificationCount(user.id, user.firmId);
 
   return (
     <div className="app-shell">
@@ -31,14 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <Link href="/app/search" className="btn" title="Recherche">
               <Search size={16} />
             </Link>
-            <Link href="/app/notifications" className="btn relative" title="Notifications">
-              <Bell size={16} />
-              {unreadNotifications > 0 ? (
-                <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
-                  {unreadNotifications > 9 ? "9+" : unreadNotifications}
-                </span>
-              ) : null}
-            </Link>
+            <NotificationBell key={unreadNotifications} unreadCount={unreadNotifications} />
             <Link href="/app/help" className="btn" title="Aide">
               <CircleHelp size={16} />
             </Link>
@@ -49,7 +34,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <form action="/api/auth/logout" method="post">
               <button className="btn" type="submit">
                 <LogOut size={16} />
-                Déconnexion
+                Deconnexion
               </button>
             </form>
           </div>
