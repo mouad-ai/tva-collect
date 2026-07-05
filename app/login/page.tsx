@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { LoginForm } from "@/components/LoginForm";
 import { LoginStatusMessages } from "@/components/LoginStatusMessages";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 export default function LoginPage() {
   return (
