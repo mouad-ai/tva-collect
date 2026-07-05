@@ -10,7 +10,7 @@ import { postLoginRedirectForRole } from "@/lib/security-policy";
 export const dynamic = "force-dynamic";
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().email(),
   password: z.string().min(1)
 });
 
@@ -80,7 +80,7 @@ function loginHtml(request: NextRequest) {
     <p>Acc&eacute;dez &agrave; votre espace s&eacute;curis&eacute; TVA Collect.</p>
     ${message}
     <form id="login-form" action="/login" method="post">
-      <label>Email<input name="email" type="email" autocomplete="email" required /></label>
+      <label>Email<input name="email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" required /></label>
       <label>Mot de passe<input name="password" type="password" autocomplete="current-password" required /></label>
       <a href="/forgot-password">Mot de passe oubli&eacute; ?</a>
       <button type="submit">Se connecter</button>
@@ -129,7 +129,14 @@ async function handlePost(request: NextRequest) {
   ]);
   if (!byIp.allowed || !byEmail.allowed) return redirectToLogin("rate-limit");
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findFirst({
+    where: {
+      email: {
+        equals: email,
+        mode: "insensitive"
+      }
+    }
+  });
   if (!user || !user.isActive || !user.passwordHash || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) {
     return redirectToLogin("credentials");
   }

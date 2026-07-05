@@ -8,7 +8,7 @@ import { rateLimit, rateLimitIp } from "@/lib/rate-limit";
 import { postLoginRedirectForRole } from "@/lib/security-policy";
 
 const schema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().email(),
   password: z.string().min(1)
 });
 
@@ -18,16 +18,23 @@ async function handlePOST(request: Request) {
     return NextResponse.json({ error: "Identifiants invalides." }, { status: 400 });
   }
   const ip = rateLimitIp(request);
-  const emailKey = body.data.email.toLowerCase();
+  const email = body.data.email.toLowerCase();
   const [byIp, byEmail] = await Promise.all([
     rateLimit({ key: `login:ip:${ip}`, limit: 12, windowMs: 15 * 60 * 1000 }),
-    rateLimit({ key: `login:email:${emailKey}`, limit: 6, windowMs: 15 * 60 * 1000 })
+    rateLimit({ key: `login:email:${email}`, limit: 6, windowMs: 15 * 60 * 1000 })
   ]);
   if (!byIp.allowed || !byEmail.allowed) {
     return NextResponse.json({ error: "Email ou mot de passe incorrect." }, { status: 429 });
   }
 
-  const user = await prisma.user.findUnique({ where: { email: body.data.email } });
+  const user = await prisma.user.findFirst({
+    where: {
+      email: {
+        equals: email,
+        mode: "insensitive"
+      }
+    }
+  });
   if (!user || !user.isActive || !user.passwordHash || !(await bcrypt.compare(body.data.password, user.passwordHash))) {
     return NextResponse.json({ error: "Email ou mot de passe incorrect." }, { status: 401 });
   }
