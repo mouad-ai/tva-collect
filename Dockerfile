@@ -11,6 +11,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate
 RUN rm -rf .next && npm run build
+RUN node scripts/assert-production-build.mjs
 
 FROM node:22-alpine AS runner
 WORKDIR /app
