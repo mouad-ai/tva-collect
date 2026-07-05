@@ -1,10 +1,28 @@
+import bcrypt from "bcryptjs";
 import { NextResponse, type NextRequest } from "next/server";
+import { z } from "zod";
+import { cookieName, createSessionToken } from "@/lib/auth";
+import { loggedApiError } from "@/lib/error-logging";
+import { prisma } from "@/lib/prisma";
+import { rateLimit, rateLimitIp } from "@/lib/rate-limit";
+import { postLoginRedirectForRole } from "@/lib/security-policy";
 
 export const dynamic = "force-dynamic";
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1)
+});
 
 function statusMessage(searchParams: URLSearchParams) {
   if (searchParams.get("invite") === "accepted") {
     return `<p class="notice">Compte activ&eacute;. Vous pouvez vous connecter.</p>`;
+  }
+  if (searchParams.get("error") === "credentials") {
+    return `<p class="alert">Email ou mot de passe incorrect.</p>`;
+  }
+  if (searchParams.get("error") === "rate-limit") {
+    return `<p class="alert">Trop de tentatives. Reessayez dans quelques minutes.</p>`;
   }
   const reset = searchParams.get("reset");
   if (reset === "done" || reset === "success") {
@@ -38,7 +56,7 @@ function loginHtml(request: NextRequest) {
     button:disabled { opacity: .7; cursor: wait; }
     a { color: var(--primary); font-weight: 800; }
     .notice { margin-top: 16px; border: 1px solid #abefc6; border-radius: 8px; background: #ecfdf3; padding: 12px; color: #067647; font-size: 14px; font-weight: 700; }
-    .error { min-height: 20px; color: var(--danger); font-size: 14px; font-weight: 700; }
+    .alert { margin-top: 16px; border: 1px solid #fecdca; border-radius: 8px; background: #fef3f2; padding: 12px; color: #b42318; font-size: 14px; font-weight: 700; }
   </style>
 </head>
 <body>
@@ -47,37 +65,13 @@ function loginHtml(request: NextRequest) {
     <h1>Connexion</h1>
     <p>Acc&eacute;dez &agrave; votre espace s&eacute;curis&eacute; TVA Collect.</p>
     ${message}
-    <form id="login-form">
+    <form id="login-form" action="/login" method="post">
       <label>Email<input name="email" type="email" autocomplete="email" required /></label>
       <label>Mot de passe<input name="password" type="password" autocomplete="current-password" required /></label>
       <a href="/forgot-password">Mot de passe oubli&eacute; ?</a>
-      <div class="error" id="login-error" aria-live="polite"></div>
-      <button id="login-button" type="submit">Se connecter</button>
+      <button type="submit">Se connecter</button>
     </form>
   </main>
-  <script>
-    const form = document.getElementById("login-form");
-    const error = document.getElementById("login-error");
-    const button = document.getElementById("login-button");
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      error.textContent = "";
-      button.disabled = true;
-      const data = new FormData(form);
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: data.get("email"), password: data.get("password") })
-      }).catch(() => null);
-      button.disabled = false;
-      if (!response || !response.ok) {
-        error.textContent = "Email ou mot de passe incorrect.";
-        return;
-      }
-      const payload = await response.json().catch(() => ({ redirectTo: "/app" }));
-      window.location.assign(typeof payload.redirectTo === "string" ? payload.redirectTo : "/app");
-    });
-  </script>
 </body>
 </html>`;
 }
@@ -90,4 +84,48 @@ export function GET(request: NextRequest) {
       "Cache-Control": "no-store, max-age=0"
     }
   });
+}
+
+function redirectToLogin(request: NextRequest, error: "credentials" | "rate-limit") {
+  return NextResponse.redirect(new URL(`/login?error=${error}`, request.url), 303);
+}
+
+async function handlePost(request: NextRequest) {
+  const formData = await request.formData();
+  const parsed = loginSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password")
+  });
+  if (!parsed.success) return redirectToLogin(request, "credentials");
+
+  const email = parsed.data.email.toLowerCase();
+  const ip = rateLimitIp(request);
+  const [byIp, byEmail] = await Promise.all([
+    rateLimit({ key: `login:ip:${ip}`, limit: 12, windowMs: 15 * 60 * 1000 }),
+    rateLimit({ key: `login:email:${email}`, limit: 6, windowMs: 15 * 60 * 1000 })
+  ]);
+  if (!byIp.allowed || !byEmail.allowed) return redirectToLogin(request, "rate-limit");
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user || !user.isActive || !user.passwordHash || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) {
+    return redirectToLogin(request, "credentials");
+  }
+
+  const response = NextResponse.redirect(new URL(postLoginRedirectForRole(user.role), request.url), 303);
+  response.cookies.set(cookieName, createSessionToken(user.id), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30
+  });
+  return response;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    return await handlePost(request);
+  } catch (error) {
+    return loggedApiError(error, request);
+  }
 }
