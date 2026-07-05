@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { resetPasswordWithToken } from "@/app/actions";
 import { PasswordField } from "@/components/PasswordField";
 import { hashPasswordResetToken, isPasswordResetUsable } from "@/lib/password-reset";
@@ -8,6 +9,11 @@ const errors: Record<string, string> = {
   mismatch: "Les mots de passe ne correspondent pas.",
   weak: "Mot de passe trop faible : minimum 12 caracteres avec majuscule, minuscule et chiffre.",
   invalid: "Ce lien est invalide, expire ou deja utilise."
+};
+
+export const metadata: Metadata = {
+  title: "Reinitialiser le mot de passe",
+  description: "Choisissez un nouveau mot de passe pour votre compte TVA Collect."
 };
 
 export default async function ResetPasswordQueryPage({

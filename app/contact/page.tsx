@@ -1,4 +1,10 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Demander un pilote",
+  description: "Demandez un pilote TVA Collect pour tester la collecte TVA avec 5 clients."
+};
 
 export default async function ContactPage({ searchParams }: { searchParams: Promise<{ sent?: string; error?: string }> }) {
   const params = await searchParams;

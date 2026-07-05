@@ -1,10 +1,18 @@
 import { CircleHelp, LogOut, Search } from "lucide-react";
 import { UserRole } from "@prisma/client";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AppSidebar } from "@/components/AppSidebar";
 import { NotificationBell } from "@/components/NotificationBell";
 import { hasAnyRole, requireFirmUser } from "@/lib/auth";
 import { getUnreadNotificationCount } from "@/lib/notifications";
+
+export const metadata: Metadata = {
+  title: {
+    default: "Espace cabinet",
+    template: "%s | Espace cabinet"
+  }
+};
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireFirmUser();

@@ -1,7 +1,15 @@
 import { LogOut } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { requireAdmin } from "@/lib/auth";
+
+export const metadata: Metadata = {
+  title: {
+    default: "Administration",
+    template: "%s | Administration"
+  }
+};
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await requireAdmin();

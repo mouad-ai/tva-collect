@@ -1,5 +1,11 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { requestPasswordReset } from "@/app/actions";
+
+export const metadata: Metadata = {
+  title: "Mot de passe oublie",
+  description: "Recevez un lien securise pour reinitialiser votre mot de passe TVA Collect."
+};
 
 export default async function ForgotPasswordPage({
   searchParams

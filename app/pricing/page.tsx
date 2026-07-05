@@ -1,4 +1,10 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Tarifs",
+  description: "Tarifs TVA Collect pour piloter la collecte TVA dans un cabinet comptable."
+};
 
 const plans = [
   { name: "Pilote", price: "1 000 MAD", note: "une fois", detail: "Pour tester avec 5 clients." },

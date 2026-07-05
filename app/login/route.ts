@@ -39,6 +39,20 @@ function loginHtml(request: NextRequest) {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Connexion - TVA Collect</title>
+  <meta name="description" content="Connectez-vous a TVA Collect pour suivre vos collectes TVA, documents clients et relances." />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#0f766e" />
+  <meta property="og:title" content="Connexion - TVA Collect" />
+  <meta property="og:description" content="Espace securise TVA Collect pour cabinets comptables." />
+  <meta property="og:image" content="/og-image.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Connexion - TVA Collect" />
+  <meta name="twitter:description" content="Espace securise TVA Collect pour cabinets comptables." />
+  <meta name="twitter:image" content="/og-image.png" />
   <style>
     :root { color-scheme: light; --ink: #172033; --muted: #667085; --border: #d9e1ec; --surface: #f6f8fb; --primary: #1f5eff; --danger: #b42318; }
     * { box-sizing: border-box; }
@@ -86,8 +100,17 @@ export function GET(request: NextRequest) {
   });
 }
 
-function redirectToLogin(request: NextRequest, error: "credentials" | "rate-limit") {
-  return NextResponse.redirect(new URL(`/login?error=${error}`, request.url), 303);
+function redirectToLogin(error: "credentials" | "rate-limit") {
+  return redirectWithRelativeLocation(`/login?error=${error}`);
+}
+
+function redirectWithRelativeLocation(location: string) {
+  return new NextResponse(null, {
+    status: 303,
+    headers: {
+      Location: location
+    }
+  });
 }
 
 async function handlePost(request: NextRequest) {
@@ -96,7 +119,7 @@ async function handlePost(request: NextRequest) {
     email: formData.get("email"),
     password: formData.get("password")
   });
-  if (!parsed.success) return redirectToLogin(request, "credentials");
+  if (!parsed.success) return redirectToLogin("credentials");
 
   const email = parsed.data.email.toLowerCase();
   const ip = rateLimitIp(request);
@@ -104,14 +127,14 @@ async function handlePost(request: NextRequest) {
     rateLimit({ key: `login:ip:${ip}`, limit: 12, windowMs: 15 * 60 * 1000 }),
     rateLimit({ key: `login:email:${email}`, limit: 6, windowMs: 15 * 60 * 1000 })
   ]);
-  if (!byIp.allowed || !byEmail.allowed) return redirectToLogin(request, "rate-limit");
+  if (!byIp.allowed || !byEmail.allowed) return redirectToLogin("rate-limit");
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !user.isActive || !user.passwordHash || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) {
-    return redirectToLogin(request, "credentials");
+    return redirectToLogin("credentials");
   }
 
-  const response = NextResponse.redirect(new URL(postLoginRedirectForRole(user.role), request.url), 303);
+  const response = redirectWithRelativeLocation(postLoginRedirectForRole(user.role));
   response.cookies.set(cookieName, createSessionToken(user.id), {
     httpOnly: true,
     sameSite: "lax",
