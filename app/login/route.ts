@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { cookieName, createSessionToken } from "@/lib/auth";
+import { cookieName, createSessionToken, getCurrentUser } from "@/lib/auth";
 import { loggedApiError } from "@/lib/error-logging";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitIp } from "@/lib/rate-limit";
@@ -90,7 +90,12 @@ function loginHtml(request: NextRequest) {
 </html>`;
 }
 
-export function GET(request: NextRequest) {
+export async function GET(request: NextRequest) {
+  if (request.cookies.getAll(cookieName).length > 0) {
+    const user = await getCurrentUser();
+    if (user) return redirectWithRelativeLocation(postLoginRedirectForRole(user.role));
+  }
+
   return new NextResponse(loginHtml(request), {
     status: 200,
     headers: {

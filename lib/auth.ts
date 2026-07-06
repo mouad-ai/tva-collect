@@ -68,6 +68,14 @@ export function verifySessionToken(token?: string): { userId: string; shouldRefr
   }
 }
 
+function verifySessionCookies(values: string[]) {
+  for (const value of values) {
+    const session = verifySessionToken(value);
+    if (session) return session;
+  }
+  return null;
+}
+
 async function clearSessionCookie() {
   try {
     const store = await cookies();
@@ -94,7 +102,7 @@ async function refreshSessionCookie(userId: string) {
 
 export async function getCurrentUser() {
   const store = await cookies();
-  const session = verifySessionToken(store.get(cookieName)?.value);
+  const session = verifySessionCookies(store.getAll(cookieName).map((cookie) => cookie.value));
   if (!session) {
     await clearSessionCookie();
     return null;
@@ -160,7 +168,8 @@ function appPathAllowsSuspendedFirm(pathname: string | null) {
 
 export async function requireFirmUser() {
   const user = await requireUser();
-  if (user.role === UserRole.ADMIN || !user.firmId || !user.firm) redirect("/login");
+  if (user.role === UserRole.ADMIN) redirect("/admin");
+  if (!user.firmId || !user.firm) redirect("/forbidden");
   if (user.firm.status === FirmStatus.SUSPENDED || user.firm.status === FirmStatus.CANCELLED) {
     const pathname = (await headers()).get("x-pathname");
     if (!appPathAllowsSuspendedFirm(pathname)) redirect("/app/suspended");
