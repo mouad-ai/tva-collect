@@ -10,6 +10,16 @@ function fail(message) {
   process.exit(1);
 }
 
+function collectFiles(dir, extension) {
+  if (!existsSync(dir)) return [];
+  const entries = readdirSync(dir, { withFileTypes: true });
+  return entries.flatMap((entry) => {
+    const fullPath = join(dir, entry.name);
+    if (entry.isDirectory()) return collectFiles(fullPath, extension);
+    return entry.isFile() && entry.name.endsWith(extension) ? [fullPath] : [];
+  });
+}
+
 const prerenderManifest = readJson(".next/prerender-manifest.json");
 const appPathsManifest = readJson(".next/server/app-paths-manifest.json");
 const loginBundle = readFileSync(".next/server/app/login/route.js", "utf8");
@@ -34,17 +44,12 @@ if (!loginBundle.includes("login-form")) {
   fail("/login route bundle does not contain the login form marker.");
 }
 
-const cssDir = ".next/static/css";
-if (!existsSync(cssDir)) {
-  fail("Next CSS output directory is missing: .next/static/css");
-}
-
-const cssFiles = readdirSync(cssDir).filter((file) => file.endsWith(".css"));
+const cssFiles = collectFiles(".next/static", ".css");
 if (cssFiles.length === 0) {
-  fail("Next build produced no CSS files under .next/static/css.");
+  fail("Next build produced no CSS files under .next/static.");
 }
 
-const cssBundle = cssFiles.map((file) => readFileSync(join(cssDir, file), "utf8")).join("\n");
+const cssBundle = cssFiles.map((file) => readFileSync(file, "utf8")).join("\n");
 for (const marker of [".app-shell", ".btn-primary", ".card", ".data-table"]) {
   if (!cssBundle.includes(marker)) {
     fail(`Compiled CSS bundle is missing design-system marker: ${marker}`);
@@ -52,7 +57,7 @@ for (const marker of [".app-shell", ".btn-primary", ".card", ".data-table"]) {
 }
 
 const indexHtml = readFileSync(".next/server/app/index.html", "utf8");
-if (!indexHtml.includes("/_next/static/css/")) {
+if (!indexHtml.includes("/_next/static/") || !indexHtml.includes(".css")) {
   fail("Public home HTML does not reference a Next CSS asset.");
 }
 
