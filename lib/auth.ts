@@ -163,6 +163,7 @@ type CurrentUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
 export type FirmUser = CurrentUser & { firmId: string; firm: NonNullable<CurrentUser["firm"]> };
 
 function appPathAllowsSuspendedFirm(pathname: string | null) {
+  if (!pathname) return true;
   return pathname?.startsWith("/app/billing") || pathname?.startsWith("/app/suspended");
 }
 

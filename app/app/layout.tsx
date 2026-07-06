@@ -1,21 +1,19 @@
 import { CircleHelp, LogOut, Search } from "lucide-react";
 import { UserRole } from "@prisma/client";
-import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { AppSidebar } from "@/components/AppSidebar";
 import { NotificationBell } from "@/components/NotificationBell";
-import { hasAnyRole, requireFirmUser } from "@/lib/auth";
+import { getCurrentUser, hasAnyRole } from "@/lib/auth";
 import { getUnreadNotificationCount } from "@/lib/notifications";
 
-export const metadata: Metadata = {
-  title: {
-    default: "Espace cabinet",
-    template: "%s | Espace cabinet"
-  }
-};
-
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const user = await requireFirmUser();
+  const pathname = (await headers()).get("x-pathname");
+  if (!pathname?.startsWith("/app")) return <>{children}</>;
+
+  const user = await getCurrentUser();
+  if (user?.role === UserRole.ADMIN || !user?.firmId || !user.firm) return <>{children}</>;
+
   const canUseBilling = hasAnyRole(user, [UserRole.OWNER, UserRole.MANAGER]);
   const unreadNotifications = await getUnreadNotificationCount(user.id, user.firmId);
 

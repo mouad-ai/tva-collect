@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/PageHeader";
+import { requireFirmUser } from "@/lib/auth";
 
 const sections = [
   {
@@ -46,7 +47,9 @@ const launchMessages = [
   }
 ];
 
-export default function HelpPage() {
+export default async function HelpPage() {
+  await requireFirmUser();
+
   return (
     <div className="content-stack">
       <PageHeader
