@@ -5,7 +5,7 @@ import { cookieName, createSessionToken } from "@/lib/auth";
 import { loggedApiError } from "@/lib/error-logging";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitIp } from "@/lib/rate-limit";
-import { postLoginRedirectForRole } from "@/lib/security-policy";
+import { postLoginDestination } from "@/lib/security-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +23,9 @@ function statusMessage(searchParams: URLSearchParams) {
   }
   if (searchParams.get("error") === "rate-limit") {
     return `<p class="alert">Trop de tentatives. Reessayez dans quelques minutes.</p>`;
+  }
+  if (searchParams.get("error") === "account") {
+    return `<p class="alert">Compte actif mais incomplet. Contactez l'administrateur TVA Collect.</p>`;
   }
   const reset = searchParams.get("reset");
   if (reset === "done" || reset === "success") {
@@ -100,7 +103,7 @@ export function GET(request: NextRequest) {
   });
 }
 
-function redirectToLogin(error: "credentials" | "rate-limit") {
+function redirectToLogin(error: "credentials" | "rate-limit" | "account") {
   return redirectWithRelativeLocation(`/login?error=${error}`);
 }
 
@@ -135,13 +138,24 @@ async function handlePost(request: NextRequest) {
         equals: email,
         mode: "insensitive"
       }
-    }
+    },
+    include: { firm: true }
   });
   if (!user || !user.isActive || !user.passwordHash || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) {
     return redirectToLogin("credentials");
   }
 
-  const response = redirectWithRelativeLocation(postLoginRedirectForRole(user.role));
+  const destination = postLoginDestination(user);
+  if (!destination.ok) {
+    console.warn("Login blocked for account without valid destination", {
+      userId: user.id,
+      role: user.role,
+      firmId: user.firmId
+    });
+    return redirectToLogin(destination.error);
+  }
+
+  const response = redirectWithRelativeLocation(destination.redirectTo);
   response.cookies.set(cookieName, createSessionToken(user.id), {
     httpOnly: true,
     sameSite: "lax",

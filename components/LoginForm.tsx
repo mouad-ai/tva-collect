@@ -26,7 +26,7 @@ export function LoginForm() {
     });
     setBusy(false);
     if (!response.ok) {
-      setError("Email ou mot de passe incorrect.");
+      setError(response.status === 403 ? "Compte actif mais incomplet. Contactez l'administrateur TVA Collect." : "Email ou mot de passe incorrect.");
       return;
     }
     const data = await response.json().catch(() => ({ redirectTo: "/app" }));

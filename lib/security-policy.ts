@@ -46,3 +46,23 @@ export function canPublicUploadForFirmStatus(status: FirmStatus) {
 export function postLoginRedirectForRole(role: UserRole) {
   return role === UserRole.ADMIN ? "/admin" : "/app";
 }
+
+export function postLoginDestination(user: {
+  role: UserRole;
+  firmId?: string | null;
+  firm?: { status: FirmStatus } | null;
+}) {
+  if (user.role === UserRole.ADMIN) {
+    return { ok: true as const, redirectTo: "/admin" };
+  }
+
+  if (!user.firmId || !user.firm) {
+    return { ok: false as const, error: "account" as const };
+  }
+
+  if (user.firm.status === FirmStatus.SUSPENDED || user.firm.status === FirmStatus.CANCELLED) {
+    return { ok: true as const, redirectTo: "/app/suspended" };
+  }
+
+  return { ok: true as const, redirectTo: "/app" };
+}

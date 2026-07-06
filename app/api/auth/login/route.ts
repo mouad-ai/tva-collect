@@ -5,7 +5,7 @@ import { cookieName, createSessionToken } from "@/lib/auth";
 import { loggedApiError } from "@/lib/error-logging";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitIp } from "@/lib/rate-limit";
-import { postLoginRedirectForRole } from "@/lib/security-policy";
+import { postLoginDestination } from "@/lib/security-policy";
 
 const schema = z.object({
   email: z.string().trim().email(),
@@ -33,13 +33,24 @@ async function handlePOST(request: Request) {
         equals: email,
         mode: "insensitive"
       }
-    }
+    },
+    include: { firm: true }
   });
   if (!user || !user.isActive || !user.passwordHash || !(await bcrypt.compare(body.data.password, user.passwordHash))) {
     return NextResponse.json({ error: "Email ou mot de passe incorrect." }, { status: 401 });
   }
 
-  const response = NextResponse.json({ ok: true, redirectTo: postLoginRedirectForRole(user.role) });
+  const destination = postLoginDestination(user);
+  if (!destination.ok) {
+    console.warn("Login blocked for account without valid destination", {
+      userId: user.id,
+      role: user.role,
+      firmId: user.firmId
+    });
+    return NextResponse.json({ error: "Compte actif mais incomplet." }, { status: 403 });
+  }
+
+  const response = NextResponse.json({ ok: true, redirectTo: destination.redirectTo });
   response.cookies.set(cookieName, createSessionToken(user.id), {
     httpOnly: true,
     sameSite: "lax",

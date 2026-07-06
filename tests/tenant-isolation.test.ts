@@ -12,6 +12,7 @@ import {
   canPublicUploadForFirmStatus,
   clientUploadRequiresUserAccount,
   isInviteUsable,
+  postLoginDestination,
   postLoginRedirectForRole
 } from "../lib/security-policy";
 import { isPasswordResetUsable } from "../lib/password-reset";
@@ -46,6 +47,25 @@ test("login redirects admin to SaaS admin and firm users to app", () => {
   assert.equal(postLoginRedirectForRole(UserRole.MANAGER), "/app");
   assert.equal(postLoginRedirectForRole(UserRole.ASSISTANT), "/app");
   assert.equal(postLoginRedirectForRole(UserRole.READ_ONLY), "/app");
+});
+
+test("login destination requires firm context for firm users", () => {
+  assert.deepEqual(postLoginDestination({ role: UserRole.ADMIN, firmId: null, firm: null }), {
+    ok: true,
+    redirectTo: "/admin"
+  });
+  assert.deepEqual(postLoginDestination({ role: UserRole.OWNER, firmId: null, firm: null }), {
+    ok: false,
+    error: "account"
+  });
+  assert.deepEqual(postLoginDestination({ role: UserRole.OWNER, firmId: "firm_1", firm: { status: FirmStatus.ACTIVE } }), {
+    ok: true,
+    redirectTo: "/app"
+  });
+  assert.deepEqual(postLoginDestination({ role: UserRole.OWNER, firmId: "firm_1", firm: { status: FirmStatus.SUSPENDED } }), {
+    ok: true,
+    redirectTo: "/app/suspended"
+  });
 });
 
 test("admin can provision a firm owner", () => {
