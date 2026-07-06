@@ -23,6 +23,9 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/lib ./lib
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 RUN addgroup -S nextjs && adduser -S nextjs -G nextjs && mkdir -p /app/uploads && chown -R nextjs:nextjs /app
 USER nextjs
 EXPOSE 3000

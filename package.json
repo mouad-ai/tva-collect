@@ -13,7 +13,8 @@
     "release:check": "prisma validate && npm run lint && npm run build",
     "postinstall": "prisma generate",
     "seed": "prisma db seed",
-    "create-admin": "tsx scripts/create-admin.ts"
+    "create-admin": "tsx scripts/create-admin.ts",
+    "diagnose-auth": "tsx scripts/diagnose-auth.ts"
   },
   "dependencies": {
     "@prisma/client": "5.22.0",
