@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { requireAdmin } from "@/lib/auth";
+import { adminInternalBase, hrefForBase } from "@/lib/routing";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   title: {
@@ -13,12 +15,14 @@ export const metadata: Metadata = {
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await requireAdmin();
+  const headerStore = await headers();
+  const visibleBase = headerStore.get("x-visible-base") ?? adminInternalBase;
 
   return (
     <div className="app-shell">
       <header className="app-shell-header" role="banner">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3.5">
-          <Link href="/admin" className="app-shell-brand">
+          <Link href={hrefForBase(visibleBase, "/")} className="app-shell-brand">
             <span className="app-shell-brand-mark">TVA</span>
             Administration
           </Link>
@@ -38,7 +42,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </header>
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[232px_1fr]">
         <aside className="card app-shell-sidebar h-fit">
-          <AdminSidebar />
+          <AdminSidebar basePath={visibleBase} />
         </aside>
         <main className="min-w-0">{children}</main>
       </div>

@@ -3,33 +3,39 @@
 import { BarChart3, Building2, ClipboardList, CreditCard, MailCheck, Rocket, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { adminInternalBase, hrefForBase } from "@/lib/routing";
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { href: "/admin", label: "Admin", icon: BarChart3 },
-  { href: "/admin/firms", label: "Cabinets", icon: Building2 },
-  { href: "/admin/billing", label: "Facturation", icon: CreditCard },
-  { href: "/admin/subscriptions", label: "Abonnements", icon: CreditCard },
-  { href: "/admin/billing-events", label: "Webhooks", icon: ClipboardList },
-  { href: "/admin/users", label: "Utilisateurs", icon: Users },
-  { href: "/admin/invites", label: "Invitations", icon: MailCheck },
-  { href: "/admin/leads", label: "Prospects", icon: Users },
-  { href: "/admin/events", label: "Evenements", icon: ClipboardList },
-  { href: "/admin/release-checklist", label: "Recette", icon: Rocket }
+  { path: "/", label: "Admin", icon: BarChart3 },
+  { path: "/firms", label: "Cabinets", icon: Building2 },
+  { path: "/billing", label: "Facturation", icon: CreditCard },
+  { path: "/subscriptions", label: "Abonnements", icon: CreditCard },
+  { path: "/billing-events", label: "Webhooks", icon: ClipboardList },
+  { path: "/users", label: "Utilisateurs", icon: Users },
+  { path: "/invites", label: "Invitations", icon: MailCheck },
+  { path: "/leads", label: "Prospects", icon: Users },
+  { path: "/events", label: "Evenements", icon: ClipboardList },
+  { path: "/release-checklist", label: "Recette", icon: Rocket }
 ];
 
-export function AdminSidebar() {
+export function AdminSidebar({ basePath = adminInternalBase }: { basePath?: string }) {
   const pathname = usePathname();
 
   return (
     <nav className="grid gap-0.5" aria-label="Navigation administration">
       {nav.map((item) => {
         const Icon = item.icon;
-        const active = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
+        const href = hrefForBase(basePath, item.path);
+        const internalHref = hrefForBase(adminInternalBase, item.path);
+        const active =
+          item.path === "/"
+            ? pathname === href || pathname === internalHref
+            : pathname === href || pathname.startsWith(`${href}/`) || pathname === internalHref || pathname.startsWith(`${internalHref}/`);
         return (
           <Link
-            key={item.href}
-            href={item.href}
+            key={item.path}
+            href={href}
             className={cn("app-shell-nav-link", active && "nav-link-active")}
             aria-current={active ? "page" : undefined}
           >

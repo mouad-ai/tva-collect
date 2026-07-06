@@ -164,7 +164,7 @@ export type FirmUser = CurrentUser & { firmId: string; firm: NonNullable<Current
 
 function appPathAllowsSuspendedFirm(pathname: string | null) {
   if (!pathname) return true;
-  return pathname?.startsWith("/app/billing") || pathname?.startsWith("/app/suspended");
+  return pathname.startsWith("/app/billing") || pathname.startsWith("/app/suspended") || pathname.startsWith("/billing") || pathname.startsWith("/suspended");
 }
 
 export async function requireFirmUser() {

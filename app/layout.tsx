@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-const metadataBase = new URL(process.env.APP_URL || "https://app.tvacollect.com");
+const metadataBase = new URL(process.env.PUBLIC_URL || "https://tvacollect.com");
 const title = "TVA Collect - Collecte TVA pour cabinets comptables";
 const description =
   "Centralisez les demandes, depots et relances TVA. Un lien par client, une vue claire pour votre equipe, sans compte cote client.";

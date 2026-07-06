@@ -4,161 +4,95 @@ import {
   CheckCircle2,
   Clock3,
   FileCheck2,
-  FileText,
+  FolderKanban,
   LockKeyhole,
   MessageSquareText,
-  PhoneCall,
-  Search,
   ShieldCheck,
   UploadCloud,
   UsersRound
 } from "lucide-react";
 import Link from "next/link";
 
-const painPoints = [
-  "Les factures arrivent sur WhatsApp, par email, en papier — personne ne sait où chercher.",
-  "Impossible de voir d'un coup d'œil qui bloque la déclaration du mois.",
-  "Les relances partent sans trace : qui a été contacté, quand, pour quoi ?",
-  "Vos assistants perdent des heures à renommer, trier et relancer à la main."
-];
-
 const workflow = [
   {
-    icon: UsersRound,
-    title: "Ouvrir la collecte",
-    body: "Choisissez la période TVA, ajoutez les clients concernés. Chaque dossier a sa fiche."
+    icon: FolderKanban,
+    title: "Créer la collecte",
+    body: "Le cabinet choisit la période TVA, ajoute les clients concernés et génère les dossiers."
   },
   {
     icon: UploadCloud,
     title: "Envoyer le lien",
-    body: "Le client dépose ses pièces via un lien sécurisé. Pas de compte à créer, pas de formation."
+    body: "Chaque client reçoit un lien sécurisé. Aucun compte client n'est nécessaire."
   },
   {
     icon: FileCheck2,
     title: "Contrôler les pièces",
-    body: "Fichiers reçus, statuts, périodes et documents manquants — tout au même endroit."
+    body: "L'assistant voit les documents reçus, manquants, invalides et prêts à traiter."
   },
   {
     icon: MessageSquareText,
     title: "Relancer proprement",
-    body: "Message prêt à copier, historique conservé. Fini les relances dans le vide."
+    body: "Les messages de relance sont prêts à copier, avec historique et preuve d'action."
   }
 ];
 
-const productAreas = [
-  {
-    icon: Search,
-    title: "Ce qui manque",
-    body: "Clients incomplets, pièces invalides, dossiers en retard — visible en un coup d'œil."
-  },
-  {
-    icon: BellRing,
-    title: "Qui relancer",
-    body: "Listes de relance, messages pré-rédigés, alertes quand un client a déjà été sollicité."
-  },
-  {
-    icon: ShieldCheck,
-    title: "Ce qui est prouvé",
-    body: "Historique des liens, dépôts, validations, rejets et exports — traçabilité cabinet."
-  },
-  {
-    icon: FileText,
-    title: "Prêt pour la déclaration",
-    body: "Exports CSV, readiness TVA et dossiers propres avant validation finale."
-  }
-];
-
-const trustItems = [
-  "Comptes cabinet séparés des clients",
+const features = [
+  "Tableau de bord des collectes actives",
+  "Portail de dépôt mobile pour les clients",
+  "Suivi des documents manquants",
+  "Relances WhatsApp prêtes à copier",
+  "Validation et rejet des fichiers",
+  "Exports CSV et archives propres",
   "Rôles propriétaire, manager, assistant et lecture seule",
-  "Liens de dépôt sans création de compte client",
-  "Fichiers protégés et rattachés à votre cabinet",
-  "Journal des actions importantes",
-  "Déploiement Docker, PostgreSQL et stockage privé"
-];
-
-const pilotItems = [
-  "Configuration de votre cabinet",
-  "Import ou création de 5 clients",
-  "Première collecte TVA",
-  "Liens de dépôt publics",
-  "Modèles de relance prêts à l'emploi",
-  "Export CSV et contrôle des pièces"
+  "Journal d'audit des actions importantes"
 ];
 
 export default function LandingPage() {
   return (
     <main className="bg-white text-ink">
-      <section className="relative min-h-[92vh] overflow-hidden bg-[#07111f] text-white">
-        <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(15,118,110,0.35),transparent)]"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.9) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.9) 1px, transparent 1px)",
-            backgroundSize: "48px 48px"
-          }}
-          aria-hidden
-        />
-
+      <section className="relative overflow-hidden bg-[#07111f] text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(20,184,166,0.24),transparent_42%)]" aria-hidden />
         <header className="relative z-10 border-b border-white/10">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
-            <Link href="/" className="flex items-center gap-3 text-lg font-extrabold tracking-tight">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-500 text-sm font-black text-white">
+            <Link href="/" className="flex items-center gap-3 text-lg font-extrabold">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-500 text-sm font-black">
                 TVA
               </span>
               TVA Collect
             </Link>
-            <nav
-              className="hidden items-center gap-6 text-sm font-semibold text-slate-300 md:flex"
-              aria-label="Navigation principale"
-            >
-              <a href="#probleme" className="transition hover:text-white">
-                Problème
-              </a>
-              <a href="#fonctionnement" className="transition hover:text-white">
-                Comment ça marche
-              </a>
-              <a href="#contrôle" className="transition hover:text-white">
-                Fonctionnalités
-              </a>
-              <Link href="/pricing" className="transition hover:text-white">
-                Tarifs
-              </Link>
+            <nav className="hidden items-center gap-6 text-sm font-semibold text-slate-300 md:flex" aria-label="Navigation publique">
+              <a href="#fonctionnement" className="hover:text-white">Fonctionnement</a>
+              <a href="#preuve" className="hover:text-white">Preuve</a>
+              <Link href="/pricing" className="hover:text-white">Tarifs</Link>
+              <Link href="/contact" className="hover:text-white">Contact</Link>
             </nav>
             <div className="flex items-center gap-2">
-              <Link
-                href="/login"
-                className="btn hidden border-white/20 bg-white/5 text-white hover:bg-white/10 sm:inline-flex"
-              >
+              <Link href="/login" className="btn hidden border-white/20 bg-white/5 text-white hover:bg-white/10 sm:inline-flex">
                 Connexion
               </Link>
               <Link href="/contact" className="btn btn-primary">
-                Demander un pilote
+                Pilote
               </Link>
             </div>
           </div>
         </header>
 
-        <div className="relative z-10 mx-auto grid min-h-[calc(92vh-74px)] max-w-7xl gap-12 px-4 py-14 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+        <div className="relative z-10 mx-auto grid min-h-[calc(92vh-73px)] max-w-7xl gap-12 px-4 py-16 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-teal-400/30 bg-teal-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-teal-200">
+            <div className="inline-flex items-center gap-2 rounded-full border border-teal-300/30 bg-teal-400/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-teal-100">
               <ShieldCheck size={14} />
-              Cabinets comptables & fiduciaires — Maroc
+              Pour cabinets comptables marocains
             </div>
-            <h1 className="mt-6 text-4xl font-extrabold leading-[1.08] tracking-tight md:text-[3.25rem]">
-              Arrêtez de courir après les pièces TVA.
+            <h1 className="mt-6 text-4xl font-extrabold leading-[1.08] tracking-tight md:text-[3.4rem]">
+              Collectez les pièces TVA sans courir après vos clients.
             </h1>
             <p className="mt-5 text-lg leading-relaxed text-slate-300">
-              Un lien par client pour déposer les documents. Un tableau de bord pour savoir qui manque quoi,
-              qui relancer, et quel dossier est prêt — avant l&apos;échéance.
+              TVA Collect centralise les demandes, les dépôts, les relances et les preuves.
+              Votre équipe sait qui a envoyé quoi, ce qui manque et quel dossier peut avancer.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/contact" className="btn btn-primary px-5">
-                Tester avec 5 clients <ArrowRight size={16} />
+                Démarrer un pilote <ArrowRight size={16} />
               </Link>
               <Link href="/demo" className="btn border-white/20 bg-white text-ink hover:bg-slate-100">
                 Voir la démo
@@ -166,9 +100,9 @@ export default function LandingPage() {
             </div>
             <dl className="mt-10 grid max-w-xl gap-4 sm:grid-cols-3">
               {[
-                ["1 lien", "par dossier client"],
+                ["1 lien", "par client"],
                 ["0 compte", "côté client"],
-                ["1 vue", "des retards"]
+                ["1 vue", "des blocages"]
               ].map(([value, label]) => (
                 <div key={value} className="rounded-lg border border-white/10 bg-white/5 px-4 py-3">
                   <dt className="text-xl font-extrabold">{value}</dt>
@@ -181,7 +115,7 @@ export default function LandingPage() {
           <div className="rounded-xl border border-white/10 bg-white p-5 text-ink shadow-2xl shadow-black/40">
             <div className="flex items-center justify-between border-b border-border pb-4">
               <div>
-                <div className="text-sm font-extrabold">Collecte TVA — Juin 2026</div>
+                <div className="text-sm font-extrabold">Collecte TVA - Juin 2026</div>
                 <div className="mt-0.5 text-xs font-medium text-muted">Espace cabinet</div>
               </div>
               <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Active</span>
@@ -201,13 +135,10 @@ export default function LandingPage() {
             <ul className="mt-4 space-y-2">
               {[
                 ["Garage Atlas", "Relevé bancaire manquant", "Urgent", "bg-red-50 text-red-700"],
-                ["Café Central", "Factures reçues — à vérifier", "À vérifier", "bg-amber-50 text-amber-800"],
+                ["Café Central", "Factures reçues - à vérifier", "À vérifier", "bg-amber-50 text-amber-800"],
                 ["Pharma Nord", "Dossier complet", "Prêt", "bg-emerald-50 text-emerald-700"]
               ].map(([client, issue, status, badgeClass]) => (
-                <li
-                  key={client}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-3"
-                >
+                <li key={client} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-3">
                   <div className="min-w-0">
                     <div className="truncate font-bold">{client}</div>
                     <div className="mt-0.5 truncate text-xs text-muted">{issue}</div>
@@ -224,37 +155,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="probleme" className="border-b border-border bg-surface py-20">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-primary">Le problème</p>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">
-              Ce n&apos;est pas un problème de stockage. C&apos;est un problème de visibilité.
-            </h2>
-            <p className="mt-4 max-w-lg leading-7 text-muted">
-              Quand les pièces arrivent par quatre canaux différents, la vraie question n&apos;est pas
-              «&nbsp;où les mettre&nbsp;?&nbsp;» — c&apos;est&nbsp;: qui a envoyé quoi, qu&apos;est-ce qui manque,
-              et quelle preuve garde le cabinet ?
-            </p>
-          </div>
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {painPoints.map((item) => (
-              <li key={item} className="flex items-start gap-3 rounded-lg border border-border bg-white p-4 text-sm font-medium leading-relaxed">
-                <BellRing size={18} className="mt-0.5 shrink-0 text-primary" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
       <section id="fonctionnement" className="py-20">
         <div className="mx-auto max-w-7xl px-4">
           <div className="max-w-2xl">
-            <p className="text-sm font-bold uppercase tracking-wide text-primary">Comment ça marche</p>
+            <p className="text-sm font-bold uppercase tracking-wide text-primary">Flux cabinet</p>
             <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">
-              Quatre étapes. Compris par le cabinet et par le client.
+              Le chemin normal d&apos;une collecte TVA.
             </h2>
+            <p className="mt-4 leading-7 text-muted">
+              Le produit reste simple: créer la collecte, envoyer les liens, recevoir les documents,
+              contrôler les pièces et exporter ce qui est prêt.
+            </p>
           </div>
           <ol className="mt-10 grid gap-4 md:grid-cols-4">
             {workflow.map((step, index) => {
@@ -276,60 +187,48 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="contrôle" className="border-y border-border bg-surface py-20">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+      <section id="preuve" className="border-y border-border bg-surface py-20">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
           <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-primary">Contrôle opérationnel</p>
+            <p className="text-sm font-bold uppercase tracking-wide text-primary">Contrôle et preuve</p>
             <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">
-              Chaque matin, votre équipe sait quoi faire.
+              Une interface faite pour le travail quotidien.
             </h2>
             <p className="mt-4 leading-7 text-muted">
-              Pas un simple dossier partagé — une liste de travail&nbsp;: relances à envoyer, pièces à
-              vérifier, dossiers prêts, preuves à conserver.
+              Les assistants n&apos;ont pas besoin de deviner. Les clients incomplets, les fichiers à vérifier,
+              les relances et les dossiers prêts sont visibles dans l&apos;espace cabinet.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/demo" className="btn btn-primary">
-                Voir la démo
+              <Link href="/contact" className="btn btn-primary">
+                Demander un pilote
               </Link>
-              <Link href="/pricing" className="btn">
-                Tarifs
+              <Link href="/login" className="btn">
+                Connexion
               </Link>
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {productAreas.map((area) => {
-              const Icon = area.icon;
-              return (
-                <article key={area.title} className="rounded-xl border border-border bg-white p-5">
-                  <Icon size={22} className="text-primary" />
-                  <h3 className="mt-4 font-extrabold">{area.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted">{area.body}</p>
-                </article>
-              );
-            })}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {features.map((feature) => (
+              <div key={feature} className="flex items-start gap-3 rounded-lg border border-border bg-white p-4 text-sm font-semibold">
+                <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-primary" />
+                {feature}
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       <section className="py-20">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 lg:grid-cols-[1fr_0.95fr] lg:items-start">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 lg:grid-cols-[1fr_380px] lg:items-center">
           <div>
             <p className="text-sm font-bold uppercase tracking-wide text-primary">Sécurité</p>
             <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">
-              Conçu pour de vrais dossiers clients.
+              Les clients déposent. Le cabinet garde le contrôle.
             </h2>
             <p className="mt-4 max-w-2xl leading-7 text-muted">
-              Vos clients n&apos;ont pas de compte. Vous gardez la main sur les utilisateurs, les liens,
-              les fichiers et l&apos;historique.
+              Les clients ne créent pas de compte. Ils utilisent uniquement un lien de dépôt.
+              Le cabinet gère les utilisateurs, les rôles, les fichiers et l&apos;historique.
             </p>
-            <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-              {trustItems.map((item) => (
-                <li key={item} className="flex items-center gap-3 rounded-lg border border-border p-3 text-sm font-medium">
-                  <CheckCircle2 size={17} className="shrink-0 text-primary" />
-                  {item}
-                </li>
-              ))}
-            </ul>
           </div>
           <aside className="rounded-xl border border-blue-100 bg-blue-50 p-6">
             <div className="flex items-center gap-3 text-[#0f3460]">
@@ -337,56 +236,37 @@ export default function LandingPage() {
               <h3 className="text-xl font-extrabold">Portail client simple</h3>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-[#183b66]">
-              Le client ouvre le lien, voit les documents demandés, dépose ses fichiers et reçoit une
-              confirmation. Vous conservez l&apos;historique complet.
+              Le client ouvre le lien, voit les documents demandés, ajoute ses fichiers et reçoit une confirmation.
             </p>
             <Link href="/contact" className="btn mt-5 bg-white">
-              Demander un pilote <ArrowRight size={16} />
+              Lancer un pilote <ArrowRight size={16} />
             </Link>
           </aside>
         </div>
       </section>
 
-      <section className="border-y border-white/10 bg-[#0f3460] py-20 text-white">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 lg:grid-cols-[1fr_380px] lg:items-center">
+      <section className="bg-[#0f3460] py-16 text-white">
+        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-6 px-4 md:flex-row md:items-center">
           <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-teal-200">Pilote cabinet</p>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">
-              Testez sur 5 dossiers clients ce mois-ci.
-            </h2>
-            <p className="mt-4 max-w-2xl leading-relaxed text-blue-100">
-              Validez le vrai usage&nbsp;: créer une collecte, envoyer les liens, recevoir les documents,
-              contrôler les pièces et exporter proprement.
+            <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-teal-200">
+              <BellRing size={16} />
+              Pilote TVA Collect
+            </div>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight">Testez sur quelques clients réels.</h2>
+            <p className="mt-3 max-w-2xl text-blue-100">
+              L&apos;objectif est simple: vérifier que votre équipe peut collecter, relancer et exporter sans explication externe.
             </p>
-            <ul className="mt-6 grid gap-2 text-sm font-medium sm:grid-cols-2">
-              {pilotItems.map((item) => (
-                <li key={item} className="flex items-center gap-2">
-                  <CheckCircle2 size={16} className="shrink-0 text-teal-300" />
-                  {item}
-                </li>
-              ))}
-            </ul>
           </div>
-          <div className="rounded-xl border border-white/15 bg-white p-6 text-ink">
-            <p className="text-sm font-semibold text-muted">Prix pilote</p>
-            <p className="mt-2 text-4xl font-extrabold">1 000 MAD</p>
-            <p className="mt-3 text-sm leading-relaxed text-muted">
-              Paiement manuel. Pas de carte bancaire, pas d&apos;engagement long — juste un test contrôlé.
-            </p>
-            <Link href="/contact" className="btn btn-primary mt-5 w-full">
-              Demander un pilote <ArrowRight size={16} />
-            </Link>
-            <Link href="/demo" className="btn mt-3 w-full">
-              <PhoneCall size={16} /> Planifier une démo
-            </Link>
-          </div>
+          <Link href="/contact" className="btn bg-white text-[#0f3460] hover:bg-blue-50">
+            Demander le pilote <ArrowRight size={16} />
+          </Link>
         </div>
       </section>
 
       <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-10 text-sm text-muted">
         <div>
           <div className="font-extrabold text-ink">TVA Collect</div>
-          <p className="mt-1">Collecte et suivi TVA pour cabinets comptables marocains.</p>
+          <p className="mt-1">Collecte de documents TVA pour cabinets comptables marocains.</p>
         </div>
         <nav className="flex flex-wrap gap-4 font-semibold" aria-label="Pied de page">
           <Link href="/pricing">Tarifs</Link>

@@ -5,6 +5,7 @@ import { cookieName, createSessionToken } from "@/lib/auth";
 import { loggedApiError } from "@/lib/error-logging";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitIp } from "@/lib/rate-limit";
+import { cleanDestinationForRequest } from "@/lib/routing";
 import { postLoginDestination } from "@/lib/security-policy";
 
 const schema = z.object({
@@ -50,7 +51,7 @@ async function handlePOST(request: Request) {
     return NextResponse.json({ error: "Compte actif mais incomplet." }, { status: 403 });
   }
 
-  const response = NextResponse.json({ ok: true, redirectTo: destination.redirectTo });
+  const response = NextResponse.json({ ok: true, redirectTo: cleanDestinationForRequest(request.url, destination.redirectTo) });
   response.cookies.set(cookieName, createSessionToken(user.id), {
     httpOnly: true,
     sameSite: "lax",

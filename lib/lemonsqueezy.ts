@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { FirmStatus, Prisma, SubscriptionStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { appHost, isAppHost, isLocalHost } from "@/lib/routing";
 
 export type BillingInterval = "monthly" | "yearly";
 
@@ -65,7 +66,12 @@ function stringValue(value: unknown) {
 }
 
 function checkoutBaseUrl() {
-  return process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
+  return process.env.APP_URL || process.env.NEXTAUTH_URL || `https://${appHost()}`;
+}
+
+function checkoutReturnPath(baseUrl: string) {
+  const host = new URL(baseUrl).host;
+  return isAppHost(host) || !isLocalHost(host) ? "/billing" : "/app/billing";
 }
 
 export async function createLemonSqueezyCheckout(input: {
@@ -79,7 +85,8 @@ export async function createLemonSqueezyCheckout(input: {
   const variantId = lemonVariantIdForPlan(input.planCode, input.interval);
   if (!variantId) throw new LemonSqueezyConfigError(`${lemonVariantEnvName(input.planCode, input.interval)} is not configured.`);
 
-  const baseUrl = checkoutBaseUrl();
+  const baseUrl = checkoutBaseUrl().replace(/\/$/, "");
+  const returnPath = checkoutReturnPath(baseUrl);
   const response = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
     method: "POST",
     headers: {
@@ -99,9 +106,9 @@ export async function createLemonSqueezyCheckout(input: {
             }
           },
           product_options: {
-            redirect_url: `${baseUrl}/app/billing?checkout=success`,
+            redirect_url: `${baseUrl}${returnPath}?checkout=success`,
             receipt_button_text: "Retour a TVA Collect",
-            receipt_link_url: `${baseUrl}/app/billing?checkout=success`
+            receipt_link_url: `${baseUrl}${returnPath}?checkout=success`
           }
         },
         relationships: {

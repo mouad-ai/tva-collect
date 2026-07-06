@@ -5,6 +5,7 @@ import { cookieName, createSessionToken } from "@/lib/auth";
 import { loggedApiError } from "@/lib/error-logging";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitIp } from "@/lib/rate-limit";
+import { cleanDestinationForRequest } from "@/lib/routing";
 import { postLoginDestination } from "@/lib/security-policy";
 
 export const dynamic = "force-dynamic";
@@ -155,7 +156,7 @@ async function handlePost(request: NextRequest) {
     return redirectToLogin(destination.error);
   }
 
-  const response = redirectWithRelativeLocation(destination.redirectTo);
+  const response = redirectWithRelativeLocation(cleanDestinationForRequest(request.url, destination.redirectTo));
   response.cookies.set(cookieName, createSessionToken(user.id), {
     httpOnly: true,
     sameSite: "lax",

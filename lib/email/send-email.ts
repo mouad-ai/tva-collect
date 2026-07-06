@@ -1,11 +1,20 @@
-import { Resend } from "resend";
-
 type SendEmailInput = {
   to: string;
   subject: string;
   html: string;
   text?: string;
 };
+
+type ResendConstructor = new (apiKey: string) => {
+  emails: {
+    send(input: { from: string; to: string; subject: string; html: string; text?: string }): Promise<{ data?: unknown; error?: unknown }>;
+  };
+};
+
+async function loadOptionalResend() {
+  const runtimeImport = new Function("specifier", "return import(specifier)") as (specifier: string) => Promise<{ Resend?: ResendConstructor }>;
+  return runtimeImport("resend").catch(() => null);
+}
 
 export async function sendEmail({ to, subject, html, text }: SendEmailInput) {
   const provider = process.env.EMAIL_PROVIDER || "console";
@@ -30,6 +39,12 @@ export async function sendEmail({ to, subject, html, text }: SendEmailInput) {
 
   if (!process.env.EMAIL_FROM) {
     throw new Error("EMAIL_FROM is required when EMAIL_PROVIDER=resend");
+  }
+
+  const resendModule = await loadOptionalResend();
+  const Resend = resendModule?.Resend;
+  if (!Resend) {
+    throw new Error("Install the resend package or use EMAIL_PROVIDER=smtp/console.");
   }
 
   const resend = new Resend(process.env.RESEND_API_KEY);

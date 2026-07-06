@@ -1,17 +1,132 @@
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  adminHost,
+  adminInternalBase,
+  appHost,
+  appInternalBase,
+  hostUrl,
+  isAdminHost,
+  isAppHost,
+  isLocalHost,
+  isPublicHost,
+  stripBase,
+  withBase,
+  type RouteZone
+} from "@/lib/routing";
+
+const sessionCookieName = "tva_session";
+
+function isPublicRuntimePath(pathname: string) {
+  return (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/favicon") ||
+    pathname.startsWith("/icons") ||
+    pathname.startsWith("/images") ||
+    pathname === "/apple-touch-icon.png" ||
+    pathname === "/site.webmanifest" ||
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml"
+  );
+}
+
+function isAuthPage(pathname: string) {
+  return (
+    pathname === "/login" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
+    pathname.startsWith("/reset-password/") ||
+    pathname.startsWith("/invite/")
+  );
+}
+
+function requestHeaders(request: NextRequest, zone: RouteZone, visibleBase: string, internalPathname?: string) {
+  const headers = new Headers(request.headers);
+  headers.set("x-pathname", request.nextUrl.pathname);
+  headers.set("x-route-zone", zone);
+  headers.set("x-visible-base", visibleBase);
+  if (internalPathname) headers.set("x-internal-pathname", internalPathname);
+  return headers;
+}
+
+function redirectToLogin(request: NextRequest) {
+  return NextResponse.redirect(new URL("/login", request.url));
+}
+
+function rewriteTo(request: NextRequest, internalPathname: string, zone: RouteZone, visibleBase: string) {
+  const url = request.nextUrl.clone();
+  url.pathname = internalPathname;
+  return NextResponse.rewrite(url, {
+    request: {
+      headers: requestHeaders(request, zone, visibleBase, internalPathname)
+    }
+  });
+}
+
+function nextWithZone(request: NextRequest, zone: RouteZone, visibleBase: string) {
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders(request, zone, visibleBase)
+    }
+  });
+}
 
 export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-pathname", pathname);
+  const host = request.headers.get("host");
+  const hasSession = Boolean(request.cookies.get(sessionCookieName));
 
-  if ((pathname.startsWith("/app") || pathname.startsWith("/admin")) && !request.cookies.get("tva_session")) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  if (isPublicRuntimePath(pathname)) {
+    return nextWithZone(request, "public", "");
   }
 
-  return NextResponse.next({ request: { headers: requestHeaders } });
+  if (isAppHost(host)) {
+    if (pathname.startsWith(adminInternalBase)) {
+      return NextResponse.redirect(hostUrl(request.url, adminHost(), stripBase(pathname, adminInternalBase)));
+    }
+    if (pathname.startsWith(appInternalBase)) {
+      return NextResponse.redirect(new URL(stripBase(pathname, appInternalBase), request.url));
+    }
+    if (isAuthPage(pathname)) return nextWithZone(request, "public", "");
+    if (!hasSession) return redirectToLogin(request);
+    return rewriteTo(request, withBase(appInternalBase, pathname), "app", "");
+  }
+
+  if (isAdminHost(host)) {
+    if (pathname.startsWith(appInternalBase)) {
+      return NextResponse.redirect(hostUrl(request.url, appHost(), stripBase(pathname, appInternalBase)));
+    }
+    if (pathname.startsWith(adminInternalBase)) {
+      return NextResponse.redirect(new URL(stripBase(pathname, adminInternalBase), request.url));
+    }
+    if (isAuthPage(pathname)) return nextWithZone(request, "public", "");
+    if (!hasSession) return redirectToLogin(request);
+    return rewriteTo(request, withBase(adminInternalBase, pathname), "admin", "");
+  }
+
+  if (isPublicHost(host)) {
+    if (pathname.startsWith(appInternalBase)) {
+      return NextResponse.redirect(hostUrl(request.url, appHost(), stripBase(pathname, appInternalBase)));
+    }
+    if (pathname.startsWith(adminInternalBase)) {
+      return NextResponse.redirect(hostUrl(request.url, adminHost(), stripBase(pathname, adminInternalBase)));
+    }
+  }
+
+  if (isLocalHost(host)) {
+    if (pathname.startsWith(appInternalBase)) {
+      if (!hasSession) return redirectToLogin(request);
+      return nextWithZone(request, "app", appInternalBase);
+    }
+    if (pathname.startsWith(adminInternalBase)) {
+      if (!hasSession) return redirectToLogin(request);
+      return nextWithZone(request, "admin", adminInternalBase);
+    }
+  }
+
+  return nextWithZone(request, "public", "");
 }
 
 export const config = {
-  matcher: ["/app", "/app/:path*", "/admin", "/admin/:path*"]
+  matcher: ["/((?!_next/static|_next/image|.*\\..*).*)"]
 };
