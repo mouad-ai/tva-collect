@@ -143,7 +143,7 @@ export async function revokeUserSessions(_userId: string) {
 
 export async function requireAdmin() {
   const user = await requireUser();
-  if (user.role !== UserRole.ADMIN) redirect("/app");
+  if (user.role !== UserRole.ADMIN) redirect("/forbidden");
   return user;
 }
 
@@ -168,8 +168,7 @@ function appPathAllowsSuspendedFirm(pathname: string | null) {
 
 export async function requireFirmUser() {
   const user = await requireUser();
-  if (user.role === UserRole.ADMIN) redirect("/admin");
-  if (!user.firmId || !user.firm) redirect("/forbidden");
+  if (user.role === UserRole.ADMIN || !user.firmId || !user.firm) redirect("/forbidden");
   if (user.firm.status === FirmStatus.SUSPENDED || user.firm.status === FirmStatus.CANCELLED) {
     const pathname = (await headers()).get("x-pathname");
     if (!appPathAllowsSuspendedFirm(pathname)) redirect("/app/suspended");
