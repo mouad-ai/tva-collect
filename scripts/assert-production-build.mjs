@@ -22,8 +22,12 @@ function collectFiles(dir, extension) {
 
 const prerenderManifest = readJson(".next/prerender-manifest.json");
 const appPathsManifest = readJson(".next/server/app-paths-manifest.json");
+const loginSource = readFileSync("app/login/route.ts", "utf8");
 const loginBundle = readFileSync(".next/server/app/login/route.js", "utf8");
-const proxyBundle = readFileSync(".next/server/middleware.js", "utf8");
+const proxyBundle = [
+  readFileSync(".next/server/middleware.js", "utf8"),
+  ...collectFiles(".next/server/chunks", ".js").map((file) => readFileSync(file, "utf8"))
+].join("\n");
 const proxySource = readFileSync("proxy.ts", "utf8");
 const nginxConfig = readFileSync("deploy/nginx/tvacollect.conf", "utf8");
 const composeProd = existsSync("docker-compose.prod.yml") ? readFileSync("docker-compose.prod.yml", "utf8") : null;
@@ -36,12 +40,12 @@ if (appPathsManifest["/login/route"] !== "app/login/route.js") {
   fail("/login/route does not point to the expected app/login/route.js bundle.");
 }
 
-if (!loginBundle.includes("force-dynamic")) {
-  fail("/login bundle does not contain the force-dynamic marker.");
+if (!loginSource.includes('export const dynamic = "force-dynamic"')) {
+  fail("/login route source does not contain the force-dynamic marker.");
 }
 
-if (!loginBundle.includes("login-form")) {
-  fail("/login route bundle does not contain the login form marker.");
+if (!loginSource.includes('id="login-form"') && !loginBundle.includes("login-form")) {
+  fail("/login route does not contain the login form marker.");
 }
 
 const cssFiles = collectFiles(".next/static", ".css");

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --webpack",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "test": "tsx --test tests/*.ts && node tests/security.test.mjs",
@@ -43,10 +43,5 @@
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
-  },
-  "overrides": {
-    "next": {
-      "postcss": "8.5.10"
-    }
   }
 }

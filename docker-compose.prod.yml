@@ -3,6 +3,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        APP_URL: ${APP_URL:-https://app.tvacollect.com}
+        ADMIN_URL: ${ADMIN_URL:-https://admin.tvacollect.com}
+        PUBLIC_URL: ${PUBLIC_URL:-https://tvacollect.com}
+        APP_HOST: ${APP_HOST:-app.tvacollect.com}
+        ADMIN_HOST: ${ADMIN_HOST:-admin.tvacollect.com}
+        PUBLIC_HOST: ${PUBLIC_HOST:-tvacollect.com}
+        NEXTAUTH_URL: ${NEXTAUTH_URL:-https://app.tvacollect.com}
     container_name: tvacollect-app
     restart: unless-stopped
     env_file:
