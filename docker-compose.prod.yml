@@ -121,6 +121,7 @@ services:
       --agree-tos
       --no-eff-email
       -d app.tvacollect.com
+      -d admin.tvacollect.com
       -d tvacollect.com
       -d www.tvacollect.com
 

@@ -90,10 +90,21 @@ async function httpHealth() {
 async function main() {
   add("NODE_ENV production", env("NODE_ENV") === "production", env("NODE_ENV") || "missing");
   add("DATABASE_URL present", required("DATABASE_URL"), env("DATABASE_URL") ? "configured" : "missing");
-  add("AUTH_SECRET strong", strong("AUTH_SECRET"), env("AUTH_SECRET") ? `${env("AUTH_SECRET").length} chars` : "missing");
-  add("NEXTAUTH_SECRET strong", strong("NEXTAUTH_SECRET"), env("NEXTAUTH_SECRET") ? `${env("NEXTAUTH_SECRET").length} chars` : "missing");
+  const hasStrongAuthSecret = strong("AUTH_SECRET") || strong("NEXTAUTH_SECRET");
+  add(
+    "Auth secret strong",
+    hasStrongAuthSecret,
+    env("AUTH_SECRET") ? `AUTH_SECRET ${env("AUTH_SECRET").length} chars` : env("NEXTAUTH_SECRET") ? `NEXTAUTH_SECRET ${env("NEXTAUTH_SECRET").length} chars` : "missing"
+  );
   add("APP_URL https", validProductionUrl("APP_URL"), env("APP_URL") || "missing");
-  add("NEXTAUTH_URL https", validProductionUrl("NEXTAUTH_URL"), env("NEXTAUTH_URL") || "missing");
+  add("ADMIN_URL https", validProductionUrl("ADMIN_URL"), env("ADMIN_URL") || "missing");
+  add("PUBLIC_URL https", validProductionUrl("PUBLIC_URL"), env("PUBLIC_URL") || "missing");
+  add("APP_HOST configured", required("APP_HOST"), env("APP_HOST") || "missing");
+  add("ADMIN_HOST configured", required("ADMIN_HOST"), env("ADMIN_HOST") || "missing");
+  add("PUBLIC_HOST configured", required("PUBLIC_HOST"), env("PUBLIC_HOST") || "missing");
+  if (env("NEXTAUTH_URL")) {
+    add("NEXTAUTH_URL https", validProductionUrl("NEXTAUTH_URL"), env("NEXTAUTH_URL"));
+  }
   add("UPLOAD_STORAGE s3-compatible", env("UPLOAD_STORAGE").toLowerCase() === "s3", env("UPLOAD_STORAGE") || "missing");
   for (const name of ["S3_ENDPOINT", "S3_BUCKET", "S3_ACCESS_KEY", "S3_SECRET_KEY"]) {
     add(`${name} configured`, required(name), env(name) ? "configured" : "missing");
@@ -115,17 +126,20 @@ async function main() {
       add(`${name} configured`, required(name), env(name) ? "configured" : "missing");
     }
   }
-  add("BILLING_PROVIDER Lemon Squeezy", env("BILLING_PROVIDER") === "LEMON_SQUEEZY", env("BILLING_PROVIDER") || "missing");
-  for (const name of ["LEMONSQUEEZY_API_KEY", "LEMONSQUEEZY_STORE_ID", "LEMONSQUEEZY_WEBHOOK_SECRET"]) {
-    add(`${name} configured`, required(name), env(name) ? "configured" : "missing");
-  }
-  for (const name of [
-    "LEMONSQUEEZY_STARTER_MONTHLY_VARIANT_ID",
-    "LEMONSQUEEZY_STARTER_YEARLY_VARIANT_ID",
-    "LEMONSQUEEZY_PRO_MONTHLY_VARIANT_ID",
-    "LEMONSQUEEZY_PRO_YEARLY_VARIANT_ID"
-  ]) {
-    add(`${name} configured`, required(name), env(name) ? "configured" : "missing");
+  const billingProvider = env("BILLING_PROVIDER") || "DISABLED";
+  add("BILLING_PROVIDER valid", ["DISABLED", "LEMON_SQUEEZY"].includes(billingProvider), billingProvider);
+  if (billingProvider === "LEMON_SQUEEZY") {
+    for (const name of ["LEMONSQUEEZY_API_KEY", "LEMONSQUEEZY_STORE_ID", "LEMONSQUEEZY_WEBHOOK_SECRET"]) {
+      add(`${name} configured`, required(name), env(name) ? "configured" : "missing");
+    }
+    for (const name of [
+      "LEMONSQUEEZY_STARTER_MONTHLY_VARIANT_ID",
+      "LEMONSQUEEZY_STARTER_YEARLY_VARIANT_ID",
+      "LEMONSQUEEZY_PRO_MONTHLY_VARIANT_ID",
+      "LEMONSQUEEZY_PRO_YEARLY_VARIANT_ID"
+    ]) {
+      add(`${name} configured`, required(name), env(name) ? "configured" : "missing");
+    }
   }
   add("ADMIN_EMAIL configured", required("ADMIN_EMAIL"), env("ADMIN_EMAIL") || "missing");
 
