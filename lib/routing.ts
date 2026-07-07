@@ -93,6 +93,18 @@ export function cleanDestinationForRequest(requestUrl: string, internalDestinati
   return internalDestination;
 }
 
+export function externalUrlForRequest(request: Request, pathname = "/", search = "") {
+  const internalUrl = new URL(request.url);
+  const forwardedHost = firstForwardedValue(request.headers.get("x-forwarded-host"));
+  const forwardedProto = firstForwardedValue(request.headers.get("x-forwarded-proto"));
+  const host = forwardedHost || request.headers.get("host") || internalUrl.host;
+  const protocol = forwardedProto || internalUrl.protocol.replace(":", "") || "https";
+  const url = new URL(`${protocol}://${host}`);
+  url.pathname = pathname;
+  url.search = search;
+  return url;
+}
+
 function hostFromUrl(value: string | undefined) {
   if (!value) return null;
   try {
@@ -100,4 +112,8 @@ function hostFromUrl(value: string | undefined) {
   } catch {
     return null;
   }
+}
+
+function firstForwardedValue(value: string | null) {
+  return value?.split(",")[0]?.trim() || null;
 }

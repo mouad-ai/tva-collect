@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { cleanDestinationForRequest, hrefForBase, stripBase, withBase } from "../lib/routing";
+import { cleanDestinationForRequest, externalUrlForRequest, hrefForBase, stripBase, withBase } from "../lib/routing";
 
 test("routing helpers strip and apply internal app/admin bases", () => {
   assert.equal(stripBase("/app", "/app"), "/");
@@ -26,4 +26,16 @@ test("post-login destinations are clean on app/admin hosts and path-based on loc
   assert.equal(cleanDestinationForRequest("https://app.tvacollect.com:3000/login", "/admin"), "https://admin.tvacollect.com/");
   assert.equal(cleanDestinationForRequest("http://localhost:3000/login", "/app"), "/app");
   assert.equal(cleanDestinationForRequest("http://localhost:3000/login", "/admin"), "/admin");
+});
+
+test("externalUrlForRequest prefers forwarded production host over internal proxy origin", () => {
+  const request = new Request("https://localhost:3000/api/auth/logout", {
+    headers: {
+      host: "localhost:3000",
+      "x-forwarded-host": "admin.tvacollect.com",
+      "x-forwarded-proto": "https"
+    }
+  });
+
+  assert.equal(externalUrlForRequest(request, "/login").toString(), "https://admin.tvacollect.com/login");
 });
