@@ -70,11 +70,30 @@ button:disabled {
 }
 
 label {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
   color: #344054;
   font-size: 13px;
   font-weight: 600;
+}
+
+label > input:not([type="checkbox"]):not([type="radio"]),
+label > textarea,
+label > select,
+label > .password-field {
+  order: 2;
+  flex: 0 0 100%;
+}
+
+label:has(> input[required]:not([type="checkbox"]):not([type="radio"])):not(:has(.required-mark))::after,
+label:has(> textarea[required]):not(:has(.required-mark))::after,
+label:has(> select[required]):not(:has(.required-mark))::after {
+  content: "*";
+  order: 1;
+  color: #b42318;
+  font-weight: 800;
 }
 
 table {

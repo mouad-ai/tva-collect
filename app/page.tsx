@@ -2,7 +2,8 @@ import {
   ArrowRight,
   BellRing,
   CheckCircle2,
-  Clock3,
+  ClipboardCheck,
+  FileArchive,
   FileCheck2,
   FolderKanban,
   LockKeyhole,
@@ -16,35 +17,53 @@ import Link from "next/link";
 const workflow = [
   {
     icon: FolderKanban,
-    title: "Créer la collecte",
-    body: "Le cabinet choisit la période TVA, ajoute les clients concernés et génère les dossiers."
+    title: "Creer une collecte",
+    body: "Le cabinet choisit la periode TVA, ajoute les clients concernes et prepare la liste des documents attendus."
   },
   {
     icon: UploadCloud,
-    title: "Envoyer le lien",
-    body: "Chaque client reçoit un lien sécurisé. Aucun compte client n'est nécessaire."
+    title: "Envoyer un lien client",
+    body: "Chaque client recoit un lien de depot securise. Aucun compte client n'est necessaire."
   },
   {
     icon: FileCheck2,
-    title: "Contrôler les pièces",
-    body: "L'assistant voit les documents reçus, manquants, invalides et prêts à traiter."
+    title: "Verifier les pieces",
+    body: "L'assistant voit les documents recus, manquants, invalides et prets a traiter."
   },
   {
     icon: MessageSquareText,
     title: "Relancer proprement",
-    body: "Les messages de relance sont prêts à copier, avec historique et preuve d'action."
+    body: "Les relances sont pretes a copier, avec historique et preuve d'action."
   }
 ];
 
 const features = [
   "Tableau de bord des collectes actives",
-  "Portail de dépôt mobile pour les clients",
+  "Portail de depot mobile pour les clients",
   "Suivi des documents manquants",
-  "Relances WhatsApp prêtes à copier",
+  "Relances WhatsApp pretes a copier",
   "Validation et rejet des fichiers",
   "Exports CSV et archives propres",
-  "Rôles propriétaire, manager, assistant et lecture seule",
+  "Roles proprietaire, manager, assistant et lecture seule",
   "Journal d'audit des actions importantes"
+];
+
+const audiences = [
+  {
+    icon: UsersRound,
+    title: "Pour le proprietaire du cabinet",
+    body: "Voir les collectes en retard, les clients a relancer, les documents a verifier et les dossiers prets."
+  },
+  {
+    icon: ClipboardCheck,
+    title: "Pour les assistants",
+    body: "Savoir quoi faire aujourd'hui sans chercher dans WhatsApp, emails ou dossiers partages."
+  },
+  {
+    icon: LockKeyhole,
+    title: "Pour les clients",
+    body: "Deposer les pieces demandees depuis telephone, sans creer de compte et avec un message de confiance du cabinet."
+  }
 ];
 
 export default function LandingPage() {
@@ -61,6 +80,7 @@ export default function LandingPage() {
               TVA Collect
             </Link>
             <nav className="hidden items-center gap-6 text-sm font-semibold text-slate-300 md:flex" aria-label="Navigation publique">
+              <a href="#definition" className="hover:text-white">Produit</a>
               <a href="#fonctionnement" className="hover:text-white">Fonctionnement</a>
               <a href="#preuve" className="hover:text-white">Preuve</a>
               <Link href="/pricing" className="hover:text-white">Tarifs</Link>
@@ -81,27 +101,27 @@ export default function LandingPage() {
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-teal-300/30 bg-teal-400/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-teal-100">
               <ShieldCheck size={14} />
-              Pour cabinets comptables marocains
+              SaaS pour cabinets comptables marocains
             </div>
             <h1 className="mt-6 text-4xl font-extrabold leading-[1.08] tracking-tight md:text-[3.4rem]">
-              Collectez les pièces TVA sans courir après vos clients.
+              TVA Collect centralise la collecte des documents TVA.
             </h1>
             <p className="mt-5 text-lg leading-relaxed text-slate-300">
-              TVA Collect centralise les demandes, les dépôts, les relances et les preuves.
-              Votre équipe sait qui a envoyé quoi, ce qui manque et quel dossier peut avancer.
+              TVA Collect aide les cabinets comptables et fiduciaires a demander les pieces, recevoir les fichiers,
+              suivre ce qui manque, relancer les clients et garder une preuve claire avant declaration.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/contact" className="btn btn-primary px-5">
-                Démarrer un pilote <ArrowRight size={16} />
+                Demarrer un pilote <ArrowRight size={16} />
               </Link>
               <Link href="/demo" className="btn border-white/20 bg-white text-ink hover:bg-slate-100">
-                Voir la démo
+                Voir la demo
               </Link>
             </div>
             <dl className="mt-10 grid max-w-xl gap-4 sm:grid-cols-3">
               {[
                 ["1 lien", "par client"],
-                ["0 compte", "côté client"],
+                ["0 compte", "cote client"],
                 ["1 vue", "des blocages"]
               ].map(([value, label]) => (
                 <div key={value} className="rounded-lg border border-white/10 bg-white/5 px-4 py-3">
@@ -124,7 +144,7 @@ export default function LandingPage() {
               {[
                 ["Clients", "42"],
                 ["Complets", "29"],
-                ["À relancer", "8"]
+                ["A relancer", "8"]
               ].map(([label, value]) => (
                 <div key={label} className="rounded-lg border border-border bg-surface px-3 py-3">
                   <div className="text-xs font-semibold text-muted">{label}</div>
@@ -134,9 +154,9 @@ export default function LandingPage() {
             </div>
             <ul className="mt-4 space-y-2">
               {[
-                ["Garage Atlas", "Relevé bancaire manquant", "Urgent", "bg-red-50 text-red-700"],
-                ["Café Central", "Factures reçues - à vérifier", "À vérifier", "bg-amber-50 text-amber-800"],
-                ["Pharma Nord", "Dossier complet", "Prêt", "bg-emerald-50 text-emerald-700"]
+                ["Garage Atlas", "Releve bancaire manquant", "Urgent", "bg-red-50 text-red-700"],
+                ["Cafe Central", "Factures recues - a verifier", "A verifier", "bg-amber-50 text-amber-800"],
+                ["Pharma Nord", "Dossier complet", "Pret", "bg-emerald-50 text-emerald-700"]
               ].map(([client, issue, status, badgeClass]) => (
                 <li key={client} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-3">
                   <div className="min-w-0">
@@ -148,14 +168,46 @@ export default function LandingPage() {
               ))}
             </ul>
             <div className="mt-4 flex items-start gap-3 rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-3 text-sm font-semibold text-amber-900">
-              <Clock3 size={16} className="mt-0.5 shrink-0" />
-              <span>8 clients à relancer avant l&apos;échéance de déclaration.</span>
+              <BellRing size={16} className="mt-0.5 shrink-0" />
+              <span>8 clients a relancer avant l&apos;echeance de declaration.</span>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="fonctionnement" className="py-20">
+      <section id="definition" className="py-20">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-wide text-primary">Qu&apos;est-ce que TVA Collect ?</p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">
+              Un portail de collecte et de suivi pour les documents TVA.
+            </h2>
+            <p className="mt-4 leading-7 text-muted">
+              TVA Collect remplace les demandes dispersees par WhatsApp, email et dossiers partages.
+              Le cabinet cree une collecte, les clients deposent leurs pieces via un lien securise, puis l&apos;equipe
+              suit les documents recus, manquants, rejetes et prets a exporter.
+            </p>
+          </div>
+          <div className="grid gap-3">
+            {audiences.map((item) => {
+              const Icon = item.icon;
+              return (
+                <article key={item.title} className="flex items-start gap-4 rounded-lg border border-border bg-white p-5">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-primary">
+                    <Icon size={21} />
+                  </span>
+                  <div>
+                    <h3 className="font-extrabold">{item.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-muted">{item.body}</p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section id="fonctionnement" className="border-y border-border bg-surface py-20">
         <div className="mx-auto max-w-7xl px-4">
           <div className="max-w-2xl">
             <p className="text-sm font-bold uppercase tracking-wide text-primary">Flux cabinet</p>
@@ -163,8 +215,8 @@ export default function LandingPage() {
               Le chemin normal d&apos;une collecte TVA.
             </h2>
             <p className="mt-4 leading-7 text-muted">
-              Le produit reste simple: créer la collecte, envoyer les liens, recevoir les documents,
-              contrôler les pièces et exporter ce qui est prêt.
+              Le produit reste simple: creer la collecte, envoyer les liens, recevoir les documents,
+              controler les pieces et exporter ce qui est pret.
             </p>
           </div>
           <ol className="mt-10 grid gap-4 md:grid-cols-4">
@@ -187,16 +239,16 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="preuve" className="border-y border-border bg-surface py-20">
+      <section id="preuve" className="py-20">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
           <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-primary">Contrôle et preuve</p>
+            <p className="text-sm font-bold uppercase tracking-wide text-primary">Controle et preuve</p>
             <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">
               Une interface faite pour le travail quotidien.
             </h2>
             <p className="mt-4 leading-7 text-muted">
-              Les assistants n&apos;ont pas besoin de deviner. Les clients incomplets, les fichiers à vérifier,
-              les relances et les dossiers prêts sont visibles dans l&apos;espace cabinet.
+              Les assistants n&apos;ont pas besoin de deviner. Les clients incomplets, les fichiers a verifier,
+              les relances et les dossiers prets sont visibles dans l&apos;espace cabinet.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href="/contact" className="btn btn-primary">
@@ -218,27 +270,27 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="py-20">
+      <section className="border-y border-border bg-blue-50 py-20">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 lg:grid-cols-[1fr_380px] lg:items-center">
           <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-primary">Sécurité</p>
+            <p className="text-sm font-bold uppercase tracking-wide text-[#0f3460]">Securite</p>
             <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">
-              Les clients déposent. Le cabinet garde le contrôle.
+              Les clients deposent. Le cabinet garde le controle.
             </h2>
             <p className="mt-4 max-w-2xl leading-7 text-muted">
-              Les clients ne créent pas de compte. Ils utilisent uniquement un lien de dépôt.
-              Le cabinet gère les utilisateurs, les rôles, les fichiers et l&apos;historique.
+              Les clients ne creent pas de compte. Ils utilisent uniquement un lien de depot.
+              Le cabinet gere les utilisateurs, les roles, les fichiers et l&apos;historique.
             </p>
           </div>
-          <aside className="rounded-xl border border-blue-100 bg-blue-50 p-6">
+          <aside className="rounded-xl border border-blue-100 bg-white p-6">
             <div className="flex items-center gap-3 text-[#0f3460]">
-              <LockKeyhole size={22} />
-              <h3 className="text-xl font-extrabold">Portail client simple</h3>
+              <FileArchive size={22} />
+              <h3 className="text-xl font-extrabold">Documents organises</h3>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-[#183b66]">
-              Le client ouvre le lien, voit les documents demandés, ajoute ses fichiers et reçoit une confirmation.
+              Les pieces recues peuvent etre controlees, classees et exportees proprement pour le traitement comptable.
             </p>
-            <Link href="/contact" className="btn mt-5 bg-white">
+            <Link href="/contact" className="btn mt-5 bg-[#0f3460] text-white">
               Lancer un pilote <ArrowRight size={16} />
             </Link>
           </aside>
@@ -252,9 +304,9 @@ export default function LandingPage() {
               <BellRing size={16} />
               Pilote TVA Collect
             </div>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight">Testez sur quelques clients réels.</h2>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight">Testez sur quelques clients reels.</h2>
             <p className="mt-3 max-w-2xl text-blue-100">
-              L&apos;objectif est simple: vérifier que votre équipe peut collecter, relancer et exporter sans explication externe.
+              L&apos;objectif est simple: verifier que votre equipe peut collecter, relancer et exporter sans explication externe.
             </p>
           </div>
           <Link href="/contact" className="btn bg-white text-[#0f3460] hover:bg-blue-50">
@@ -271,7 +323,7 @@ export default function LandingPage() {
         <nav className="flex flex-wrap gap-4 font-semibold" aria-label="Pied de page">
           <Link href="/pricing">Tarifs</Link>
           <Link href="/contact">Contact</Link>
-          <Link href="/privacy">Confidentialité</Link>
+          <Link href="/privacy">Confidentialite</Link>
           <Link href="/terms">Conditions</Link>
           <Link href="/login">Connexion</Link>
         </nav>
