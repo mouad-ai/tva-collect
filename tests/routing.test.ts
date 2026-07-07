@@ -22,6 +22,8 @@ test("post-login destinations are clean on app/admin hosts and path-based on loc
   assert.equal(cleanDestinationForRequest("https://app.tvacollect.com/login", "/app/clients"), "/clients");
   assert.equal(cleanDestinationForRequest("https://admin.tvacollect.com/login", "/admin"), "/");
   assert.equal(cleanDestinationForRequest("https://admin.tvacollect.com/login", "/admin/firms"), "/firms");
+  assert.equal(cleanDestinationForRequest("https://admin.tvacollect.com:3000/login", "/app"), "https://app.tvacollect.com/");
+  assert.equal(cleanDestinationForRequest("https://app.tvacollect.com:3000/login", "/admin"), "https://admin.tvacollect.com/");
   assert.equal(cleanDestinationForRequest("http://localhost:3000/login", "/app"), "/app");
   assert.equal(cleanDestinationForRequest("http://localhost:3000/login", "/admin"), "/admin");
 });

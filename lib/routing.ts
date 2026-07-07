@@ -60,7 +60,13 @@ export function hrefForBase(basePath: string, path = "") {
 
 export function hostUrl(requestUrl: string, targetHost: string, pathname = "/") {
   const url = new URL(requestUrl);
-  url.hostname = normalizeHost(targetHost);
+  const normalizedTarget = targetHost.trim().toLowerCase();
+  if (normalizedTarget.includes(":")) {
+    url.host = normalizedTarget;
+  } else {
+    url.hostname = normalizeHost(normalizedTarget);
+    url.port = "";
+  }
   url.pathname = pathname;
   url.search = "";
   return url;
