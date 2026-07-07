@@ -26,9 +26,9 @@ export const leadStages = [
 ];
 
 export const planPrices = {
-  Starter: 999,
-  Pro: 1999,
-  Premium: 0
+  Starter: 399,
+  Pro: 799,
+  Premium: 1490
 };
 
 function textIncludes(value: string | null | undefined, terms: string[]) {
@@ -49,7 +49,7 @@ export function leadQualification(lead: SalesLead) {
   if (assistants >= 3) score += 15;
   else if (assistants >= 1) score += 8;
   if (textIncludes(text, ["whatsapp", "relance", "retard", "manquant", "perdu", "chaos", "excel"])) score += 20;
-  if (textIncludes(text, ["urgent", "deadline", "échéance", "tva"])) score += 10;
+  if (textIncludes(text, ["urgent", "deadline", "echeance", "tva"])) score += 10;
   if (lead.painLevel === "HIGH") score += 15;
   if (lead.painLevel === "LOW") score -= 8;
   if (textIncludes(text, ["gratuit", "free", "dgi", "facturation complete", "comptabilite complete"])) score -= 20;
@@ -67,27 +67,27 @@ export function leadQualification(lead: SalesLead) {
 export function pricingRecommendation(lead: SalesLead) {
   const clients = lead.numberOfClients || 0;
   const assistants = lead.numberOfAssistants || 0;
-  if (clients > 100 || assistants > 3) {
+  if (clients > 75 || assistants > 3) {
     return {
-      plan: "Premium",
-      price: "Sur mesure",
-      setupFee: lead.expectedSetupFee || 5000,
-      reason: "Volume élevé, besoin probable de multi-utilisateurs, workflow avance ou accompagnement premium."
+      plan: "Cabinet Plus",
+      price: "1 490 MAD/mois",
+      setupFee: lead.expectedSetupFee || 2000,
+      reason: "Volume eleve, besoin de plus d'utilisateurs, stockage, workflows ou accompagnement prioritaire."
     };
   }
-  if (clients > 30 || assistants > 1 || textIncludes(lead.currentWorkflow, ["cnss", "paie", "clôture", "multi"])) {
+  if (clients > 20 || assistants > 1 || textIncludes(lead.currentWorkflow, ["cnss", "paie", "cloture", "multi"])) {
     return {
-      plan: "Pro",
-      price: "1 999 MAD/mois",
-      setupFee: lead.expectedSetupFee || 2000,
-      reason: "Cabinet assez structure pour Pro: plus de clients, assistants, exports et templates."
+      plan: "Professionnel",
+      price: "799 MAD/mois",
+      setupFee: lead.expectedSetupFee || 1000,
+      reason: "Meilleur equilibre pour un cabinet actif: plusieurs utilisateurs, exports, rapports et plus de clients."
     };
   }
   return {
-    plan: "Starter",
-    price: "999 MAD/mois",
-    setupFee: lead.expectedSetupFee || 1000,
-    reason: "Bon démarrage pour piloter une premiere collecte TVA avec un petit portefeuille."
+    plan: "Essentiel",
+    price: "399 MAD/mois",
+    setupFee: lead.expectedSetupFee || 500,
+    reason: "Bon demarrage pour un petit cabinet qui veut sortir de WhatsApp sans gros engagement."
   };
 }
 
@@ -110,18 +110,18 @@ export function demoScriptForLead(lead: SalesLead) {
 
 export function salesFollowUpMessage(lead: SalesLead & { name?: string | null; firmName?: string | null }) {
   const pricing = pricingRecommendation(lead);
-  const plan = pricing.plan === "Starter" ? "Démarrage" : pricing.plan;
+  const plan = pricing.plan;
   const name = lead.name || "Bonjour";
   if (lead.stage === "DEMO_SCHEDULED") {
-    return `${name}, merci pour votre demande. Pendant la demo, je vous montrerai comment passer des relances WhatsApp au suivi contrôle des documents TVA.`;
+    return `${name}, merci pour votre demande. Pendant la demo, je vous montrerai comment passer des relances WhatsApp au suivi controle des documents TVA.`;
   }
   if (lead.stage === "PILOT_PROPOSED" || lead.stage === "PILOT_ACTIVE") {
-    return `${name}, je vous propose de mesurer le pilote sur 30 jours: clients importes, documents reçus, relances générées et temps gagne. Offre recommandee ensuite: ${plan}.`;
+    return `${name}, je vous propose de mesurer le pilote sur 30 jours: clients importes, documents recus, relances generees et temps gagne. Offre recommandee ensuite: ${plan}.`;
   }
   if (lead.stage === "DEMO_DONE") {
     return `${name}, suite a notre demo, le meilleur prochain pas est un pilote payant avec ${pricing.setupFee} MAD de mise en place et le plan ${plan}.`;
   }
-  return `${name}, TVA Collect aide votre cabinet a centraliser les dépôts, suivre les manquants et reduire les relances WhatsApp. On peut demarrer avec un pilote contrôle.`;
+  return `${name}, TVA Collect aide votre cabinet a centraliser les depots, suivre les manquants et reduire les relances WhatsApp. On peut demarrer avec un pilote controle.`;
 }
 
 export function isFollowUpOverdue(lead: SalesLead, now = new Date()) {

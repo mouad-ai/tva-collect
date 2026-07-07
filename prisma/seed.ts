@@ -56,11 +56,11 @@ async function main() {
     create: {
       id: "plan_pro",
       code: "PRO",
-      name: "Pro",
-      monthlyPriceMad: 1999,
-      clientLimit: 100,
+      name: "Professionnel",
+      monthlyPriceMad: 799,
+      clientLimit: 75,
       userLimit: 3,
-      storageLimitMb: 20480,
+      storageLimitMb: 10240,
       hasZipExport: true,
       hasAdvancedReports: true
     }
