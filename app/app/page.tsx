@@ -34,7 +34,9 @@ export default async function DashboardPage() {
     pendingReviews,
     invalidDocuments,
     uploads,
-    urgentClients
+    urgentClients,
+    reviewedDocuments,
+    teamInvites
   ] = await Promise.all([
     prisma.client.count({ where: { firmId: user.firmId, deletedAt: null } }),
     prisma.client.count({ where: { firmId: user.firmId, deletedAt: null, phone: null, email: null } }),
@@ -80,7 +82,9 @@ export default async function DashboardPage() {
       },
       orderBy: [{ updatedAt: "asc" }],
       take: 6
-    })
+    }),
+    prisma.uploadedDocument.count({ where: { firmId: user.firmId, deletedAt: null, qualityStatus: { not: "UNREVIEWED" } } }),
+    prisma.userInvite.count({ where: { firmId: user.firmId } })
   ]);
 
   const riskyCollections = activeCollectionDetails
@@ -119,46 +123,46 @@ export default async function DashboardPage() {
 
   const activationItems = [
     {
-      label: "Compléter le profil cabinet",
-      done: Boolean(user.firm.city && user.firm.phone && user.firm.email),
-      href: "/app/settings",
-      cta: "Compléter"
-    },
-    {
-      label: "Ajouter le logo du cabinet",
-      done: Boolean(user.firm.logoUrl),
-      href: "/app/settings",
-      cta: "Ajouter logo"
-    },
-    {
-      label: "Ajouter ou importer des clients",
+      label: "Créer votre premier client",
       done: clients > 0,
       href: "/app/clients",
-      cta: "Ajouter clients"
+      cta: "Ajouter un client"
     },
     {
-      label: "Créer la première collecte TVA",
+      label: "Créer une période de collecte TVA",
       done: totalCollections > 0,
       href: "/app/collections",
-      cta: "Créer collecte"
+      cta: "Créer une collecte"
     },
     {
-      label: "Générer le premier lien de dépôt",
+      label: "Partager un lien de dépôt avec un client",
       done: uploadLinks > 0,
       href: "/app/collections",
-      cta: "Sélectionner clients"
+      cta: "Sélectionner des clients"
     },
     {
-      label: "Recevoir le premier document",
+      label: "Recevoir un premier document",
       done: uploads.length > 0,
       href: "/app/documents",
-      cta: "Voir documents"
+      cta: "Voir les documents"
     },
     {
-      label: "Exporter le premier rapport",
-      done: exportedReports > 0,
-      href: "/app/reports",
-      cta: "Exporter"
+      label: "Valider ou rejeter un document",
+      done: reviewedDocuments > 0,
+      href: "/app/documents",
+      cta: "Contrôler les documents"
+    },
+    {
+      label: "Envoyer une première relance",
+      done: totalRemindersGenerated > 0,
+      href: "/app/reminders",
+      cta: "Envoyer une relance"
+    },
+    {
+      label: "Inviter un membre de l'équipe",
+      done: teamInvites > 0,
+      href: "/app/settings/team",
+      cta: "Inviter l'équipe"
     }
   ];
   const completedActivation = activationItems.filter((item) => item.done).length;
@@ -262,7 +266,7 @@ export default async function DashboardPage() {
                 Configuration : {completedActivation}/{activationItems.length} terminée
               </h2>
               <p className="mt-2 text-sm text-muted">
-                Objectif : créer une collecte, envoyer un lien, recevoir un premier document.
+                Le cycle complet : client, collecte, lien de dépôt, document reçu, contrôle, relance et équipe.
               </p>
             </div>
             {nextActivationItem ? (

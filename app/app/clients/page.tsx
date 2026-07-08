@@ -48,7 +48,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         description="Ajoutez, importez et retrouvez les dossiers clients de votre cabinet."
       />
 
-      <section className="card p-5">
+      <section id="new-client" className="card p-5">
         <h2 className="mb-4 font-extrabold">Nouveau client</h2>
         <form action={createClientAction} className="grid gap-4">
           <div className="field-grid">
@@ -88,7 +88,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
               icon={Plus}
               title={search ? "Aucun client trouve" : "Aucun client pour le moment"}
               description={search ? "Essayez un autre nom, email ou ICE." : "Ajoutez votre premier client ou importez une liste CSV pour commencer une collecte TVA."}
-              actionHref="/app/clients"
+              actionHref={search ? "/app/clients" : "/app/clients#new-client"}
               actionLabel={search ? "Reinitialiser la recherche" : "Ajouter un client"}
             />
           </div>

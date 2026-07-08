@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { cookieName, createSessionToken } from "@/lib/auth";
+import { supportEmail } from "@/lib/constants";
 import { loggedApiError } from "@/lib/error-logging";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitIp } from "@/lib/rate-limit";
@@ -111,6 +112,7 @@ function loginHtml(request: NextRequest) {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
       Connexion s&eacute;curis&eacute;e &mdash; vos donn&eacute;es restent priv&eacute;es
     </p>
+    <p class="trust">Besoin d'aide ? <a href="mailto:${supportEmail}">${supportEmail}</a></p>
   </div>
 </body>
 </html>`;

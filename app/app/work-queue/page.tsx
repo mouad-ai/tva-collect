@@ -63,7 +63,9 @@ function MissionCard({ item }: { item: OperationRecommendation }) {
         <span>{item.reminderCount} relance(s)</span>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        {canRemind ? <ReminderButton clientCollectionId={item.itemId} channel="WHATSAPP" /> : null}
+        {canRemind ? (
+          <ReminderButton clientCollectionId={item.itemId} channel="WHATSAPP" phone={item.clientPhone} email={item.clientEmail} />
+        ) : null}
         <Link href={item.href} className="btn">Ouvrir dossier</Link>
       </div>
     </div>

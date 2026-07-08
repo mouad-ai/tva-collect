@@ -62,7 +62,7 @@ export default async function AdminFirmDetailPage({ params }: { params: Promise<
           <label>Raison<textarea name="suspendedReason" rows={4} defaultValue={firm.suspendedReason || ""} /></label>
           <button className="btn">Suspendre</button>
           {firm.status === "SUSPENDED" || firm.status === "CANCELLED" ? (
-            <button formAction={reactivateFirm.bind(null, firm.id)} className="btn btn-primary">Reactiver</button>
+            <button formAction={reactivateFirm.bind(null, firm.id)} className="btn btn-primary">Réactiver</button>
           ) : null}
         </form>
         <form action={transferOwnership} className="card grid gap-3 p-4">
@@ -91,7 +91,7 @@ export default async function AdminFirmDetailPage({ params }: { params: Promise<
           <div className="grid gap-2 text-sm">
             {firm.users.map((user) => (
               <div key={user.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3">
-                <div><span className="font-bold">{user.name}</span> - {user.email} - {roleLabel(user.role)} - {user.isActive ? "Actif" : "Desactive"}</div>
+                <div><span className="font-bold">{user.name}</span> - {user.email} - {roleLabel(user.role)} - {user.isActive ? "Actif" : "Désactivé"}</div>
                 {user.role === "OWNER" ? (
                   <form action={createOwnerInvite.bind(null, firm.id, user.id)}>
                     <button className="btn">Générer lien mot de passe</button>
@@ -105,7 +105,7 @@ export default async function AdminFirmDetailPage({ params }: { params: Promise<
           <h2 className="mb-3 font-black">Collectes recentes</h2>
           <div className="grid gap-2 text-sm">
             {firm.collectionPeriods.map((collection) => <div key={collection.id} className="rounded-md border border-border p-3"><span className="font-bold">{collection.name}</span> - {collectionStatusLabel(collection.status)}</div>)}
-            {!firm.collectionPeriods.length ? <p className="text-muted">Aucune collecte.</p> : null}
+            {!firm.collectionPeriods.length ? <p className="text-muted">Aucune collecte pour ce cabinet.</p> : null}
           </div>
         </div>
       </section>
@@ -116,17 +116,17 @@ export default async function AdminFirmDetailPage({ params }: { params: Promise<
           {firm.invites.map((invite) => (
             <div key={invite.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3">
               <div>
-                <span className="font-bold">{invite.email}</span> - {roleLabel(invite.role)} - {invite.acceptedAt ? "Acceptee" : invite.revokedAt ? "Revoquee" : invite.expiresAt < new Date() ? "Expiree" : "Active"}
+                <span className="font-bold">{invite.email}</span> - {roleLabel(invite.role)} - {invite.acceptedAt ? "Acceptée" : invite.revokedAt ? "Révoquée" : invite.expiresAt < new Date() ? "Expirée" : "En attente"}
               </div>
               {!invite.acceptedAt ? (
                 <div className="flex gap-2">
                   <form action={resendInvite.bind(null, invite.id)}><button className="btn">Renvoyer</button></form>
-                  {!invite.revokedAt ? <form action={cancelInvite.bind(null, invite.id)}><button className="btn">Annulér</button></form> : null}
+                  {!invite.revokedAt ? <form action={cancelInvite.bind(null, invite.id)}><button className="btn">Annuler</button></form> : null}
                 </div>
               ) : null}
             </div>
           ))}
-          {!firm.invites.length ? <p className="text-muted">Aucune invitation.</p> : null}
+          {!firm.invites.length ? <p className="text-muted">Aucune invitation pour ce cabinet.</p> : null}
         </div>
       </section>
     </div>

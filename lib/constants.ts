@@ -1,3 +1,5 @@
+export const supportEmail = process.env.SUPPORT_EMAIL || "contact@tvacollect.com";
+
 export const defaultRequiredDocuments = [
   "Factures d'achat",
   "Factures de vente",

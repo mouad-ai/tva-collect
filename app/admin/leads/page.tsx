@@ -208,7 +208,20 @@ export default async function AdminLeadsPage({
                   </tr>
                 );
               })}
-              {!leads.length ? <tr><td colSpan={7}><EmptyState title="Aucun prospect" description="Aucun prospect ne correspond aux filtres." /></td></tr> : null}
+              {!leads.length ? (
+                <tr>
+                  <td colSpan={7}>
+                    <EmptyState
+                      title={search || params.stage ? "Aucun prospect trouvé" : "Aucun prospect pour le moment"}
+                      description={
+                        search || params.stage
+                          ? "Essayez un autre nom, email, ville ou statut."
+                          : "Les prospects arrivent automatiquement depuis les formulaires publics /contact et /demo du site."
+                      }
+                    />
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>

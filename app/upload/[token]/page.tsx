@@ -3,7 +3,7 @@ import { AlertTriangle, CheckCircle2, Circle, Clock, FileText, ShieldCheck, XCir
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { UploadForm } from "@/components/UploadForm";
-import { clientEducationMessages, monthNames, workflowTemplateFromType } from "@/lib/constants";
+import { clientEducationMessages, monthNames, supportEmail, workflowTemplateFromType } from "@/lib/constants";
 import {
   clientDocStatus,
   clientDocStatusLabel,
@@ -284,6 +284,11 @@ export default async function PublicUploadPage({ params }: { params: Promise<{ t
             ) : null}
           </div>
         </section>
+
+        <p className="pb-2 text-center text-xs text-muted">
+          Question sur votre dossier : contactez {item.firm.name}. Problème technique avec ce portail :{" "}
+          <a href={`mailto:${supportEmail}`} className="font-bold text-primary">{supportEmail}</a>
+        </p>
       </div>
     </main>
   );

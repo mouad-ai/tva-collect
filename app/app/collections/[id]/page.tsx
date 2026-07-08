@@ -252,8 +252,8 @@ export default async function CollectionDetailPage({
                     </td>
                     <td>
                       <div className="flex min-w-[280px] flex-wrap gap-2">
-                        <ReminderButton clientCollectionId={item.id} channel="WHATSAPP" />
-                        <ReminderButton clientCollectionId={item.id} channel="EMAIL" />
+                        <ReminderButton clientCollectionId={item.id} channel="WHATSAPP" phone={item.client.phone} email={item.client.email} />
+                        <ReminderButton clientCollectionId={item.id} channel="EMAIL" phone={item.client.phone} email={item.client.email} />
                         <Link className="btn" href={`/app/documents?clientId=${item.clientId}&collectionPeriodId=${collection.id}`} title="Documents">
                           <FileText size={16} /> Documents
                         </Link>

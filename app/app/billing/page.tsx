@@ -1,9 +1,9 @@
 import { ArrowRight, CreditCard, ExternalLink, HardDrive, Users } from "lucide-react";
-import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { CheckoutButton } from "@/components/CheckoutButton";
 import { PageHeader } from "@/components/PageHeader";
 import { requireFirmAnyRole } from "@/lib/auth";
+import { supportEmail } from "@/lib/constants";
 import {
   BillingSchemaUnavailableError,
   formatMad,
@@ -57,7 +57,7 @@ export default async function BillingPage({
       <PageHeader
         title="Facturation"
         description="Abonnement, limites et portail Lemon Squeezy."
-        actions={<Link href="/contact" className="btn">Contacter le support</Link>}
+        actions={<a href={`mailto:${supportEmail}`} className="btn">Contacter le support</a>}
       />
 
       {params.checkout === "success" ? (
@@ -177,19 +177,9 @@ export default async function BillingPage({
               ) : null}
               {!subscription?.customerPortalUrl && !subscription?.updatePaymentMethodUrl ? (
                 <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-900">
-                  Le portail sera disponible apres synchronisation du webhook Lemon Squeezy.
+                  Le portail sera disponible après la mise en place du paiement en ligne. Contactez le support pour un paiement par virement.
                 </p>
               ) : null}
-            </div>
-          </div>
-
-          <div className="card p-4">
-            <h2 className="font-extrabold">Identifiants Lemon</h2>
-            <div className="mt-3 grid gap-2 text-xs text-muted">
-              <p><strong>Customer:</strong> {subscription?.lemonCustomerId || "-"}</p>
-              <p><strong>Subscription:</strong> {subscription?.lemonSubscriptionId || "-"}</p>
-              <p><strong>Variant:</strong> {subscription?.lemonVariantId || "-"}</p>
-              <p><strong>Status Lemon:</strong> {subscription?.lemonStatus || "-"}</p>
             </div>
           </div>
         </aside>

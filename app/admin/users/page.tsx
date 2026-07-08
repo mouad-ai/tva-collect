@@ -7,7 +7,7 @@ import { SearchFilterForm } from "@/components/SearchFilterForm";
 import { requireAdmin } from "@/lib/auth";
 import { roleLabel } from "@/lib/labels";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 export default async function AdminUsersPage({ searchParams }: { searchParams: Promise<{ search?: string; role?: string; state?: string; page?: string; limit?: string }> }) {
   await requireAdmin();
@@ -48,7 +48,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
           searchPlaceholder="Rechercher utilisateur, email, cabinet"
           filters={[
             { name: "role", label: "Role", value: params.role, options: [{ value: "", label: "Tous" }, ...Object.values(UserRole).map((role) => ({ value: role, label: roleLabel(role) }))] },
-            { name: "state", label: "Etat", value: params.state, options: [{ value: "", label: "Tous" }, { value: "active", label: "Actif" }, { value: "disabled", label: "Desactive" }] }
+            { name: "state", label: "Etat", value: params.state, options: [{ value: "", label: "Tous" }, { value: "active", label: "Actif" }, { value: "disabled", label: "Désactivé" }] }
           ]}
         />
         <PaginationControls total={total} page={page} limit={limit} searchParams={params} />
@@ -75,20 +75,30 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                 <tr key={user.id}>
                   <td className="font-bold">{user.name}</td>
                   <td>{user.email}</td>
-                  <td><span className="status-badge">{roleLabel(user.role)}</span></td>
+                  <td>
+                    <span className="badge border-slate-200 bg-slate-50 text-slate-700">
+                      <span className="badge-dot" aria-hidden="true" />
+                      {roleLabel(user.role)}
+                    </span>
+                  </td>
                   <td>{user.role === UserRole.ADMIN ? "Plateforme" : user.firm?.name || "-"}</td>
-                  <td>{user.isActive ? "Actif" : "Desactive"}</td>
+                  <td>
+                    <span className={cn("badge", user.isActive ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-slate-50 text-slate-600")}>
+                      <span className="badge-dot" aria-hidden="true" />
+                      {user.isActive ? "Actif" : "Désactivé"}
+                    </span>
+                  </td>
                   <td>{formatDate(user.createdAt)}</td>
                   <td>
                     {user.role !== UserRole.ADMIN ? (
                       user.isActive ? (
                         <form action={disableUser.bind(null, user.id)}>
-                          <input type="hidden" name="disabledReason" value="Desactive par administrateur SaaS" />
-                          <ConfirmSubmitButton message={`Desactiver ${user.email} ?`} className="btn btn-danger">Desactiver</ConfirmSubmitButton>
+                          <input type="hidden" name="disabledReason" value="Désactivé par administrateur SaaS" />
+                          <ConfirmSubmitButton message={`Désactiver ${user.email} ?`} className="btn btn-danger">Désactiver</ConfirmSubmitButton>
                         </form>
                       ) : (
                         <form action={enableUser.bind(null, user.id)}>
-                          <button className="btn">Reactiver</button>
+                          <button className="btn">Réactiver</button>
                         </form>
                       )
                     ) : "-"}

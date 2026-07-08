@@ -46,6 +46,9 @@ export default async function CollectionsPage({ searchParams }: { searchParams: 
     prisma.collectionPeriod.count({ where }),
     prisma.client.findMany({ where: { firmId: user.firmId, deletedAt: null }, orderBy: { companyName: "asc" } })
   ]);
+  const currentDate = new Date();
+  const currentMonthIndex = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
 
   return (
     <div className="content-stack">
@@ -54,11 +57,11 @@ export default async function CollectionsPage({ searchParams }: { searchParams: 
         description="Créez une période de travail, ajoutez vos clients et envoyez les liens de dépôt."
       />
 
-      <section className="card p-5">
+      <section id="new-collection" className="card p-5">
         <h2 className="mb-4 font-extrabold">Nouvelle collecte</h2>
         <form action={createCollectionAction} className="grid gap-4">
           <div className="grid gap-4 md:grid-cols-[1fr_190px_150px_150px_auto] md:items-end">
-            <label>Nom <span className="required-mark">*</span><input name="name" placeholder="TVA Juillet 2026" required /></label>
+            <label>Nom <span className="required-mark">*</span><input name="name" placeholder={`TVA ${monthNames[currentMonthIndex]} ${currentYear}`} required /></label>
             <label>
               Type
               <select name="workflowType" defaultValue="TVA_MONTHLY">
@@ -67,8 +70,8 @@ export default async function CollectionsPage({ searchParams }: { searchParams: 
                 ))}
               </select>
             </label>
-            <label>Mois<select name="month" defaultValue="6">{monthNames.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}</select></label>
-            <label>Annee <span className="required-mark">*</span><input name="year" type="number" defaultValue="2026" required /></label>
+            <label>Mois<select name="month" defaultValue={currentMonthIndex + 1}>{monthNames.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}</select></label>
+            <label>Annee <span className="required-mark">*</span><input name="year" type="number" defaultValue={currentYear} required /></label>
             <PendingSubmitButton><Plus size={16} /> Creer</PendingSubmitButton>
           </div>
           {clients.length ? (
@@ -109,8 +112,10 @@ export default async function CollectionsPage({ searchParams }: { searchParams: 
               icon={Plus}
               title="Aucune collecte TVA"
               description="Créez une collecte mensuelle ou trimestrielle pour générer les liens de dépôt clients."
-              actionHref="/app/clients"
-              actionLabel="Vérifier les clients"
+              actionHref="/app/collections#new-collection"
+              actionLabel="Créer une collecte"
+              secondaryHref={clients.length ? undefined : "/app/clients"}
+              secondaryLabel={clients.length ? undefined : "Ajouter des clients d'abord"}
             />
           </div>
         ) : (

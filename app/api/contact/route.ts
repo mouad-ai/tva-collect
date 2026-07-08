@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { sendLeadNotificationEmail } from "@/lib/email";
+import { logServerError } from "@/lib/error-logging";
 import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
@@ -27,14 +29,15 @@ export async function POST(request: Request) {
   if (!body.success) {
     return NextResponse.redirect(new URL(`${redirectTo}?error=1`, request.url), 303);
   }
-  await prisma.lead.create({
+  const numberOfClients = body.data.numberOfClients === "" ? null : Number(body.data.numberOfClients);
+  const lead = await prisma.lead.create({
     data: {
       name: body.data.name,
       firmName: body.data.firmName,
       phone: body.data.phone,
       email: body.data.email,
       city: body.data.city || null,
-      numberOfClients: body.data.numberOfClients === "" ? null : Number(body.data.numberOfClients),
+      numberOfClients,
       numberOfAssistants: body.data.numberOfAssistants === "" ? null : Number(body.data.numberOfAssistants),
       currentWorkflow: body.data.currentWorkflow || null,
       painLevel: body.data.painLevel || null,
@@ -48,5 +51,24 @@ export async function POST(request: Request) {
       message: body.data.message || null
     }
   });
+
+  // Lead is already saved above; a notification failure must never break the
+  // prospect's form submission, so this is best-effort and only logged.
+  try {
+    await sendLeadNotificationEmail({
+      name: lead.name,
+      firmName: lead.firmName,
+      phone: lead.phone,
+      email: lead.email,
+      city: lead.city,
+      numberOfClients,
+      message: lead.message,
+      leadSource: lead.leadSource,
+      createdAt: lead.createdAt
+    });
+  } catch (error) {
+    await logServerError({ error, request, metadata: { leadId: lead.id, context: "lead-notification-email" } });
+  }
+
   return NextResponse.redirect(new URL(`${redirectTo}?sent=1`, request.url), 303);
 }

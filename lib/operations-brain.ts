@@ -32,6 +32,8 @@ export type OperationRecommendation = {
   clientId: string;
   collectionId: string;
   clientName: string;
+  clientPhone: string | null;
+  clientEmail: string | null;
   collectionName: string;
   actionType: OperationActionType;
   actionLabel: string;
@@ -154,6 +156,8 @@ export function buildNextBestAction(item: OperationClientCollection, complianceS
     clientId: item.clientId,
     collectionId: item.collectionPeriodId,
     clientName: item.client.companyName,
+    clientPhone: item.client.phone || null,
+    clientEmail: item.client.email || null,
     collectionName: item.collectionPeriod.name,
     actionType,
     actionLabel,

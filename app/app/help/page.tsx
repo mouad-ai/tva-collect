@@ -1,5 +1,7 @@
+import { Mail } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { requireFirmUser } from "@/lib/auth";
+import { supportEmail } from "@/lib/constants";
 
 const sections = [
   {
@@ -84,6 +86,10 @@ export default async function HelpPage() {
         <p className="mt-2 text-sm leading-relaxed text-muted">
           Vérifiez d&apos;abord les informations du cabinet dans Paramètres. Pour un problème bloquant, contactez le support TVA Collect avec le nom du cabinet, le client concerné et la collecte.
         </p>
+        <a href={`mailto:${supportEmail}`} className="btn btn-primary mt-4 w-fit">
+          <Mail size={16} />
+          {supportEmail}
+        </a>
       </section>
     </div>
   );

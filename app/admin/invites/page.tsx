@@ -7,7 +7,7 @@ import { requireAdmin } from "@/lib/auth";
 import { inviteUrl } from "@/lib/invites";
 import { roleLabel } from "@/lib/labels";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 export default async function AdminInvitesPage({ searchParams }: { searchParams: Promise<{ created?: string; search?: string; state?: string; page?: string; limit?: string }> }) {
   await requireAdmin();
@@ -55,9 +55,9 @@ export default async function AdminInvitesPage({ searchParams }: { searchParams:
           filters={[{ name: "state", label: "Etat", value: params.state, options: [
             { value: "", label: "Tous" },
             { value: "pending", label: "En attente" },
-            { value: "accepted", label: "Acceptee" },
-            { value: "revoked", label: "Revoquee" },
-            { value: "expired", label: "Expiree" }
+            { value: "accepted", label: "Acceptée" },
+            { value: "revoked", label: "Révoquée" },
+            { value: "expired", label: "Expirée" }
           ] }]}
         />
         <PaginationControls total={total} page={page} limit={limit} searchParams={params} />
@@ -82,20 +82,36 @@ export default async function AdminInvitesPage({ searchParams }: { searchParams:
             <tbody>
               {invites.map((invite) => {
                 const expired = invite.expiresAt < new Date();
-                const state = invite.acceptedAt ? "Acceptee" : invite.revokedAt ? "Revoquee" : expired ? "Expiree" : "Active";
+                const state = invite.acceptedAt
+                  ? { label: "Acceptée", tone: "border-emerald-200 bg-emerald-50 text-emerald-700" }
+                  : invite.revokedAt
+                    ? { label: "Révoquée", tone: "border-slate-200 bg-slate-50 text-slate-600" }
+                    : expired
+                      ? { label: "Expirée", tone: "border-amber-200 bg-amber-50 text-amber-800" }
+                      : { label: "En attente", tone: "border-blue-200 bg-blue-50 text-blue-700" };
                 return (
                   <tr key={invite.id}>
                     <td className="font-bold">{invite.email}</td>
                     <td>{invite.name || "-"}</td>
-                    <td><span className="status-badge">{roleLabel(invite.role)}</span></td>
+                    <td>
+                      <span className="badge border-slate-200 bg-slate-50 text-slate-700">
+                        <span className="badge-dot" aria-hidden="true" />
+                        {roleLabel(invite.role)}
+                      </span>
+                    </td>
                     <td>{invite.firm.name}</td>
                     <td>{formatDate(invite.expiresAt)}</td>
-                    <td>{state}</td>
+                    <td>
+                      <span className={cn("badge", state.tone)}>
+                        <span className="badge-dot" aria-hidden="true" />
+                        {state.label}
+                      </span>
+                    </td>
                     <td className="flex flex-wrap gap-2">
                       {!invite.acceptedAt ? (
                         <>
                           <form action={resendInvite.bind(null, invite.id)}><button className="btn">Renvoyer</button></form>
-                          {!invite.revokedAt ? <form action={cancelInvite.bind(null, invite.id)}><ConfirmSubmitButton message={`Annulér l'invitation ${invite.email} ?`}>Annulér</ConfirmSubmitButton></form> : null}
+                          {!invite.revokedAt ? <form action={cancelInvite.bind(null, invite.id)}><ConfirmSubmitButton message={`Annuler l'invitation ${invite.email} ?`}>Annuler</ConfirmSubmitButton></form> : null}
                         </>
                       ) : "-"}
                     </td>

@@ -1,12 +1,13 @@
 import { Prisma, UserRole } from "@prisma/client";
 import { cancelInvite, disableUser, enableUser, inviteFirmUser, resendInvite, transferOwnership } from "@/app/actions";
+import { EmptyState } from "@/components/EmptyState";
 import { PaginationControls } from "@/components/PaginationControls";
 import { SearchFilterForm } from "@/components/SearchFilterForm";
 import { requireFirmAnyRole } from "@/lib/auth";
 import { inviteUrl } from "@/lib/invites";
 import { roleLabel } from "@/lib/labels";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 const errorMessages: Record<string, string> = {
   "invalid-invite": "Invitation invalide. Vérifiez l'email et le role.",
@@ -119,23 +120,43 @@ export default async function TeamSettingsPage({ searchParams }: { searchParams:
                 <tr key={teamUser.id}>
                   <td className="font-bold">{teamUser.name}</td>
                   <td>{teamUser.email}</td>
-                  <td><span className="status-badge">{roleLabel(teamUser.role)}</span></td>
-                  <td>{teamUser.isActive ? "Actif" : "Desactive"}</td>
+                  <td>
+                    <span className="badge border-slate-200 bg-slate-50 text-slate-700">
+                      <span className="badge-dot" aria-hidden="true" />
+                      {roleLabel(teamUser.role)}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={cn("badge", teamUser.isActive ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-slate-50 text-slate-600")}>
+                      <span className="badge-dot" aria-hidden="true" />
+                      {teamUser.isActive ? "Actif" : "Désactivé"}
+                    </span>
+                  </td>
                   <td>{formatDate(teamUser.createdAt)}</td>
                   <td>
                     {teamUser.id === user.id || teamUser.role === UserRole.OWNER ? "-" : teamUser.isActive ? (
                       <form action={disableUser.bind(null, teamUser.id)}>
-                        <input type="hidden" name="disabledReason" value="Desactive par responsable cabinet" />
-                        <button className="btn">Desactiver</button>
+                        <input type="hidden" name="disabledReason" value="Désactivé par le responsable cabinet" />
+                        <button className="btn">Désactiver</button>
                       </form>
                     ) : (
                       <form action={enableUser.bind(null, teamUser.id)}>
-                        <button className="btn">Reactiver</button>
+                        <button className="btn">Réactiver</button>
                       </form>
                     )}
                   </td>
                 </tr>
               ))}
+              {!users.length ? (
+                <tr>
+                  <td colSpan={6}>
+                    <EmptyState
+                      title={search || role ? "Aucun utilisateur trouvé" : "Aucun membre d'équipe pour le moment"}
+                      description={search || role ? "Essayez un autre nom, email ou rôle." : "Invitez un premier membre de votre équipe avec le formulaire ci-dessus."}
+                    />
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>
@@ -144,7 +165,7 @@ export default async function TeamSettingsPage({ searchParams }: { searchParams:
 
       <section className="card min-w-0 overflow-hidden">
         <div className="p-4">
-          <h2 className="font-extrabold">Invitations en attente</h2>
+          <h2 className="font-extrabold">Invitations</h2>
         </div>
         <div className="table-wrap">
           <table className="data-table">
@@ -158,23 +179,46 @@ export default async function TeamSettingsPage({ searchParams }: { searchParams:
               </tr>
             </thead>
             <tbody>
-              {invites.map((invite) => (
-                <tr key={invite.id}>
-                  <td className="font-bold">{invite.email}</td>
-                  <td>{roleLabel(invite.role)}</td>
-                  <td>{formatDate(invite.expiresAt)}</td>
-                  <td>{invite.acceptedAt ? "Acceptee" : invite.revokedAt ? "Revoquee" : invite.expiresAt < new Date() ? "Expiree" : "Active"}</td>
-                  <td className="flex flex-wrap gap-2">
-                    {!invite.acceptedAt && invite.role !== UserRole.OWNER ? (
-                      <>
-                        <form action={resendInvite.bind(null, invite.id)}><button className="btn">Renvoyer</button></form>
-                        {!invite.revokedAt ? <form action={cancelInvite.bind(null, invite.id)}><button className="btn">Annulér</button></form> : null}
-                      </>
-                    ) : "-"}
+              {invites.map((invite) => {
+                const inviteStatus = invite.acceptedAt
+                  ? { label: "Acceptée", tone: "border-emerald-200 bg-emerald-50 text-emerald-700" }
+                  : invite.revokedAt
+                    ? { label: "Révoquée", tone: "border-slate-200 bg-slate-50 text-slate-600" }
+                    : invite.expiresAt < new Date()
+                      ? { label: "Expirée", tone: "border-amber-200 bg-amber-50 text-amber-800" }
+                      : { label: "En attente", tone: "border-blue-200 bg-blue-50 text-blue-700" };
+                return (
+                  <tr key={invite.id}>
+                    <td className="font-bold">{invite.email}</td>
+                    <td>{roleLabel(invite.role)}</td>
+                    <td>{formatDate(invite.expiresAt)}</td>
+                    <td>
+                      <span className={cn("badge", inviteStatus.tone)}>
+                        <span className="badge-dot" aria-hidden="true" />
+                        {inviteStatus.label}
+                      </span>
+                    </td>
+                    <td className="flex flex-wrap gap-2">
+                      {!invite.acceptedAt && invite.role !== UserRole.OWNER ? (
+                        <>
+                          <form action={resendInvite.bind(null, invite.id)}><button className="btn">Renvoyer</button></form>
+                          {!invite.revokedAt ? <form action={cancelInvite.bind(null, invite.id)}><button className="btn">Annuler</button></form> : null}
+                        </>
+                      ) : "-"}
+                    </td>
+                  </tr>
+                );
+              })}
+              {!invites.length ? (
+                <tr>
+                  <td colSpan={5}>
+                    <EmptyState
+                      title="Aucune invitation pour le moment"
+                      description="Invitez un premier membre de votre équipe avec le formulaire ci-dessus."
+                    />
                   </td>
                 </tr>
-              ))}
-              {!invites.length ? <tr><td colSpan={5} className="text-muted">Aucune invitation.</td></tr> : null}
+              ) : null}
             </tbody>
           </table>
         </div>

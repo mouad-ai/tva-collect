@@ -20,6 +20,30 @@ export function csvEscape(value: unknown) {
   return `"${text.replaceAll('"', '""')}"`;
 }
 
+/**
+ * Normalizes a stored phone number to a WhatsApp-compatible digits-only
+ * international number (no leading "+"). Assumes Moroccan local formats
+ * ("0612345678", "06 12 34 56 78") when no country code is present, since
+ * that's what cabinets enter for their clients. Returns null when the value
+ * doesn't look like a usable phone number.
+ */
+export function whatsAppPhone(phone?: string | null) {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, "");
+  if (!digits) return null;
+  if (digits.startsWith("212") && digits.length === 12) return digits;
+  if (digits.startsWith("0") && digits.length === 10) return `212${digits.slice(1)}`;
+  if (digits.length === 9 && /^[5-7]/.test(digits)) return `212${digits}`;
+  if (digits.length >= 8 && digits.length <= 15) return digits;
+  return null;
+}
+
+export function whatsAppLink(phone: string | null | undefined, message: string) {
+  const formatted = whatsAppPhone(phone);
+  if (!formatted) return null;
+  return `https://wa.me/${formatted}?text=${encodeURIComponent(message)}`;
+}
+
 export function uploadUrl(token: string) {
   // Client upload pages live on the PUBLIC marketing domain (www/tvacollect.com),
   // not on the authenticated app domain. Prefer the public base URL so shared

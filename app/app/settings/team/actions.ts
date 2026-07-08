@@ -54,7 +54,7 @@ export async function setUserActiveAction(targetUserId: string, isActive: boolea
   }
   await prisma.user.update({
     where: { id: targetUserId },
-    data: { isActive, disabledAt: isActive ? null : new Date(), disabledReason: isActive ? null : "Desactive par administrateur cabinet" }
+    data: { isActive, disabledAt: isActive ? null : new Date(), disabledReason: isActive ? null : "Désactivé par administrateur cabinet" }
   });
   if (!isActive) await revokeUserSessions(targetUserId);
   await auditEvent({ action: isActive ? "team.user_enabled" : "team.user_disabled", firmId: user.firmId, userId: user.id, entityType: "User", entityId: targetUserId });

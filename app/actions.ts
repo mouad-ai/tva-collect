@@ -32,7 +32,9 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireAdmin, requireFirmAnyRole, requireUser } from "@/lib/auth";
 import { clientCompletionConfirmationText, clientUploadProofText, requiredDocumentsFromFirm, workflowTemplateFromType } from "@/lib/constants";
-import { sendInviteEmail, sendPasswordResetEmail } from "@/lib/email";
+import { isRejectedQuality } from "@/lib/document-status";
+import { sendDocumentRejectedEmail, sendInviteEmail, sendPasswordResetEmail } from "@/lib/email";
+import { logServerError } from "@/lib/error-logging";
 import { generateInviteToken, hashInviteToken, inviteExpiresAt, inviteUrl, passwordStrengthError } from "@/lib/invites";
 import { recordOperationalEvent } from "@/lib/operational-events";
 import { generatePasswordResetToken, hashPasswordResetToken, isPasswordResetUsable, passwordResetExpiresAt, passwordResetUrl } from "@/lib/password-reset";
@@ -43,6 +45,7 @@ import { saveLocalUpload, validateUpload } from "@/lib/storage";
 import { tvaFilingDeadlinesWithConfig } from "@/lib/tva-filing";
 import { calculateTvaReadiness } from "@/lib/tva-readiness";
 import { generateUploadToken, recalculateClientCollectionStatus, uploadTokenExpiryDate } from "@/lib/tva";
+import { uploadUrl } from "@/lib/utils";
 import { BillingEnforcementError, ensureFirmSubscription, getPlanByCode, requirePlanFeature, requireWithinLimit } from "@/lib/billing";
 
 function text(formData: FormData, key: string) {
@@ -1419,17 +1422,65 @@ export async function updateUploadedDocumentQualityAction(documentId: string, fo
   if (typeof status !== "string" || !Object.values(DocumentQualityStatus).includes(status as DocumentQualityStatus)) return;
   const document = await prisma.uploadedDocument.findFirst({
     where: { id: documentId, firmId: user.firmId },
-    select: { clientCollectionId: true, originalFileName: true, clientCollection: { select: { clientId: true, collectionPeriodId: true } } }
+    select: {
+      clientCollectionId: true,
+      originalFileName: true,
+      qualityStatus: true,
+      accountantComment: true,
+      requiredDocument: { select: { name: true } },
+      clientCollection: {
+        select: {
+          clientId: true,
+          collectionPeriodId: true,
+          uploadToken: true,
+          client: { select: { companyName: true, contactName: true, email: true } },
+          collectionPeriod: { select: { name: true } }
+        }
+      }
+    }
   });
   if (!document) return;
+
+  const newComment = text(formData, "accountantComment");
+  const wasRejected = isRejectedQuality(document.qualityStatus);
+  const isNowRejected = isRejectedQuality(status);
+  const changed = document.qualityStatus !== status || document.accountantComment !== newComment;
+  const shouldNotifyClient = isNowRejected && changed;
 
   await prisma.uploadedDocument.update({
     where: { id: documentId },
     data: {
       qualityStatus: status as DocumentQualityStatus,
-      accountantComment: text(formData, "accountantComment")
+      accountantComment: newComment
     }
   });
+
+  let clientNotified = false;
+  let clientNotifyError: string | null = null;
+  const clientEmail = document.clientCollection.client.email;
+  if (shouldNotifyClient && clientEmail) {
+    try {
+      await sendDocumentRejectedEmail({
+        to: clientEmail,
+        clientName: document.clientCollection.client.contactName || document.clientCollection.client.companyName,
+        firmName: user.firm.name,
+        collectionName: document.clientCollection.collectionPeriod.name,
+        documentName: document.requiredDocument?.name || document.originalFileName,
+        reason: newComment,
+        uploadLink: uploadUrl(document.clientCollection.uploadToken)
+      });
+      clientNotified = true;
+    } catch (error) {
+      clientNotifyError = error instanceof Error ? error.message : String(error);
+      await logServerError({
+        error,
+        firmId: user.firmId,
+        userId: user.id,
+        metadata: { documentId, context: "document-rejected-email" }
+      });
+    }
+  }
+
   await recordOperationalEvent({
     firmId: user.firmId,
     actorUserId: user.id,
@@ -1441,7 +1492,13 @@ export async function updateUploadedDocumentQualityAction(documentId: string, fo
     eventType: status === DocumentQualityStatus.VALID ? "DOCUMENT_REVIEWED" : "DOCUMENT_REJECTED",
     eventTitle: status === DocumentQualityStatus.VALID ? "Document valide" : "Document rejete",
     eventDescription: `${document.originalFileName}: ${status}.`,
-    metadata: { qualityStatus: status, accountantComment: text(formData, "accountantComment") },
+    metadata: {
+      qualityStatus: status,
+      accountantComment: newComment,
+      wasAlreadyRejected: wasRejected,
+      clientNotified,
+      clientNotifyError
+    },
     source: "APP_DOCUMENTS"
   });
 

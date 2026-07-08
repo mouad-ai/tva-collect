@@ -13,6 +13,7 @@ import {
   UsersRound
 } from "lucide-react";
 import Link from "next/link";
+import { supportEmail } from "@/lib/constants";
 import { appLoginHref } from "@/lib/routing";
 
 const workflow = [
@@ -321,6 +322,7 @@ export default function LandingPage() {
         <div>
           <div className="font-extrabold text-ink">TVA Collect</div>
           <p className="mt-1">Collecte de documents TVA pour cabinets comptables marocains.</p>
+          <a href={`mailto:${supportEmail}`} className="mt-1 inline-block font-semibold text-primary">{supportEmail}</a>
         </div>
         <nav className="flex flex-wrap gap-4 font-semibold" aria-label="Pied de page">
           <Link href="/pricing">Tarifs</Link>

@@ -1,4 +1,5 @@
 import { Prisma, ReminderChannel } from "@prisma/client";
+import { Mail, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
 import { PaginationControls } from "@/components/PaginationControls";
@@ -108,15 +109,24 @@ export default async function RemindersPage({
                     <td>{formatDate(item.reminderLogs[0]?.createdAt)}</td>
                     <td>
                       <div className="flex flex-wrap gap-2">
-                        <ReminderButton clientCollectionId={item.id} channel="WHATSAPP" />
-                        <ReminderButton clientCollectionId={item.id} channel="EMAIL" />
+                        <ReminderButton clientCollectionId={item.id} channel="WHATSAPP" phone={item.client.phone} email={item.client.email} />
+                        <ReminderButton clientCollectionId={item.id} channel="EMAIL" phone={item.client.phone} email={item.client.email} />
                       </div>
                     </td>
                   </tr>
                 );
               })}
               {!toRemind.length ? (
-                <tr><td colSpan={5}><EmptyState title="Aucune relance urgente" description="Aucun client actif ne correspond aux filtres." /></td></tr>
+                <tr>
+                  <td colSpan={5}>
+                    <EmptyState
+                      title="Aucune relance urgente"
+                      description="Tous les clients actifs sont à jour, ou aucun ne correspond aux filtres."
+                      actionHref="/app/collections"
+                      actionLabel="Voir les collectes actives"
+                    />
+                  </td>
+                </tr>
               ) : null}
             </tbody>
           </table>
@@ -145,12 +155,26 @@ export default async function RemindersPage({
                   <td>{formatDate(log.createdAt)}</td>
                   <td>{log.clientCollection.client.companyName}</td>
                   <td>{log.clientCollection.collectionPeriod.name}</td>
-                  <td>{log.channel}</td>
+                  <td>
+                    <span className="inline-flex items-center gap-1.5 font-semibold">
+                      {log.channel === "WHATSAPP" ? <MessageSquare size={14} /> : <Mail size={14} />}
+                      {log.channel === "WHATSAPP" ? "WhatsApp" : "Email"}
+                    </span>
+                  </td>
                   <td className="max-w-xl whitespace-pre-wrap text-sm">{log.message.slice(0, 260)}{log.message.length > 260 ? "..." : ""}</td>
                 </tr>
               ))}
               {!history.length ? (
-                <tr><td colSpan={5}><EmptyState title="Aucune relance générée" description="L'historique apparaitra apres generation des premiers messages." /></td></tr>
+                <tr>
+                  <td colSpan={5}>
+                    <EmptyState
+                      title="Aucune relance générée"
+                      description="L'historique apparaîtra ici après l'envoi de vos premières relances."
+                      actionHref="/app/collections"
+                      actionLabel="Voir les collectes actives"
+                    />
+                  </td>
+                </tr>
               ) : null}
             </tbody>
           </table>

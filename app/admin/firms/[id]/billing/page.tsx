@@ -67,7 +67,7 @@ export default async function AdminFirmBillingPage({
           </form>
           {firm.status === "SUSPENDED" || firm.status === "CANCELLED" ? (
             <form action={reactivateFirm.bind(null, id)}>
-              <button className="btn btn-primary" type="submit">Reactiver</button>
+              <button className="btn btn-primary" type="submit">Réactiver</button>
             </form>
           ) : null}
         </div>
