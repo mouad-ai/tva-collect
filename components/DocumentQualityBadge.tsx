@@ -15,7 +15,8 @@ const toneByStatus: Record<string, string> = {
 export function DocumentQualityBadge({ status }: { status: DocumentQualityStatus | string }) {
   const key = String(status);
   return (
-    <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-bold", toneByStatus[key] || "border-slate-200 bg-slate-50 text-slate-700")}>
+    <span className={cn("badge", toneByStatus[key] || "border-slate-200 bg-slate-50 text-slate-700")}>
+      <span className="badge-dot" aria-hidden="true" />
       {documentQualityLabel(key)}
     </span>
   );

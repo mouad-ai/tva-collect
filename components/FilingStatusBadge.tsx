@@ -4,7 +4,8 @@ import { cn } from "@/lib/utils";
 
 export function FilingStatusBadge({ status }: { status: TvaFilingStatus | string }) {
   return (
-    <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-bold", filingStatusTone(String(status)))}>
+    <span className={cn("badge", filingStatusTone(String(status)))}>
+      <span className="badge-dot" aria-hidden="true" />
       {filingStatusLabel(String(status))}
     </span>
   );

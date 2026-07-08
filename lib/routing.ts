@@ -41,6 +41,63 @@ export function isPublicHost(hostHeader: string | null | undefined) {
   return !isLocalHost(host) && (host === configured || host === `www.${configured}`);
 }
 
+/**
+ * Canonical base URL (scheme + host, no trailing slash) for each zone.
+ * Upload/share links MUST use the public base because the /upload/[token]
+ * route is a public page served on the marketing domain.
+ */
+export function publicBaseUrl() {
+  const explicit = process.env.PUBLIC_SITE_URL || process.env.PUBLIC_URL;
+  if (explicit) return explicit.replace(/\/+$/, "");
+  return `https://${publicHost()}`;
+}
+
+export function appBaseUrl() {
+  const explicit = process.env.APP_URL || process.env.NEXTAUTH_URL;
+  if (explicit) return explicit.replace(/\/+$/, "");
+  return `https://${appHost()}`;
+}
+
+/**
+ * Login URL used by public marketing "Connexion" buttons. Resolves to the app
+ * domain (e.g. https://app.tvacollect.com/login) from APP_URL so there is no
+ * intermediate www/login → app/login hop. Falls back to a relative "/login" for
+ * local dev (single origin) or when APP_URL is unset/localhost — which still
+ * works and is caught by the proxy's public→app auth redirect as a safety net.
+ */
+export function appLoginHref() {
+  const base = process.env.APP_URL || process.env.NEXTAUTH_URL;
+  if (!base) return "/login";
+  try {
+    const url = new URL(base);
+    if (isLocalHost(url.hostname)) return "/login";
+    return `${url.origin}/login`;
+  } catch {
+    return "/login";
+  }
+}
+
+/** Best available external host for the request (honours reverse-proxy headers). */
+export function requestHost(request: Request) {
+  return firstForwardedValue(request.headers.get("x-forwarded-host")) || request.headers.get("host");
+}
+
+/**
+ * Domain attribute for the session cookie so a single login is shared across
+ * app/admin/www subdomains. Returns undefined on localhost (host-only cookie).
+ */
+export function sessionCookieDomain(hostHeader: string | null | undefined) {
+  const explicit = process.env.SESSION_COOKIE_DOMAIN;
+  if (explicit) return explicit;
+  const host = normalizeHost(hostHeader);
+  if (!host || isLocalHost(host)) return undefined;
+  const parent = normalizeHost(publicHost());
+  if (parent && (host === parent || host.endsWith(`.${parent}`))) {
+    return `.${parent}`;
+  }
+  return undefined;
+}
+
 export function stripBase(pathname: string, base: string) {
   if (pathname === base) return "/";
   if (!pathname.startsWith(`${base}/`)) return pathname;

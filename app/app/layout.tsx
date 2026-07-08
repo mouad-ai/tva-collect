@@ -31,14 +31,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             TVA Collect
           </Link>
           <div className="flex flex-wrap items-center gap-2">
-            <Link href={hrefForBase(visibleBase, "/search")} className="btn" title="Recherche">
+            <Link href={hrefForBase(visibleBase, "/search")} className="btn btn-icon" title="Recherche" aria-label="Recherche">
               <Search size={16} />
             </Link>
             <NotificationBell key={unreadNotifications} unreadCount={unreadNotifications} basePath={visibleBase} />
-            <Link href={hrefForBase(visibleBase, "/help")} className="btn" title="Aide">
+            <Link href={hrefForBase(visibleBase, "/help")} className="btn btn-icon" title="Aide" aria-label="Aide">
               <CircleHelp size={16} />
             </Link>
-            <div className="rounded-lg border border-border bg-surface px-3 py-2 text-sm">
+            <div className="hidden rounded-lg border border-border bg-surface px-3 py-2 text-sm sm:block">
               <div className="font-semibold">{user.firm.name}</div>
               <div className="text-xs text-muted">{user.name}</div>
             </div>

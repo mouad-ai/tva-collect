@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "crypto";
 import { FirmStatus, UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { sessionCookieDomain } from "@/lib/routing";
 
 const cookieName = "tva_session";
 const defaultSessionMaxAgeSeconds = 60 * 60 * 24 * 30;
@@ -76,10 +77,28 @@ function verifySessionCookies(values: string[]) {
   return null;
 }
 
+async function currentCookieDomain() {
+  try {
+    const store = await headers();
+    return sessionCookieDomain(store.get("x-forwarded-host") || store.get("host"));
+  } catch {
+    return undefined;
+  }
+}
+
 async function clearSessionCookie() {
   try {
     const store = await cookies();
-    store.delete(cookieName);
+    // Expire the cookie on the same domain it was set with, otherwise a
+    // subdomain-shared session cookie is not removed.
+    store.set(cookieName, "", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      domain: await currentCookieDomain(),
+      maxAge: 0
+    });
   } catch {
     // Server components can be read-only; route handlers/actions will clear it.
   }
@@ -93,6 +112,7 @@ async function refreshSessionCookie(userId: string) {
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",
+      domain: await currentCookieDomain(),
       maxAge: sessionMaxAgeSeconds()
     });
   } catch {

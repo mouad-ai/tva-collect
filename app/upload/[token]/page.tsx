@@ -1,14 +1,36 @@
 import { OperationalActorType } from "@prisma/client";
-import { AlertCircle, CheckCircle2, Circle, Clock, FileText } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Circle, Clock, FileText, ShieldCheck, XCircle } from "lucide-react";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { UploadForm } from "@/components/UploadForm";
-import { StatusBadge } from "@/components/StatusBadge";
 import { clientEducationMessages, monthNames, workflowTemplateFromType } from "@/lib/constants";
+import {
+  clientDocStatus,
+  clientDocStatusLabel,
+  clientDocStatusTone,
+  clientFileStatus,
+  type ClientDocStatus
+} from "@/lib/document-status";
 import { recordOperationalEvent } from "@/lib/operational-events";
 import { prisma } from "@/lib/prisma";
 import { deadlineCountdownLabel, daysUntilWorkflowDeadline, workflowDeadline } from "@/lib/tva";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
+
+function DocStatusBadge({ status }: { status: ClientDocStatus }) {
+  return (
+    <span className={cn("badge shrink-0", clientDocStatusTone(status))}>
+      <span className="badge-dot" aria-hidden="true" />
+      {clientDocStatusLabel(status)}
+    </span>
+  );
+}
+
+function statusIcon(status: ClientDocStatus) {
+  if (status === "VALIDATED") return <CheckCircle2 size={20} className="text-emerald-600" />;
+  if (status === "REJECTED") return <XCircle size={20} className="text-red-600" />;
+  if (status === "PENDING") return <Clock size={20} className="text-blue-600" />;
+  return <Circle size={20} className="text-slate-300" />;
+}
 
 export default async function PublicUploadPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -39,18 +61,32 @@ export default async function PublicUploadPage({ params }: { params: Promise<{ t
     userAgent: headerStore.get("user-agent"),
     source: "PUBLIC_UPLOAD_PAGE"
   });
-  const requiredDocs = item.requiredDocuments.filter((doc) => doc.isRequired);
-  const completedDocs = requiredDocs.filter((doc) => doc.status === "RECEIVED");
-  const missingDocs = requiredDocs.filter((doc) => doc.status === "MISSING");
-  const rejectedDocs = item.uploadedDocuments.filter((document) => !["UNREVIEWED", "VALID"].includes(document.qualityStatus));
-  const progress = requiredDocs.length ? Math.round((completedDocs.length / requiredDocs.length) * 100) : 100;
+  // Group uploaded files by the required document they were classified against so
+  // each obligation reflects the cabinet's REAL validation state, not just presence.
+  const uploadsByRequiredId = new Map<string, typeof item.uploadedDocuments>();
+  for (const upload of item.uploadedDocuments) {
+    if (!upload.requiredDocumentId) continue;
+    const list = uploadsByRequiredId.get(upload.requiredDocumentId) ?? [];
+    list.push(upload);
+    uploadsByRequiredId.set(upload.requiredDocumentId, list);
+  }
+
+  const docStates = item.requiredDocuments.map((doc) => ({
+    doc,
+    ...clientDocStatus(doc.status, uploadsByRequiredId.get(doc.id) ?? [])
+  }));
+  const requiredStates = docStates.filter((entry) => entry.doc.isRequired);
+  const submittedCount = requiredStates.filter((entry) => entry.status === "VALIDATED" || entry.status === "PENDING").length;
+  const firstRejected = requiredStates.find((entry) => entry.status === "REJECTED");
+  const firstMissing = requiredStates.find((entry) => entry.status === "MISSING");
+  const progress = requiredStates.length ? Math.round((submittedCount / requiredStates.length) * 100) : 100;
   const workflowTemplate = workflowTemplateFromType(item.collectionPeriod.workflowType);
   const deadline = workflowDeadline(item.collectionPeriod.workflowType, item.collectionPeriod.year, item.collectionPeriod.month);
   const daysRemaining = daysUntilWorkflowDeadline(item.collectionPeriod.workflowType, item.collectionPeriod.year, item.collectionPeriod.month);
-  const nextAction = rejectedDocs[0]
-    ? `Remplacer ou clarifier le fichier ${rejectedDocs[0].originalFileName}.`
-    : missingDocs[0]
-      ? `Deposer le document suivant : ${missingDocs[0].name}.`
+  const nextAction = firstRejected
+    ? `Remplacer le document rejete : ${firstRejected.doc.name}.`
+    : firstMissing
+      ? `Deposer le document suivant : ${firstMissing.doc.name}.`
       : "Confirmer que tous les documents disponibles ont été déposes.";
 
   const unavailableReason =
@@ -68,133 +104,182 @@ export default async function PublicUploadPage({ params }: { params: Promise<{ t
 
   if (unavailableReason) {
     return (
-      <main className="min-h-screen bg-white px-4 py-6">
-        <div className="mx-auto grid max-w-2xl gap-6">
-          <header className="border-b border-border pb-4">
+      <main className="min-h-screen bg-surface px-4 py-10">
+        <div className="mx-auto grid max-w-lg gap-6">
+          <div className="card p-6 text-center">
             {item.firm.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- Firm logos can be arbitrary external URLs in the pilot.
-              <img src={item.firm.logoUrl} alt={item.firm.name} className="mb-4 max-h-14 max-w-48 object-contain" />
+              <img src={item.firm.logoUrl} alt={item.firm.name} className="mx-auto mb-4 max-h-14 max-w-48 object-contain" />
             ) : null}
-            <div className="text-sm font-bold text-primary">Cabinet: {item.firm.name}</div>
-            <h1 className="mt-2 text-2xl font-black">{item.isLocked ? "Période verrouillee" : "Collecte indisponible"}</h1>
-            <p className="mt-3 text-sm text-muted">
-              {unavailableReason}
-            </p>
-          </header>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-700">
+              <AlertTriangle size={22} />
+            </div>
+            <div className="mt-3 text-sm font-bold text-primary">Cabinet : {item.firm.name}</div>
+            <h1 className="mt-2 text-xl font-extrabold tracking-tight">{item.isLocked ? "Période verrouillee" : "Portail indisponible"}</h1>
+            <p className="mt-3 text-sm leading-relaxed text-muted">{unavailableReason}</p>
+          </div>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-white px-4 py-6">
-      <div className="mx-auto grid max-w-2xl gap-6">
-        <header className="border-b border-border pb-4">
+    <main className="min-h-screen bg-surface pb-16">
+      <header className="border-b border-border bg-white">
+        <div className="mx-auto grid max-w-2xl gap-3 px-4 py-6">
           {item.firm.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- Firm logos can be arbitrary external URLs in the pilot.
-            <img src={item.firm.logoUrl} alt={item.firm.name} className="mb-4 max-h-14 max-w-48 object-contain" />
-          ) : null}
-          <div className="text-sm font-bold text-primary">Cabinet: {item.firm.name}</div>
-          <h1 className="mt-2 text-2xl font-black">Deposez vos documents ici</h1>
-          <div className="mt-3 grid gap-1 text-sm text-muted">
+            <img src={item.firm.logoUrl} alt={item.firm.name} className="max-h-14 max-w-48 object-contain" />
+          ) : (
+            <span className="inline-flex w-fit items-center gap-2 text-sm font-extrabold text-primary">
+              <ShieldCheck size={18} />
+              Portail sécurisé
+            </span>
+          )}
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wide text-primary">Cabinet {item.firm.name}</div>
+            <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-ink md:text-3xl">Déposez vos documents</h1>
+          </div>
+          <div className="grid gap-1 text-sm text-muted">
             <p><span className="font-bold text-ink">Client :</span> {item.client.companyName}</p>
-            <p><span className="font-bold text-ink">Demande :</span> {workflowTemplate.label} - {monthNames[item.collectionPeriod.month - 1]} {item.collectionPeriod.year}</p>
+            <p><span className="font-bold text-ink">Demande :</span> {workflowTemplate.label} — {monthNames[item.collectionPeriod.month - 1]} {item.collectionPeriod.year}</p>
             {item.firm.phone || item.firm.email ? (
-              <p><span className="font-bold text-ink">Contact cabinet:</span> {[item.firm.phone, item.firm.email].filter(Boolean).join(" - ")}</p>
+              <p><span className="font-bold text-ink">Contact cabinet :</span> {[item.firm.phone, item.firm.email].filter(Boolean).join(" · ")}</p>
             ) : null}
           </div>
-        </header>
+        </div>
+      </header>
 
-        <section className="card p-4">
-          <div className="rounded-md border border-primary/20 bg-slate-50 p-4">
-          <h2 className="font-black">Bienvenue sur le portail de dépôt de votre cabinet comptable</h2>
-          <p className="mt-2 text-sm text-muted">
-              Deposez ici les documents demandes par votre cabinet comptable. Aucun compte n&apos;est necessaire. Vos fichiers sont transmis uniquement a votre cabinet.
+      <div className="mx-auto grid max-w-2xl gap-5 px-4 pt-6">
+        <section className="card border-primary/15 bg-gradient-to-br from-white to-teal-50/40 p-5">
+          <h2 className="text-lg font-extrabold">Bienvenue sur votre espace de dépôt</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            Déposez ici les pièces demandées par votre cabinet comptable. Aucun compte n&apos;est nécessaire :
+            vos fichiers sont transmis uniquement à votre cabinet.
           </p>
-            <div className="mt-4 grid gap-2 text-sm md:grid-cols-3">
-              <div className="rounded-md border border-border bg-white p-3"><span className="font-black">1.</span> Vérifiez les documents demandes</div>
-              <div className="rounded-md border border-border bg-white p-3"><span className="font-black">2.</span> Ajoutez des fichiers lisibles</div>
-              <div className="rounded-md border border-border bg-white p-3"><span className="font-black">3.</span> Confirmez et gardez la preuve</div>
+          <div className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-white p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-extrabold text-white">1</span>
+              Vérifiez les documents demandés
+            </div>
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-white p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-extrabold text-white">2</span>
+              Ajoutez des fichiers lisibles
+            </div>
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-white p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-extrabold text-white">3</span>
+              Confirmez votre envoi
             </div>
           </div>
         </section>
 
-        <section className="card p-4">
+        <section className="card p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="font-black">Vos obligations</h2>
+              <h2 className="text-lg font-extrabold">Vos documents à fournir</h2>
               <p className="mt-1 text-sm text-muted">
-                {completedDocs.length} complete(s) / {requiredDocs.length} demande(s)
+                {submittedCount} envoyé(s) sur {requiredStates.length} demandé(s)
               </p>
             </div>
-            <div className="rounded-md border border-border px-3 py-2 text-sm">
+            <div className="rounded-lg border border-border bg-surface px-3 py-2 text-sm">
               <div className="flex items-center gap-2 font-bold">
                 <Clock size={16} />
                 {deadlineCountdownLabel(daysRemaining)}
               </div>
-              <div className="mt-1 text-xs text-muted">Échéance estimee: {formatDate(deadline)}</div>
+              <div className="mt-1 text-xs text-muted">Échéance estimée : {formatDate(deadline)}</div>
             </div>
           </div>
-          <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
-            <div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} />
+          <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
           </div>
-          <div className="mt-2 text-sm font-bold">{progress}% du dossier complete</div>
-          <div className="mt-4 flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-            <AlertCircle size={18} className="mt-0.5 shrink-0" />
+          <div className="mt-2 text-sm font-bold text-ink">{progress}% du dossier complété</div>
+          <div className={cn("alert mt-4", firstRejected ? "alert-danger" : "alert-warning")}>
+            <AlertTriangle size={18} />
             <div>
-              <div className="font-black">Prochaine action</div>
-              <div>{nextAction}</div>
+              <div className="font-extrabold">Prochaine action</div>
+              <div className="font-medium">{nextAction}</div>
             </div>
           </div>
         </section>
 
-        <section className="card p-4">
-          <h2 className="mb-3 font-black">Documents demandes</h2>
+        <section className="card p-5">
+          <h2 className="mb-3 text-lg font-extrabold">Détail des documents demandés</h2>
           <div className="grid gap-2">
-            {item.requiredDocuments.map((doc) => (
-              <div key={doc.id} className="flex items-center gap-3 rounded-md border border-border p-3">
-                {doc.status === "RECEIVED" ? <CheckCircle2 size={18} className="text-emerald-600" /> : <Circle size={18} className="text-slate-400" />}
-                <span className="flex-1 font-bold">{doc.name}</span>
-                <StatusBadge status={doc.status === "MISSING" ? "MISSING_DOC" : doc.status} />
+            {docStates.map(({ doc, status, reason }) => (
+              <div
+                key={doc.id}
+                className={cn(
+                  "flex flex-wrap items-center gap-3 rounded-lg border p-3",
+                  status === "REJECTED" ? "border-red-200 bg-red-50/50" : "border-border"
+                )}
+              >
+                {statusIcon(status)}
+                <span className="flex-1 font-bold text-ink">{doc.name}</span>
+                <DocStatusBadge status={status} />
+                {status === "REJECTED" ? (
+                  <p className="w-full text-sm font-medium text-red-700">
+                    {reason
+                      ? `Motif du rejet : ${reason}. Merci de déposer un nouveau document ci-dessous.`
+                      : "Ce document a été rejeté par votre cabinet. Merci de déposer un nouveau document ci-dessous."}
+                  </p>
+                ) : null}
               </div>
             ))}
           </div>
         </section>
 
-        <section className="card p-4">
-          <h2 className="mb-3 font-black">Regles simples pour eviter les retards</h2>
+        <section className="card p-5">
+          <h2 className="mb-3 text-lg font-extrabold">Conseils pour éviter les retards</h2>
           <div className="grid gap-3">
             {clientEducationMessages.map((message) => (
-              <div key={message.title} className="rounded-md border border-border p-3">
-                <div className="font-black">{message.title}</div>
-                <p className="mt-1 text-sm text-muted">{message.body}</p>
+              <div key={message.title} className="rounded-lg border border-border p-3">
+                <div className="font-extrabold text-ink">{message.title}</div>
+                <p className="mt-1 text-sm leading-relaxed text-muted">{message.body}</p>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="card p-4">
-          <h2 className="mb-4 font-black">Ajouter des fichiers</h2>
+        <section className="card border-primary/20 p-5 shadow-elevated">
+          <h2 className="mb-4 text-lg font-extrabold">Ajouter des fichiers</h2>
           <UploadForm token={token} requiredDocuments={item.requiredDocuments} />
-          <p className="mt-3 text-xs text-muted">Formats acceptes : PDF, JPG, PNG, XLS, XLSX, DOC, DOCX. Maximum 10 Mo par fichier.</p>
+          <p className="mt-3 text-xs text-muted">Formats acceptés : PDF, JPG, PNG, Excel, Word. Taille maximum : 10 Mo par fichier.</p>
         </section>
 
-        <section className="card p-4">
-          <h2 className="mb-3 font-black">Fichiers deja reçus</h2>
+        <section className="card p-5">
+          <h2 className="mb-1 text-lg font-extrabold">Fichiers déjà reçus</h2>
+          <p className="mb-3 text-sm text-muted">
+            Le statut reflète la validation par votre cabinet. Un fichier rejeté doit être remplacé.
+          </p>
           <div className="grid gap-2">
-            {item.uploadedDocuments.map((document) => (
-              <div key={document.id} className="flex items-center justify-between gap-3 rounded-md border border-border p-3">
-                <div className="flex items-center gap-2">
-                  <FileText size={16} />
-                  <span className="font-bold">{document.originalFileName}</span>
+            {item.uploadedDocuments.map((document) => {
+              const file = clientFileStatus(document.qualityStatus);
+              return (
+                <div
+                  key={document.id}
+                  className={cn(
+                    "flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3",
+                    file.status === "REJECTED" ? "border-red-200 bg-red-50/50" : "border-border"
+                  )}
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <FileText size={16} className="shrink-0 text-muted" />
+                    <span className="truncate font-bold text-ink">{document.originalFileName}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted">{formatDate(document.createdAt)}</span>
+                    <DocStatusBadge status={file.status} />
+                  </div>
+                  {file.status === "REJECTED" && document.accountantComment ? (
+                    <p className="w-full text-sm font-medium text-red-700">Motif : {document.accountantComment}</p>
+                  ) : null}
                 </div>
-                <span className="text-xs text-muted">{formatDate(document.createdAt)}</span>
-              </div>
-            ))}
+              );
+            })}
             {!item.uploadedDocuments.length ? (
-              <div className="flex items-center gap-2 rounded-md bg-slate-50 p-3 text-sm text-muted">
-                <CheckCircle2 size={16} />
-                Aucun fichier dépose pour le moment.
+              <div className="alert alert-info">
+                <CheckCircle2 size={18} />
+                Aucun fichier déposé pour le moment.
               </div>
             ) : null}
           </div>

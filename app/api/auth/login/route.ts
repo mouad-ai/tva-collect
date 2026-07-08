@@ -5,7 +5,7 @@ import { cookieName, createSessionToken } from "@/lib/auth";
 import { loggedApiError } from "@/lib/error-logging";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitIp } from "@/lib/rate-limit";
-import { cleanDestinationForRequest } from "@/lib/routing";
+import { cleanDestinationForRequest, requestHost, sessionCookieDomain } from "@/lib/routing";
 import { postLoginDestination } from "@/lib/security-policy";
 
 const schema = z.object({
@@ -57,6 +57,7 @@ async function handlePOST(request: Request) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
+    domain: sessionCookieDomain(requestHost(request)),
     maxAge: 60 * 60 * 24 * 30
   });
   return response;

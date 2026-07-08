@@ -21,6 +21,14 @@ export function csvEscape(value: unknown) {
 }
 
 export function uploadUrl(token: string) {
-  const base = process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
-  return `${base}/upload/${token}`;
+  // Client upload pages live on the PUBLIC marketing domain (www/tvacollect.com),
+  // not on the authenticated app domain. Prefer the public base URL so shared
+  // links never resolve to app.tvacollect.com (which would 404 / require login).
+  const base =
+    process.env.PUBLIC_SITE_URL ||
+    process.env.PUBLIC_URL ||
+    process.env.APP_URL ||
+    process.env.NEXTAUTH_URL ||
+    "http://localhost:3000";
+  return `${base.replace(/\/+$/, "")}/upload/${token}`;
 }

@@ -26,7 +26,7 @@ export function NotificationBell({ unreadCount, basePath = appInternalBase }: { 
   }
 
   return (
-    <Link href={notificationsHref} className="btn relative" title="Notifications" onClick={markSeen}>
+    <Link href={notificationsHref} className="btn btn-icon relative" title="Notifications" aria-label="Notifications" onClick={markSeen}>
       <Bell size={16} />
       {displayCount > 0 ? (
         <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">

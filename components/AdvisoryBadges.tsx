@@ -4,7 +4,8 @@ import { cn } from "@/lib/utils";
 
 export function AdvisoryRiskBadge({ level }: { level: AdvisoryRiskLevel }) {
   return (
-    <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-bold", advisoryRiskTone[level])}>
+    <span className={cn("badge", advisoryRiskTone[level])}>
+      <span className="badge-dot" aria-hidden="true" />
       {advisoryRiskLabel[level]}
     </span>
   );
@@ -12,7 +13,7 @@ export function AdvisoryRiskBadge({ level }: { level: AdvisoryRiskLevel }) {
 
 export function AdvisoryConfidenceBadge({ level }: { level: AdvisoryConfidence }) {
   return (
-    <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-bold", advisoryConfidenceTone[level])}>
+    <span className={cn("badge", advisoryConfidenceTone[level])}>
       {advisoryConfidenceLabel[level]}
     </span>
   );

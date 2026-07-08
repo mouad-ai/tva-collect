@@ -1,4 +1,6 @@
+import { Building2, FileStack, HardDrive, Target, Users } from "lucide-react";
 import Link from "next/link";
+import { PageHeader } from "@/components/PageHeader";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatBytes, formatDate } from "@/lib/utils";
@@ -15,37 +17,50 @@ export default async function AdminDashboardPage() {
   ]);
   const storage = documents.reduce((sum, document) => sum + document.size, 0);
 
-  return (
-    <div className="grid gap-6">
-      <div>
-        <h1 className="text-2xl font-black">Tableau de bord admin</h1>
-        <p className="text-sm text-muted">Vue interne SaaS: cabinets, usage, prospects et activite.</p>
-      </div>
+  const kpis = [
+    { label: "Cabinets", value: firms, icon: Building2 },
+    { label: "Utilisateurs", value: users, icon: Users },
+    { label: "Clients", value: clients, icon: Users },
+    { label: "Documents", value: documents.length, icon: FileStack },
+    { label: "Prospects", value: leads, icon: Target }
+  ];
 
-      <section className="grid gap-4 md:grid-cols-5">
-        {[
-          ["Cabinets", firms],
-          ["Utilisateurs", users],
-          ["Clients", clients],
-          ["Documents", documents.length],
-          ["Prospects", leads]
-        ].map(([label, value]) => (
-          <div key={label} className="card p-4">
-            <div className="text-sm font-bold text-muted">{label}</div>
-            <div className="mt-2 text-3xl font-black">{value}</div>
+  return (
+    <div className="content-stack">
+      <PageHeader
+        label="Administration"
+        title="Tableau de bord admin"
+        description="Vue interne SaaS : cabinets, usage, prospects et activité récente."
+      />
+
+      <section className="grid gap-4 sm:grid-cols-2 md:grid-cols-5">
+        {kpis.map(({ label, value, icon: Icon }) => (
+          <div key={label} className="stat-card">
+            <div className="stat-card-label">
+              <Icon size={15} className="text-admin" />
+              {label}
+            </div>
+            <div className="stat-card-value">{value}</div>
           </div>
         ))}
       </section>
 
-      <section className="card p-4">
-        <div className="text-sm font-bold text-muted">Stockage total</div>
-        <div className="mt-2 text-3xl font-black">{formatBytes(storage)}</div>
+      <section className="stat-card sm:max-w-xs">
+        <div className="stat-card-label">
+          <HardDrive size={15} className="text-admin" />
+          Stockage total
+        </div>
+        <div className="stat-card-value">{formatBytes(storage)}</div>
+        <div className="stat-card-note">Tous cabinets confondus</div>
       </section>
 
       <section className="card min-w-0 overflow-hidden">
         <div className="flex items-center justify-between border-b border-border p-4">
-          <h2 className="font-black">Activite recente</h2>
-          <Link href="/admin/events" className="btn">Voir evenements</Link>
+          <div>
+            <h2 className="font-extrabold">Activité récente</h2>
+            <p className="text-sm text-muted">Derniers événements enregistrés sur la plateforme.</p>
+          </div>
+          <Link href="/admin/events" className="btn">Voir événements</Link>
         </div>
         <div className="table-wrap">
           <table className="data-table">

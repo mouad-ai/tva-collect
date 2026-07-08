@@ -20,6 +20,10 @@ function isPublicRuntimePath(pathname: string) {
   return (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
+    // Public client upload page: must render on ANY host (www, app, admin) so that
+    // both canonical links and legacy app-domain links resolve instead of 404ing.
+    pathname === "/upload" ||
+    pathname.startsWith("/upload/") ||
     pathname.startsWith("/favicon") ||
     pathname.startsWith("/icons") ||
     pathname.startsWith("/images") ||
@@ -105,6 +109,14 @@ export function proxy(request: NextRequest) {
   }
 
   if (isPublicHost(host)) {
+    // Authentication lives on the app domain only. Anyone landing on an auth page
+    // of the public marketing domain (e.g. www.tvacollect.com/login) is redirected
+    // to the same path on the app domain so login happens exactly once.
+    if (isAuthPage(pathname)) {
+      const target = hostUrl(request.url, appHost(), pathname);
+      target.search = request.nextUrl.search;
+      return NextResponse.redirect(target);
+    }
     if (pathname.startsWith(appInternalBase)) {
       return NextResponse.redirect(hostUrl(request.url, appHost(), stripBase(pathname, appInternalBase)));
     }

@@ -13,6 +13,7 @@ import {
   UsersRound
 } from "lucide-react";
 import Link from "next/link";
+import { appLoginHref } from "@/lib/routing";
 
 const workflow = [
   {
@@ -67,6 +68,7 @@ const audiences = [
 ];
 
 export default function LandingPage() {
+  const loginHref = appLoginHref();
   return (
     <main className="bg-white text-ink">
       <section className="relative overflow-hidden bg-[#07111f] text-white">
@@ -87,7 +89,7 @@ export default function LandingPage() {
               <Link href="/contact" className="hover:text-white">Contact</Link>
             </nav>
             <div className="flex items-center gap-2">
-              <Link href="/login" className="btn hidden border-white/20 bg-white/5 text-white hover:bg-white/10 sm:inline-flex">
+              <Link href={loginHref} className="btn hidden border-white/20 bg-white/5 text-white hover:bg-white/10 sm:inline-flex">
                 Connexion
               </Link>
               <Link href="/contact" className="btn btn-primary">
@@ -104,11 +106,11 @@ export default function LandingPage() {
               SaaS pour cabinets comptables marocains
             </div>
             <h1 className="mt-6 text-4xl font-extrabold leading-[1.08] tracking-tight md:text-[3.4rem]">
-              TVA Collect centralise la collecte des documents TVA.
+              Collectez les documents TVA de vos clients sans chaos WhatsApp.
             </h1>
             <p className="mt-5 text-lg leading-relaxed text-slate-300">
-              TVA Collect aide les cabinets comptables et fiduciaires a demander les pieces, recevoir les fichiers,
-              suivre ce qui manque, relancer les clients et garder une preuve claire avant declaration.
+              TVA Collect centralise les demandes, les depots et les relances : un lien de dépôt par client,
+              une vue claire de ce qui manque, et une preuve d&apos;action avant chaque declaration.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/contact" className="btn btn-primary px-5">
@@ -254,7 +256,7 @@ export default function LandingPage() {
               <Link href="/contact" className="btn btn-primary">
                 Demander un pilote
               </Link>
-              <Link href="/login" className="btn">
+              <Link href={loginHref} className="btn">
                 Connexion
               </Link>
             </div>
@@ -325,7 +327,7 @@ export default function LandingPage() {
           <Link href="/contact">Contact</Link>
           <Link href="/privacy">Confidentialite</Link>
           <Link href="/terms">Conditions</Link>
-          <Link href="/login">Connexion</Link>
+          <Link href={loginHref}>Connexion</Link>
         </nav>
       </footer>
     </main>
