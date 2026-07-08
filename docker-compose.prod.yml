@@ -64,11 +64,21 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      # Console is reverse-proxied at a different public hostname than the
+      # container sees itself on; MinIO needs this to build correct redirect
+      # and asset URLs for the console UI. See docs/vps-docker-minio-deployment.md.
+      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL:-https://minio.tvacollect.com}
     volumes:
       - minio-data:/data
     expose:
       - "9000"
+      - "9001"
     ports:
+      # Loopback-only fallback console access via SSH tunnel. Not reachable
+      # from the internet. The public route is minio.tvacollect.com via the
+      # nginx service below, which reaches this container over the internal
+      # Docker network (http://minio:9001) — this port mapping is unrelated
+      # to that path and can be removed if the SSH tunnel fallback is unwanted.
       - "127.0.0.1:9001:9001"
     healthcheck:
       test: ["CMD-SHELL", "mc ready local || curl -sf http://127.0.0.1:9000/minio/health/ready || wget -q -O - http://127.0.0.1:9000/minio/health/ready >/dev/null"]
@@ -113,6 +123,9 @@ services:
       - ./deploy/nginx/tvacollect.conf:/etc/nginx/conf.d/default.conf:ro
       - ./deploy/certbot/www:/var/www/certbot:ro
       - ./deploy/certbot/conf:/etc/letsencrypt:ro
+      # Basic-auth credentials for minio.tvacollect.com. Not checked into git;
+      # generate it before starting/reloading nginx (docs/vps-docker-minio-deployment.md).
+      - ./deploy/nginx/minio.htpasswd:/etc/nginx/minio.htpasswd:ro
 
   certbot:
     image: certbot/certbot:v2.11.0
@@ -132,6 +145,7 @@ services:
       -d admin.tvacollect.com
       -d tvacollect.com
       -d www.tvacollect.com
+      -d minio.tvacollect.com
 
 volumes:
   postgres-data:

@@ -52,7 +52,7 @@ MinIO notes:
 - `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD` are only for MinIO administration.
 - `S3_ACCESS_KEY` / `S3_SECRET_KEY` are the app credentials.
 - The `minio-init` service creates the bucket, blocks anonymous access, creates the app user, and attaches a bucket-only policy.
-- The MinIO console is bound to `127.0.0.1:9001`, not public internet.
+- The MinIO console is admin-only at `https://minio.tvacollect.com` (Nginx Basic Auth + MinIO login, optionally Cloudflare Access) or via SSH tunnel to `127.0.0.1:9001` — never public without Basic Auth. See `docs/vps-docker-minio-deployment.md` for setup and `deploy/nginx/minio.htpasswd` generation (required before Nginx will start).
 
 The app container runs:
 

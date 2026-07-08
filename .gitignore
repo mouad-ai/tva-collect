@@ -15,5 +15,6 @@ deploy/certbot/conf/*
 deploy/certbot/www/*
 !deploy/certbot/conf/.gitkeep
 !deploy/certbot/www/.gitkeep
+deploy/nginx/minio.htpasswd
 coverage
 *.log
