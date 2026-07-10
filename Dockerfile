@@ -1,7 +1,7 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --ignore-scripts && npm install --no-save --ignore-scripts @esbuild/linux-x64@0.23.1
+RUN npm ci --ignore-scripts && npm install --no-save --ignore-scripts tsx@4.19.2 @esbuild/linux-x64@0.23.1
 
 FROM node:22-alpine AS builder
 WORKDIR /app
