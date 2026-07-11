@@ -98,14 +98,16 @@ Create these records:
 A      app      VPS_IP
 A      www      VPS_IP
 A      @        VPS_IP
+A      minio    VPS_IP
 ```
 
 Recommended app structure:
 
 ```txt
-app.tvacollect.com   TVA Collect SaaS app
-www.tvacollect.com   public landing page
-tvacollect.com       redirect to www or landing page
+app.tvacollect.com     TVA Collect SaaS app
+www.tvacollect.com     public landing page
+tvacollect.com         redirect to www or landing page
+minio.tvacollect.com   MinIO console, admin-only (see docs/vps-docker-minio-deployment.md)
 ```
 
 Production environment:
