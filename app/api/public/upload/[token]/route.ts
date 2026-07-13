@@ -164,7 +164,13 @@ async function handlePOST(request: Request, { params }: { params: Promise<{ toke
         uploaderComment: uploaderComment || null
       }
     });
-    await scanUploadedFile({ documentId: document.id, firmId: item.firmId, bytes });
+    // See the identical comment in app/actions.ts's uploadDocumentsAction —
+    // the file is already saved once the row above is created; don't block
+    // the response on the antivirus scan (up to 15s per file). Downloads
+    // stay blocked until the scan completes (canDownloadScannedDocument).
+    scanUploadedFile({ documentId: document.id, firmId: item.firmId, bytes }).catch((error) =>
+      logServerError({ error, firmId: item.firmId, metadata: { documentId: document.id, context: "background-document-scan" } })
+    );
     await recordOperationalEvent({
       firmId: item.firmId,
       actorType: OperationalActorType.CLIENT,

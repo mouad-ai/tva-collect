@@ -1752,7 +1752,17 @@ export async function uploadDocumentsAction(token: string, formData: FormData) {
         uploaderComment: text(formData, "uploaderComment")
       }
     });
-    await scanUploadedFile({ documentId: document.id, firmId: item.firmId, bytes });
+    // The file is already saved and visible to the firm at this point —
+    // don't make the client's "upload confirmed" response wait on the
+    // antivirus scan (a network round-trip to ClamAV, up to 15s per file).
+    // That used to leave the upload page showing "uploading" long after the
+    // file had actually arrived. Downloads stay blocked until the scan
+    // completes (canDownloadScannedDocument), so this doesn't weaken the
+    // fail-closed guarantee — it just stops the scan from gating the
+    // upload confirmation itself.
+    scanUploadedFile({ documentId: document.id, firmId: item.firmId, bytes }).catch((error) =>
+      logServerError({ error, firmId: item.firmId, metadata: { documentId: document.id, context: "background-document-scan" } })
+    );
     await recordOperationalEvent({
       firmId: item.firmId,
       actorType: OperationalActorType.CLIENT,

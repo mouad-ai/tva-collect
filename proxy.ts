@@ -84,11 +84,28 @@ export function proxy(request: NextRequest) {
     return nextWithZone(request, "public", "");
   }
 
+  // A GET/HEAD hitting a URL that still carries the internal /app or /admin
+  // prefix on its own host (stale link, bookmark, typed URL) is redirected to
+  // the clean canonical URL. A POST — most importantly a Server Action call,
+  // which fetches whatever URL is currently in the address bar — must NOT be
+  // redirected here: redirecting a POST means the browser has to replay the
+  // request body, and Server Action bodies are streamed and cannot be
+  // replayed, so the request just hangs forever (reported as "307, stuck
+  // pending"). For non-GET requests, serve the route in place instead.
+  const isSafeMethod = request.method === "GET" || request.method === "HEAD";
+
   if (isAppHost(host)) {
     if (pathname.startsWith(adminInternalBase)) {
+      if (!isSafeMethod) return rewriteTo(request, pathname, "admin", "");
       return NextResponse.redirect(hostUrl(request.url, adminHost(), stripBase(pathname, adminInternalBase)));
     }
     if (pathname.startsWith(appInternalBase)) {
+      if (!isSafeMethod) {
+        const cleanPath = stripBase(pathname, appInternalBase);
+        if (isAuthPage(cleanPath)) return nextWithZone(request, "public", "");
+        if (!hasSession) return redirectToLogin(request);
+        return rewriteTo(request, pathname, "app", "");
+      }
       return NextResponse.redirect(new URL(stripBase(pathname, appInternalBase), request.url));
     }
     if (isAuthPage(pathname)) return nextWithZone(request, "public", "");
@@ -98,9 +115,16 @@ export function proxy(request: NextRequest) {
 
   if (isAdminHost(host)) {
     if (pathname.startsWith(appInternalBase)) {
+      if (!isSafeMethod) return rewriteTo(request, pathname, "app", "");
       return NextResponse.redirect(hostUrl(request.url, appHost(), stripBase(pathname, appInternalBase)));
     }
     if (pathname.startsWith(adminInternalBase)) {
+      if (!isSafeMethod) {
+        const cleanPath = stripBase(pathname, adminInternalBase);
+        if (isAuthPage(cleanPath)) return nextWithZone(request, "public", "");
+        if (!hasSession) return redirectToLogin(request);
+        return rewriteTo(request, pathname, "admin", "");
+      }
       return NextResponse.redirect(new URL(stripBase(pathname, adminInternalBase), request.url));
     }
     if (isAuthPage(pathname)) return nextWithZone(request, "public", "");
