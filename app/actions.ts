@@ -68,13 +68,6 @@ function dateValue(formData: FormData, key: string) {
   const value = text(formData, key);
   return value ? new Date(value) : null;
 }
-function redirectBackToDocuments(formData: FormData) {
-  const returnTo = formData.get("returnTo");
-  if (typeof returnTo === "string" && (returnTo === "/documents" || returnTo.startsWith("/documents?") || returnTo === "/app/documents" || returnTo.startsWith("/app/documents?"))) {
-    redirect(returnTo);
-  }
-  redirect("/app/documents");
-}
 
 async function actionIp() {
   const store = await headers();
@@ -1387,11 +1380,12 @@ export async function classifyUploadedDocumentAction(documentId: string, formDat
     where: { id: documentId, firmId: user.firmId },
     include: { clientCollection: { include: { requiredDocuments: true } } }
   });
-  if (!document) return;
+  if (!document) return { error: "Document introuvable." };
 
   const targetDoc = requiredDocumentId
     ? document.clientCollection.requiredDocuments.find((doc) => doc.id === requiredDocumentId)
     : null;
+  if (requiredDocumentId && !targetDoc) return { error: "Classification invalide." };
 
   await prisma.uploadedDocument.update({
     where: { id: document.id },
@@ -1424,13 +1418,13 @@ export async function classifyUploadedDocumentAction(documentId: string, formDat
   revalidatePath("/app/documents");
   revalidatePath("/documents");
   revalidatePath(`/app/collections/${document.clientCollection.collectionPeriodId}`);
-  redirectBackToDocuments(formData);
+  return { ok: true, requiredDocumentId: targetDoc?.id || null, requiredDocumentName: targetDoc?.name || null };
 }
 
 export async function updateUploadedDocumentQualityAction(documentId: string, formData: FormData) {
   const user = await requireFirmAnyRole([UserRole.OWNER, UserRole.MANAGER, UserRole.ASSISTANT]);
   const status = formData.get("qualityStatus");
-  if (typeof status !== "string" || !Object.values(DocumentQualityStatus).includes(status as DocumentQualityStatus)) return;
+  if (typeof status !== "string" || !Object.values(DocumentQualityStatus).includes(status as DocumentQualityStatus)) return { error: "Statut invalide." };
   const document = await prisma.uploadedDocument.findFirst({
     where: { id: documentId, firmId: user.firmId },
     select: {
@@ -1450,7 +1444,7 @@ export async function updateUploadedDocumentQualityAction(documentId: string, fo
       }
     }
   });
-  if (!document) return;
+  if (!document) return { error: "Document introuvable." };
 
   const newComment = text(formData, "accountantComment");
   const wasRejected = isRejectedQuality(document.qualityStatus);
@@ -1516,7 +1510,7 @@ export async function updateUploadedDocumentQualityAction(documentId: string, fo
   revalidatePath("/app/documents");
   revalidatePath("/documents");
   revalidatePath(`/app/collections/${document.clientCollection.collectionPeriodId}`);
-  redirectBackToDocuments(formData);
+  return { ok: true, qualityStatus: status, accountantComment: newComment };
 }
 
 export async function restoreUploadedDocumentAction(documentId: string) {

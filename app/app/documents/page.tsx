@@ -1,12 +1,11 @@
-import { Check, CheckCircle2, Download, FileText, ShieldAlert } from "lucide-react";
+import { CheckCircle2, Download, FileText, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { DocumentQualityStatus, Prisma } from "@prisma/client";
-import { classifyUploadedDocumentAction, updateUploadedDocumentQualityAction } from "@/app/actions";
-import { DocumentQualityBadge } from "@/components/DocumentQualityBadge";
+import { DocumentClassificationForm } from "@/components/DocumentClassificationForm";
+import { DocumentQualityForm } from "@/components/DocumentQualityForm";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { PaginationControls } from "@/components/PaginationControls";
-import { PendingSubmitButton } from "@/components/PendingSubmitButton";
 import { SearchFilterForm } from "@/components/SearchFilterForm";
 import { requireFirmUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -79,12 +78,6 @@ export default async function DocumentsPage({
   ]);
 
   const hasActiveFilters = Boolean(params.search || params.clientId || params.collectionPeriodId || params.qualityStatus);
-  const returnSearchParams = new URLSearchParams();
-  for (const key of ["clientId", "collectionPeriodId", "search", "qualityStatus", "page", "limit", "sort"] as const) {
-    const value = params[key];
-    if (value) returnSearchParams.set(key, value);
-  }
-  const documentsReturnTo = `/app/documents${returnSearchParams.size ? `?${returnSearchParams.toString()}` : ""}`;
 
   return (
     <div className="content-stack">
@@ -215,50 +208,19 @@ export default async function DocumentsPage({
                         </div>
                       </td>
                       <td>
-                        <form action={classifyUploadedDocumentAction.bind(null, document.id)} className="doc-inline-form">
-                          <input type="hidden" name="returnTo" value={documentsReturnTo} />
-                          <div className="doc-inline-form-row">
-                            <select name="requiredDocumentId" defaultValue={document.requiredDocumentId || ""} aria-label="Type de document">
-                              <option value="">Autre / non classé</option>
-                              {document.clientCollection.requiredDocuments.map((doc) => (
-                                <option key={doc.id} value={doc.id}>{doc.name}</option>
-                              ))}
-                            </select>
-                            <PendingSubmitButton className="btn btn-compact btn-primary" pendingLabel="...">
-                              <Check size={14} aria-hidden="true" />
-                              <span className="sr-only">Enregistrer la classification</span>
-                            </PendingSubmitButton>
-                          </div>
-                          {document.requiredDocument ? (
-                            <div className="text-xs font-semibold text-muted">Actuel : {document.requiredDocument.name}</div>
-                          ) : null}
-                        </form>
+                        <DocumentClassificationForm
+                          documentId={document.id}
+                          requiredDocuments={document.clientCollection.requiredDocuments.map((doc) => ({ id: doc.id, name: doc.name }))}
+                          initialRequiredDocumentId={document.requiredDocumentId || ""}
+                          initialRequiredDocumentName={document.requiredDocument?.name || null}
+                        />
                       </td>
                       <td className="doc-review-cell">
-                        <form action={updateUploadedDocumentQualityAction.bind(null, document.id)} className="doc-inline-form">
-                          <input type="hidden" name="returnTo" value={documentsReturnTo} />
-                          <DocumentQualityBadge status={document.qualityStatus} />
-                          <div className="doc-inline-form-row">
-                            <select name="qualityStatus" defaultValue={document.qualityStatus} aria-label="Statut de contrôle">
-                              <option value="UNREVIEWED">À vérifier</option>
-                              <option value="VALID">Valide</option>
-                              <option value="WRONG_DOCUMENT">Mauvais document</option>
-                              <option value="UNREADABLE">Illisible</option>
-                              <option value="DUPLICATE">Doublon</option>
-                              <option value="MISSING_PAGE">Page manquante</option>
-                              <option value="NOT_TVA">Hors TVA</option>
-                            </select>
-                            <PendingSubmitButton className="btn btn-compact btn-primary" pendingLabel="...">
-                              <Check size={14} aria-hidden="true" />
-                              <span className="sr-only">Enregistrer le contrôle</span>
-                            </PendingSubmitButton>
-                          </div>
-                          <input
-                            name="accountantComment"
-                            defaultValue={document.accountantComment || ""}
-                            placeholder="Commentaire interne (optionnel)"
-                          />
-                        </form>
+                        <DocumentQualityForm
+                          documentId={document.id}
+                          initialStatus={document.qualityStatus}
+                          initialComment={document.accountantComment || ""}
+                        />
                       </td>
                       <td>
                         {document.clientAcknowledgedDelayRisk ? (
