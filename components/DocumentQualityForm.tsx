@@ -60,7 +60,8 @@ export function DocumentQualityForm({
   const [status, setStatus] = useState<QualityStatus>(() => normalizeQualityStatus(initialStatus));
   const [comment, setComment] = useState(initialComment);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isSaving, setIsSaving] = useState(false);
+  const [, startTransition] = useTransition();
 
   function submitQuality(formData: FormData) {
     const nextStatus = formData.get("qualityStatus");
@@ -73,18 +74,30 @@ export function DocumentQualityForm({
     setError(null);
     setStatus(nextStatus);
     setComment(nextComment);
+    setIsSaving(true);
 
+    // isSaving (not useTransition's own isPending) drives the UI: this action
+    // calls revalidatePath, and Next folds the resulting router refresh into
+    // the same transition, so isPending can stay true well after our own
+    // result already came back — that's what left the badge looking stuck on
+    // "pending" until the page was manually refreshed. isSaving is set and
+    // cleared by us alone, right around the result handling, so it always
+    // reflects our own request/response cycle.
     startTransition(async () => {
-      const result: SaveResult = await updateUploadedDocumentQualityAction(documentId, formData);
-      if (result && "error" in result) {
-        setStatus(previousStatus);
-        setComment(previousComment);
-        setError(result.error || "Impossible d enregistrer la modification.");
-        return;
-      }
-      if (result && "ok" in result && result.ok) {
-        setStatus(normalizeQualityStatus(result.qualityStatus));
-        setComment(result.accountantComment || "");
+      try {
+        const result: SaveResult = await updateUploadedDocumentQualityAction(documentId, formData);
+        if (result && "error" in result) {
+          setStatus(previousStatus);
+          setComment(previousComment);
+          setError(result.error || "Impossible d enregistrer la modification.");
+          return;
+        }
+        if (result && "ok" in result && result.ok) {
+          setStatus(normalizeQualityStatus(result.qualityStatus));
+          setComment(result.accountantComment || "");
+        }
+      } finally {
+        setIsSaving(false);
       }
     });
   }
@@ -98,15 +111,15 @@ export function DocumentQualityForm({
         submitQuality(new FormData(event.currentTarget));
       }}
     >
-      <QualityBadge status={status} pending={isPending} />
+      <QualityBadge status={status} pending={isSaving} />
       <div className="doc-inline-form-row">
         <select name="qualityStatus" value={status} onChange={(event) => setStatus(event.target.value as QualityStatus)} aria-label="Statut de contrôle">
           {qualityOptions.map((option) => (
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
-        <button type="submit" className="btn btn-compact btn-primary" disabled={isPending}>
-          {isPending ? <span className="spinner" aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}
+        <button type="submit" className="btn btn-compact btn-primary" disabled={isSaving}>
+          {isSaving ? <span className="spinner" aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}
           <span className="sr-only">Enregistrer le contrôle</span>
         </button>
       </div>

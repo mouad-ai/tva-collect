@@ -15,14 +15,27 @@ export function UploadForm({
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [fileSummary, setFileSummary] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [, startTransition] = useTransition();
 
   async function action(formData: FormData) {
     setMessage("");
+    setIsSubmitting(true);
     startTransition(async () => {
-      const result = await uploadDocumentsAction(token, formData);
-      setIsError(Boolean(result?.error));
-      setMessage(result?.error ? result.error : "Documents reçus avec succes. Vous pouvez ajouter d'autres fichiers si besoin.");
+      // Don't rely on useTransition's own isPending to drive the UI here: this
+      // action calls revalidatePath, and Next folds the resulting router
+      // refresh into the same transition, so isPending can stay true after
+      // our own result already arrived (or briefly overlap with it) — that's
+      // what caused the success message and the "uploading" banner to show
+      // at the same time. isSubmitting is set/cleared by us alone, in the
+      // same block as the message, so the two states can never overlap.
+      try {
+        const result = await uploadDocumentsAction(token, formData);
+        setIsError(Boolean(result?.error));
+        setMessage(result?.error ? result.error : "Documents reçus avec succès. Vous pouvez ajouter d'autres fichiers si besoin.");
+      } finally {
+        setIsSubmitting(false);
+      }
     });
   }
 
@@ -57,7 +70,7 @@ export function UploadForm({
             required
             accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.doc,.docx,image/*"
             capture="environment"
-            disabled={isPending}
+            disabled={isSubmitting}
             className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             onChange={(event) => {
               const files = Array.from(event.target.files || []);
@@ -86,8 +99,7 @@ export function UploadForm({
           <span>{clientCompletionConfirmationText}</span>
         </label>
       </div>
-      {message ? <p className={isError ? "alert alert-danger" : "alert alert-success"}>{message}</p> : null}
-      {isPending ? (
+      {isSubmitting ? (
         <div className="alert alert-info">
           <div className="flex-1">
             Envoi en cours. Gardez cette page ouverte jusqu&apos;à la confirmation.
@@ -96,10 +108,12 @@ export function UploadForm({
             </div>
           </div>
         </div>
+      ) : message ? (
+        <p className={isError ? "alert alert-danger" : "alert alert-success"}>{message}</p>
       ) : null}
-      <button className="btn btn-primary" disabled={isPending}>
-        {isPending ? <span className="spinner" aria-hidden="true" /> : <Upload size={16} />}
-        {isPending ? "Envoi en cours..." : "Déposer les documents"}
+      <button className="btn btn-primary" disabled={isSubmitting}>
+        {isSubmitting ? <span className="spinner" aria-hidden="true" /> : <Upload size={16} />}
+        {isSubmitting ? "Envoi en cours..." : "Déposer les documents"}
       </button>
     </form>
   );

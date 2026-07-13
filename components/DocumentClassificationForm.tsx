@@ -25,7 +25,8 @@ export function DocumentClassificationForm({
   const [requiredDocumentId, setRequiredDocumentId] = useState(initialRequiredDocumentId);
   const [requiredDocumentName, setRequiredDocumentName] = useState(initialRequiredDocumentName);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isSaving, setIsSaving] = useState(false);
+  const [, startTransition] = useTransition();
 
   function submitClassification(formData: FormData) {
     const nextId = String(formData.get("requiredDocumentId") || "");
@@ -36,18 +37,27 @@ export function DocumentClassificationForm({
     setError(null);
     setRequiredDocumentId(nextId);
     setRequiredDocumentName(nextName);
+    setIsSaving(true);
 
+    // isSaving (not useTransition's own isPending) drives the UI — see
+    // DocumentQualityForm for why: this action calls revalidatePath, and
+    // Next folds the resulting router refresh into the same transition, so
+    // isPending can stay true well after our own result already came back.
     startTransition(async () => {
-      const result: SaveResult = await classifyUploadedDocumentAction(documentId, formData);
-      if (result && "error" in result) {
-        setRequiredDocumentId(previousId);
-        setRequiredDocumentName(previousName);
-        setError(result.error || "Impossible d enregistrer la modification.");
-        return;
-      }
-      if (result && "ok" in result && result.ok) {
-        setRequiredDocumentId(result.requiredDocumentId || "");
-        setRequiredDocumentName(result.requiredDocumentName || null);
+      try {
+        const result: SaveResult = await classifyUploadedDocumentAction(documentId, formData);
+        if (result && "error" in result) {
+          setRequiredDocumentId(previousId);
+          setRequiredDocumentName(previousName);
+          setError(result.error || "Impossible d enregistrer la modification.");
+          return;
+        }
+        if (result && "ok" in result && result.ok) {
+          setRequiredDocumentId(result.requiredDocumentId || "");
+          setRequiredDocumentName(result.requiredDocumentName || null);
+        }
+      } finally {
+        setIsSaving(false);
       }
     });
   }
@@ -68,8 +78,8 @@ export function DocumentClassificationForm({
             <option key={doc.id} value={doc.id}>{doc.name}</option>
           ))}
         </select>
-        <button type="submit" className="btn btn-compact btn-primary" disabled={isPending}>
-          {isPending ? <span className="spinner" aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}
+        <button type="submit" className="btn btn-compact btn-primary" disabled={isSaving}>
+          {isSaving ? <span className="spinner" aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}
           <span className="sr-only">Enregistrer la classification</span>
         </button>
       </div>
