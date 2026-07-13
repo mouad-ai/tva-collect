@@ -1,6 +1,7 @@
 import { ArrowRight, CreditCard, ExternalLink, HardDrive, Users } from "lucide-react";
 import { UserRole } from "@prisma/client";
 import { CheckoutButton } from "@/components/CheckoutButton";
+import { CustomerPortalButton } from "@/components/CustomerPortalButton";
 import { PageHeader } from "@/components/PageHeader";
 import { requireFirmAnyRole } from "@/lib/auth";
 import { supportEmail } from "@/lib/constants";
@@ -133,7 +134,10 @@ export default async function BillingPage({
         <div className="card min-w-0 overflow-hidden">
           <div className="border-b border-border p-4">
             <h2 className="font-extrabold">Changer d&apos;abonnement</h2>
-            <p className="mt-1 text-sm text-muted">Le checkout, la carte, les factures et le portail client sont geres par Lemon Squeezy.</p>
+            <p className="mt-1 text-sm text-muted">Le checkout, la carte, les factures et le portail client sont geres par Lemon Squeezy, notre partenaire de paiement securise.</p>
+            <p className="mt-1 text-xs text-muted">
+              Les prix ci-dessous sont affiches en MAD a titre indicatif. Lemon Squeezy est le marchand officiel de cette transaction et peut facturer votre carte dans une autre devise (USD) selon votre pays.
+            </p>
           </div>
           <div className="grid gap-4 p-4 md:grid-cols-3">
             {plans.map((item) => (
@@ -165,21 +169,24 @@ export default async function BillingPage({
             <h2 className="font-extrabold">Portail Lemon Squeezy</h2>
             <p className="mt-2 text-sm text-muted">Utilisez le portail pour voir les factures, changer la carte ou annuler l&apos;abonnement.</p>
             <div className="mt-4 grid gap-2">
-              {subscription?.customerPortalUrl ? (
-                <a className="btn btn-primary" href={subscription.customerPortalUrl} target="_blank" rel="noreferrer">
-                  Gerer l&apos;abonnement <ExternalLink size={16} />
-                </a>
-              ) : null}
-              {subscription?.updatePaymentMethodUrl ? (
-                <a className="btn" href={subscription.updatePaymentMethodUrl} target="_blank" rel="noreferrer">
-                  Mettre a jour la carte <ExternalLink size={16} />
-                </a>
-              ) : null}
-              {!subscription?.customerPortalUrl && !subscription?.updatePaymentMethodUrl ? (
-                <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-900">
-                  Le portail sera disponible après la mise en place du paiement en ligne. Contactez le support pour un paiement par virement.
+              {subscription?.provider === "LEMON_SQUEEZY" && subscription.lemonSubscriptionId ? (
+                <>
+                  <CustomerPortalButton />
+                  {subscription.updatePaymentMethodUrl ? (
+                    <a className="btn" href={subscription.updatePaymentMethodUrl} target="_blank" rel="noreferrer">
+                      Mettre a jour la carte <ExternalLink size={16} />
+                    </a>
+                  ) : null}
+                </>
+              ) : subscription?.provider === "MANUAL" ? (
+                <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm font-bold text-blue-900">
+                  Ce cabinet est facture par virement bancaire. Contactez le support pour toute question sur vos factures.
                 </p>
-              ) : null}
+              ) : (
+                <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-900">
+                  Le portail sera disponible apres votre premier paiement en ligne via Lemon Squeezy.
+                </p>
+              )}
             </div>
           </div>
         </aside>

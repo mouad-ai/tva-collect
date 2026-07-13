@@ -77,6 +77,7 @@ export default async function AdminFirmBillingPage({
         <div className="card p-5">
           <h2 className="font-extrabold">Subscription Lemon</h2>
           <div className="mt-4 grid gap-2 text-sm">
+            <p><strong>Fournisseur:</strong> {subscription?.provider === "LEMON_SQUEEZY" ? "Lemon Squeezy" : subscription?.provider === "MANUAL" ? "Manuel (virement)" : "-"}</p>
             <p><strong>Status local:</strong> {subscription ? subscriptionStatusLabel(subscription.status) : "-"}</p>
             <p><strong>Status Lemon:</strong> {subscription?.lemonStatus || "-"}</p>
             <p><strong>Customer ID:</strong> {subscription?.lemonCustomerId || "-"}</p>

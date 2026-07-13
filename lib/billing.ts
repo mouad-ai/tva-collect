@@ -234,7 +234,7 @@ export async function getPlanByCode(code: string) {
 export async function ensureFirmSubscription(
   firmId: string,
   planCode: string,
-  options?: { trialEndsAt?: Date | null; status?: FirmStatus; tx?: Prisma.TransactionClient }
+  options?: { trialEndsAt?: Date | null; status?: FirmStatus; provider?: string; tx?: Prisma.TransactionClient }
 ) {
   const db = options?.tx || prisma;
   const plan = await getPlanByCode(planCode);
@@ -248,11 +248,17 @@ export async function ensureFirmSubscription(
   const isTrial = options?.status === FirmStatus.TRIAL || !options?.status;
   const periodEnd = isTrial ? trialEndsAt : addMonths(now, 1);
 
+  // This bootstraps a baseline subscription row for firm creation, manual
+  // invoicing, admin plan changes, and lifecycle sync — none of which is the
+  // actual Lemon Squeezy checkout/webhook path (that path upserts its own
+  // FirmSubscription directly in lib/lemonsqueezy.ts and always sets
+  // provider: "LEMON_SQUEEZY" itself). So a firm bootstrapped here has not
+  // gone through Lemon Squeezy and should default to "MANUAL".
   return db.firmSubscription.create({
     data: {
       firmId,
       planId: plan.id,
-      provider: "LEMON_SQUEEZY",
+      provider: options?.provider || "MANUAL",
       status: isTrial ? SubscriptionStatus.TRIAL : SubscriptionStatus.ACTIVE,
       startedAt: now,
       trialEndsAt,

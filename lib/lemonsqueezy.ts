@@ -126,6 +126,58 @@ export async function createLemonSqueezyCheckout(input: {
   return body.data.attributes.url;
 }
 
+// Subscription lifecycle events: payload's `data` IS the subscription resource
+// (data.type === "subscriptions"), so data.id is the subscription ID.
+const subscriptionLifecycleEventNames = new Set([
+  "subscription_created",
+  "subscription_updated",
+  "subscription_cancelled",
+  "subscription_resumed",
+  "subscription_expired",
+  "subscription_paused",
+  "subscription_unpaused"
+]);
+
+// Payment/invoice events: payload's `data` is a *subscription-invoice*
+// resource, not a subscription — data.id is the invoice ID, and the parent
+// subscription is only referenced via attributes.subscription_id. These
+// invoices also don't reliably carry variant_id/renews_at the way a
+// subscription resource does, so they must never be run through the same
+// full subscription upsert as lifecycle events.
+const subscriptionPaymentEventNames = new Set([
+  "subscription_payment_success",
+  "subscription_payment_failed",
+  "subscription_payment_recovered",
+  "subscription_payment_refunded"
+]);
+
+/**
+ * Fetches a fresh customer-portal URL directly from Lemon Squeezy for a
+ * known subscription, instead of relying on whatever URL was last cached
+ * from a webhook (which can go stale between events).
+ */
+export async function fetchLemonSqueezyCustomerPortalUrl(lemonSubscriptionId: string) {
+  const apiKey = requiredEnv("LEMONSQUEEZY_API_KEY");
+  const response = await fetch(`https://api.lemonsqueezy.com/v1/subscriptions/${encodeURIComponent(lemonSubscriptionId)}`, {
+    headers: {
+      accept: "application/vnd.api+json",
+      authorization: `Bearer ${apiKey}`
+    }
+  });
+  const body = (await response.json().catch(() => null)) as {
+    data?: { attributes?: { urls?: { customer_portal?: string; update_payment_method?: string } } };
+    errors?: unknown;
+  } | null;
+  const portalUrl = body?.data?.attributes?.urls?.customer_portal;
+  if (!response.ok || !portalUrl) {
+    throw new Error(`Lemon Squeezy subscription lookup failed (${response.status}): ${JSON.stringify(body?.errors || body).slice(0, 500)}`);
+  }
+  return {
+    customerPortalUrl: portalUrl,
+    updatePaymentMethodUrl: body?.data?.attributes?.urls?.update_payment_method || null
+  };
+}
+
 export function extractLemonWebhookContext(payload: Record<string, unknown>) {
   const meta = (payload.meta || {}) as Record<string, unknown>;
   const data = (payload.data || {}) as Record<string, unknown>;
@@ -136,7 +188,13 @@ export function extractLemonWebhookContext(payload: Record<string, unknown>) {
 
   const eventName = stringValue(meta.event_name) || "unknown";
   const eventId = stringValue(meta.event_id) || stringValue(meta.webhook_id) || null;
-  const lemonSubscriptionId = stringValue(data.id) || stringValue(attributes.subscription_id);
+  const isPaymentEvent = subscriptionPaymentEventNames.has(eventName);
+  // For payment/invoice events, data.id is the invoice's own ID — the real
+  // subscription ID only lives in attributes.subscription_id. For lifecycle
+  // events, data.id IS the subscription ID.
+  const lemonSubscriptionId = isPaymentEvent
+    ? stringValue(attributes.subscription_id)
+    : stringValue(data.id) || stringValue(attributes.subscription_id);
   const lemonVariantId = stringValue(attributes.variant_id);
 
   return {
@@ -198,8 +256,36 @@ export async function processLemonSqueezyWebhook(payload: Record<string, unknown
   });
 
   try {
-    const isSubscriptionEvent = context.eventName.startsWith("subscription_");
-    if (isSubscriptionEvent && context.firmId) {
+    if (subscriptionPaymentEventNames.has(context.eventName) && context.firmId) {
+      // Payment/invoice events never touch plan, variant, or period data —
+      // only a lightweight status nudge, and only for firms actually on
+      // Lemon Squeezy (never override a manually-billed firm's status from
+      // a stray/malformed event).
+      const now = new Date();
+      const existingSubscription = await prisma.firmSubscription.findUnique({ where: { firmId: context.firmId } });
+      if (existingSubscription && existingSubscription.provider === "LEMON_SQUEEZY") {
+        if (context.eventName === "subscription_payment_failed") {
+          await prisma.firmSubscription.update({ where: { firmId: context.firmId }, data: { status: SubscriptionStatus.OVERDUE } });
+          await prisma.firm.update({ where: { id: context.firmId }, data: { status: FirmStatus.OVERDUE } });
+        } else if (
+          (context.eventName === "subscription_payment_recovered" || context.eventName === "subscription_payment_success") &&
+          existingSubscription.status === SubscriptionStatus.OVERDUE
+        ) {
+          // Only clear an OVERDUE state — never force-activate a firm that
+          // was cancelled/suspended for an unrelated reason.
+          await prisma.firmSubscription.update({ where: { firmId: context.firmId }, data: { status: SubscriptionStatus.ACTIVE } });
+          await prisma.firm.update({ where: { id: context.firmId }, data: { status: FirmStatus.ACTIVE, suspendedAt: null, suspendedReason: null } });
+        }
+        // subscription_payment_refunded: logged via BillingEvent only: refunds are reviewed manually, not auto-actioned.
+      }
+      await prisma.billingEvent.update({
+        where: { id: event.id },
+        data: { firmId: context.firmId, subscriptionId: existingSubscription?.id || null, processedAt: now, processingError: null }
+      });
+      return { event, subscription: existingSubscription, duplicate: false };
+    }
+
+    if (subscriptionLifecycleEventNames.has(context.eventName) && context.firmId) {
       const plan = await planForWebhook(context.planCode, context.lemonVariantId);
       if (!plan) throw new Error("No TVA Collect plan mapped to Lemon Squeezy variant.");
       const subscriptionStatus = mapLemonStatusToSubscriptionStatus(context.lemonStatus);
