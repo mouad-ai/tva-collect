@@ -79,7 +79,7 @@ export default async function TvaRiskRegisterPage({
     <div className="content-stack">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight">Registre des risques TVA</h1>
-        <p className="text-sm text-muted">Registre calcule depuis les readiness checks, documents manquants, documents invalides et saisies TVA suspectes.</p>
+        <p className="text-sm text-muted">Registre calculé depuis les readiness checks, documents manquants, documents invalides et saisies TVA suspectes.</p>
       </div>
 
       <section className="grid gap-4 md:grid-cols-3">
@@ -100,8 +100,8 @@ export default async function TvaRiskRegisterPage({
       <section className="card min-w-0 overflow-hidden">
         <SearchFilterForm
           searchPlaceholder="Rechercher client, période, risque"
-          filters={[{ name: "severity", label: "Severite", value: params.severity, options: [
-            { value: "", label: "Toutes les severites" },
+          filters={[{ name: "severity", label: "Sévérité", value: params.severity, options: [
+            { value: "", label: "Toutes les sévérités" },
             { value: "CRITICAL", label: "Critique" },
             { value: "HIGH", label: "Élevé" },
             { value: "MEDIUM", label: "Moyen" },
@@ -115,7 +115,7 @@ export default async function TvaRiskRegisterPage({
               <tr>
                 <th>Client</th>
                 <th>Période</th>
-                <th>Severite</th>
+                <th>Sévérité</th>
                 <th>Source</th>
                 <th>Risque</th>
                 <th>Action</th>
@@ -127,7 +127,8 @@ export default async function TvaRiskRegisterPage({
                   <td className="font-bold">{risk.clientName}</td>
                   <td>{risk.period}</td>
                   <td>
-                    <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-black", riskTone[risk.severity])}>
+                    <span className={cn("badge", riskTone[risk.severity])}>
+                      <span className="badge-dot" aria-hidden="true" />
                       {fiscalSeverityLabel(risk.severity)}
                     </span>
                   </td>

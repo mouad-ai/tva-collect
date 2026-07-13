@@ -129,14 +129,24 @@ async function main() {
   const billingProvider = env("BILLING_PROVIDER") || "DISABLED";
   add("BILLING_PROVIDER valid", ["DISABLED", "LEMON_SQUEEZY"].includes(billingProvider), billingProvider);
   if (billingProvider === "LEMON_SQUEEZY") {
-    for (const name of ["LEMONSQUEEZY_API_KEY", "LEMONSQUEEZY_STORE_ID", "LEMONSQUEEZY_WEBHOOK_SECRET"]) {
+    for (const name of ["LEMONSQUEEZY_API_KEY", "LEMONSQUEEZY_STORE_ID"]) {
       add(`${name} configured`, required(name), env(name) ? "configured" : "missing");
     }
+    // This secret authenticates every incoming webhook (HMAC-SHA256) — a
+    // short/weak value defeats that check just like a weak AUTH_SECRET
+    // would, so hold it to the same strength bar, not just "present".
+    add(
+      "LEMONSQUEEZY_WEBHOOK_SECRET strong",
+      strong("LEMONSQUEEZY_WEBHOOK_SECRET"),
+      env("LEMONSQUEEZY_WEBHOOK_SECRET") ? `${env("LEMONSQUEEZY_WEBHOOK_SECRET").length} chars` : "missing"
+    );
     for (const name of [
       "LEMONSQUEEZY_STARTER_MONTHLY_VARIANT_ID",
       "LEMONSQUEEZY_STARTER_YEARLY_VARIANT_ID",
       "LEMONSQUEEZY_PRO_MONTHLY_VARIANT_ID",
-      "LEMONSQUEEZY_PRO_YEARLY_VARIANT_ID"
+      "LEMONSQUEEZY_PRO_YEARLY_VARIANT_ID",
+      "LEMONSQUEEZY_PREMIUM_MONTHLY_VARIANT_ID",
+      "LEMONSQUEEZY_PREMIUM_YEARLY_VARIANT_ID"
     ]) {
       add(`${name} configured`, required(name), env(name) ? "configured" : "missing");
     }

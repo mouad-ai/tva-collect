@@ -53,13 +53,13 @@ export default async function GlobalSearchPage({
     <div className="content-stack">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight">Recherche globale</h1>
-        <p className="text-sm text-muted">Recherchez clients, ICE, telephone, collectes et documents.</p>
+        <p className="text-sm text-muted">Recherchez clients, ICE, téléphone, collectes et documents.</p>
       </div>
 
       <section className="card min-w-0 overflow-hidden">
         {/* UX-FIX: header search button now opens a real global search page. */}
         <SearchFilterForm
-          searchPlaceholder="Client, ICE, telephone, document, collecte..."
+          searchPlaceholder="Client, ICE, téléphone, document, collecte..."
           filters={[{ name: "type", label: "Type", value: type, options: [
             { value: "", label: "Tous" },
             { value: "clients", label: "Clients" },
@@ -69,11 +69,11 @@ export default async function GlobalSearchPage({
         />
         {!query ? (
           <div className="p-4">
-            <EmptyState icon={Search} title="Lancez une recherche" description="Tapez au moins un nom, ICE, telephone, document ou collecte." />
+            <EmptyState icon={Search} title="Lancez une recherche" description="Tapez au moins un nom, ICE, téléphone, document ou collecte." />
           </div>
         ) : !hasResults ? (
           <div className="p-4">
-            <EmptyState icon={Search} title="Aucun resultat" description="Essayez un autre mot-cle ou effacez les filtres." actionHref="/app/search" actionLabel="Effacer recherche" />
+            <EmptyState icon={Search} title="Aucun résultat" description="Essayez un autre mot-clé ou effacez les filtres." actionHref="/app/search" actionLabel="Effacer recherche" />
           </div>
         ) : (
           <div className="grid gap-4 p-4">

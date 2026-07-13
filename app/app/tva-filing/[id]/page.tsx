@@ -5,7 +5,15 @@ import { lockClientCollectionAction, unlockClientCollectionAction, updateTvaPaym
 import { requireFirmUser } from "@/lib/auth";
 import { monthNames, workflowTemplateFromType } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
-import { deadlineWarning, filingStatusLabel, filingStatusTone, paymentStatusLabel, submissionStatusLabel } from "@/lib/tva-filing";
+import {
+  deadlineWarning,
+  filingStatusLabel,
+  filingStatusTone,
+  paymentMethodLabel,
+  paymentStatusLabel,
+  receiptTypeLabel,
+  submissionStatusLabel
+} from "@/lib/tva-filing";
 import { cn, formatDate } from "@/lib/utils";
 
 function dateInputValue(date?: Date | null) {
@@ -21,7 +29,7 @@ export default async function TvaFilingDetailPage({ params }: { params: Promise<
   const user = await requireFirmUser();
   const { id } = await params;
   const filingCase = await prisma.tvaFilingCase.findFirst({ where: { id, firmId: user.firmId } });
-  if (!filingCase) return <div className="card p-6">Dossier de declaration introuvable.</div>;
+  if (!filingCase) return <div className="card p-6">Dossier de déclaration introuvable.</div>;
   const [clientCollection, submissions, payment, receipts] = await Promise.all([
     prisma.clientCollection.findFirst({
       where: { id: filingCase.clientCollectionId, firmId: user.firmId },
@@ -54,7 +62,8 @@ export default async function TvaFilingDetailPage({ params }: { params: Promise<
             {workflowTemplateFromType(clientCollection.collectionPeriod.workflowType).label} - {monthNames[filingCase.periodMonth - 1]} {filingCase.periodYear}
           </p>
         </div>
-        <span className={cn("inline-flex rounded-full border px-3 py-2 text-sm font-black", filingStatusTone(filingCase.status))}>
+        <span className={cn("badge", filingStatusTone(filingCase.status))}>
+          <span className="badge-dot" aria-hidden="true" />
           {filingStatusLabel(filingCase.status)}
         </span>
       </div>
@@ -77,16 +86,16 @@ export default async function TvaFilingDetailPage({ params }: { params: Promise<
         </div>
         <div className="card p-4">
           <div className="text-sm font-bold text-muted">Verrou période</div>
-          <div className="mt-2 font-black">{clientCollection.isLocked ? "Verrouillee" : "Ouverte"}</div>
-          <div className="text-xs text-muted">{clientCollection.lockReason || "Dépôt client autorise tant que la collecte est active."}</div>
+          <div className="mt-2 font-black">{clientCollection.isLocked ? "Verrouillée" : "Ouverte"}</div>
+          <div className="text-xs text-muted">{clientCollection.lockReason || "Dépôt client autorisé tant que la collecte est active."}</div>
         </div>
       </section>
 
       <section className="card p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-              <h2 className="font-extrabold">Contrôle avant declaration</h2>
-            <p className="text-sm text-muted">Ce bloc ne remplace pas la declaration externe. Il garde la preuve de ce qui a été suivi dans TVA Collect.</p>
+              <h2 className="font-extrabold">Contrôle avant déclaration</h2>
+            <p className="text-sm text-muted">Ce bloc ne remplace pas la déclaration externe. Il garde la preuve de ce qui a été suivi dans TVA Collect.</p>
           </div>
           {clientCollection.isLocked ? (
             <form action={unlockClientCollectionAction.bind(null, clientCollection.id)} className="flex flex-wrap gap-2">
@@ -95,7 +104,7 @@ export default async function TvaFilingDetailPage({ params }: { params: Promise<
             </form>
           ) : (
             <form action={lockClientCollectionAction.bind(null, clientCollection.id)} className="flex flex-wrap gap-2">
-              <input name="lockReason" placeholder="Raison du verrouillage" defaultValue="Preparation declaration TVA demarree." />
+              <input name="lockReason" placeholder="Raison du verrouillage" defaultValue="Préparation déclaration TVA démarrée." />
               <button className="btn btn-primary"><LockKeyhole size={16} /> Verrouiller</button>
             </form>
           )}
@@ -110,8 +119,8 @@ export default async function TvaFilingDetailPage({ params }: { params: Promise<
             <div className="mt-1 text-muted">{unreviewed.length} document(s) non revu(s).</div>
           </div>
           <div className="rounded-md border border-border p-3 text-sm">
-            <div className="font-extrabold">Rejetes / invalides</div>
-            <div className="mt-1 text-muted">{rejected.length} document(s) avec probleme ouvert.</div>
+            <div className="font-extrabold">Rejetés / invalides</div>
+            <div className="mt-1 text-muted">{rejected.length} document(s) avec problème ouvert.</div>
           </div>
         </div>
       </section>
@@ -123,7 +132,7 @@ export default async function TvaFilingDetailPage({ params }: { params: Promise<
             <label>Statut<select name="status" defaultValue={submissions[0]?.status || TvaSubmissionStatus.NOT_SUBMITTED}>
               {Object.values(TvaSubmissionStatus).map((status) => <option key={status} value={status}>{submissionStatusLabel(status)}</option>)}
             </select></label>
-            <label>Reference externe<input name="externalReference" defaultValue={submissions[0]?.externalReference || ""} /></label>
+            <label>Référence externe<input name="externalReference" defaultValue={submissions[0]?.externalReference || ""} /></label>
             <label>Date de soumission<input name="submittedAt" type="date" defaultValue={dateInputValue(submissions[0]?.submittedAt)} /></label>
             <label>Raison rejet / correction<textarea name="rejectionReason" rows={2} defaultValue={submissions[0]?.rejectionReason || ""} /></label>
             <label>Notes<textarea name="notes" rows={3} defaultValue={submissions[0]?.notes || ""} /></label>
@@ -146,14 +155,14 @@ export default async function TvaFilingDetailPage({ params }: { params: Promise<
               {Object.values(TvaPaymentStatus).map((status) => <option key={status} value={status}>{paymentStatusLabel(status)}</option>)}
             </select></label>
             <div className="grid gap-3 md:grid-cols-2">
-              <label>Montant du<input name="amountDue" type="number" step="0.01" defaultValue={moneyValue(payment?.amountDue)} /></label>
-              <label>Montant paye<input name="amountPaid" type="number" step="0.01" defaultValue={moneyValue(payment?.amountPaid)} /></label>
+              <label>Montant dû<input name="amountDue" type="number" step="0.01" defaultValue={moneyValue(payment?.amountDue)} /></label>
+              <label>Montant payé<input name="amountPaid" type="number" step="0.01" defaultValue={moneyValue(payment?.amountPaid)} /></label>
             </div>
             <label>Date paiement<input name="paymentDate" type="date" defaultValue={dateInputValue(payment?.paymentDate)} /></label>
-            <label>Methode<select name="paymentMethod" defaultValue={payment?.paymentMethod || TvaPaymentMethod.ONLINE_PORTAL}>
-              {Object.values(TvaPaymentMethod).map((method) => <option key={method} value={method}>{method}</option>)}
+            <label>Méthode<select name="paymentMethod" defaultValue={payment?.paymentMethod || TvaPaymentMethod.ONLINE_PORTAL}>
+              {Object.values(TvaPaymentMethod).map((method) => <option key={method} value={method}>{paymentMethodLabel(method)}</option>)}
             </select></label>
-            <label>Reference paiement<input name="paymentReference" defaultValue={payment?.paymentReference || ""} /></label>
+            <label>Référence paiement<input name="paymentReference" defaultValue={payment?.paymentReference || ""} /></label>
             <label>Notes<textarea name="notes" rows={3} defaultValue={payment?.notes || ""} /></label>
             <button className="btn btn-primary w-fit">Sauver paiement</button>
           </form>
@@ -161,16 +170,16 @@ export default async function TvaFilingDetailPage({ params }: { params: Promise<
       </section>
 
       <section className="card p-4">
-        <h2 className="font-extrabold">Fiscal Receipt Vault</h2>
-        <p className="mt-2 text-sm text-muted">Zone de preuve fiscale pour references externes, reçus de declaration et reçus de paiement. L&apos;upload de reçus sera ajoute a l&apos;etape suivante.</p>
+        <h2 className="font-extrabold">Preuves fiscales</h2>
+        <p className="mt-2 text-sm text-muted">Zone de preuve fiscale pour références externes, reçus de déclaration et reçus de paiement. L&apos;upload de reçus sera ajouté à l&apos;étape suivante.</p>
         <div className="mt-4 grid gap-2">
           {receipts.map((receipt) => (
             <div key={receipt.id} className="rounded-md border border-border p-3 text-sm">
-              <div className="font-bold">{receipt.type} - {formatDate(receipt.createdAt)}</div>
+              <div className="font-bold">{receiptTypeLabel(receipt.type)} - {formatDate(receipt.createdAt)}</div>
               <div className="text-muted">{receipt.referenceNumber || receipt.notes || "-"}</div>
             </div>
           ))}
-          {!receipts.length ? <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-900">Aucun reçu fiscal enregistre pour cette declaration.</div> : null}
+          {!receipts.length ? <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-900">Aucun reçu fiscal enregistré pour cette déclaration.</div> : null}
         </div>
       </section>
     </div>

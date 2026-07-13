@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 type Status = ClientCollectionStatus | CollectionStatus | string;
 
 const labels: Record<string, string> = {
-  NOT_STARTED: "Non commence",
+  NOT_STARTED: "Non commencé",
   IN_PROGRESS: "En cours",
   MISSING: "Documents manquants",
   COMPLETE: "Dossier complet",

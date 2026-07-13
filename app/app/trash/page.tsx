@@ -71,12 +71,12 @@ export default async function TrashPage({
     <div className="content-stack">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight">Corbeille</h1>
-        <p className="text-sm text-muted">Elements supprimés récupérables. Les fichiers ne sont pas purgés automatiquement.</p>
+        <p className="text-sm text-muted">Éléments supprimés récupérables. Les fichiers ne sont pas purgés automatiquement.</p>
       </div>
 
       <section className="card min-w-0 overflow-hidden">
         <SearchFilterForm
-          searchPlaceholder="Rechercher element supprime"
+          searchPlaceholder="Rechercher élément supprimé"
           filters={[{ name: "type", label: "Type", value: params.type, options: [
             { value: "", label: "Tous les types" },
             { value: "client", label: "Clients" },
@@ -89,10 +89,10 @@ export default async function TrashPage({
           <table className="data-table">
             <thead>
               <tr>
-                <th>Element</th>
+                <th>Élément</th>
                 <th>Type</th>
                 <th>Contexte</th>
-                <th>Supprime le</th>
+                <th>Supprimé le</th>
                 <th>Raison</th>
                 <th>Action</th>
               </tr>
@@ -115,7 +115,7 @@ export default async function TrashPage({
                   </tr>
                 );
               })}
-              {!paginatedItems.length ? <tr><td colSpan={6}><EmptyState title="Corbeille vide" description="Aucun element supprime ne correspond aux filtres." /></td></tr> : null}
+              {!paginatedItems.length ? <tr><td colSpan={6}><EmptyState title="Corbeille vide" description="Aucun élément supprimé ne correspond aux filtres." /></td></tr> : null}
             </tbody>
           </table>
         </div>

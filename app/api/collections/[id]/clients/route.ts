@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireMutableFirmUser } from "@/lib/auth";
 import { requiredDocumentsFromFirm, workflowTemplateFromType } from "@/lib/constants";
+import { isSameOriginRequest, rejectCrossOrigin } from "@/lib/csrf";
 import { loggedApiError } from "@/lib/error-logging";
 import { prisma } from "@/lib/prisma";
 import { requireFirmCollection, TenantAccessError } from "@/lib/tenant";
@@ -12,6 +13,7 @@ const schema = z.object({
 });
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!isSameOriginRequest(request)) return rejectCrossOrigin();
   const user = await requireMutableFirmUser();
   const { id } = await params;
   const body = schema.safeParse(await request.json().catch(() => null));

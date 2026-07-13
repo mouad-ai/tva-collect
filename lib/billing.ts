@@ -409,6 +409,41 @@ export function usagePercent(used: number, limit: number | null | undefined) {
   return Math.min(100, Math.round((used / limit) * 100));
 }
 
+export type FirmUsage = Awaited<ReturnType<typeof getFirmUsage>>;
+
+/**
+ * Detects a firm sitting ABOVE its current plan's limits — this happens when
+ * a plan is downgraded (via Lemon Squeezy webhook or an admin plan change)
+ * while the firm already has more clients/users/storage than the new plan
+ * allows. We deliberately never delete or disable anything to get a firm
+ * back under its limit — that would destroy client data over a billing
+ * event. requireWithinLimit() already stops the firm from growing further;
+ * this just makes the over-limit state visible so the firm/admin can act on
+ * it (upgrade, or manually reduce usage).
+ */
+export function overLimitReasons(plan: SubscriptionPlan | null | undefined, usage: FirmUsage): string[] {
+  if (!plan) return [];
+  const reasons: string[] = [];
+  if (plan.clientLimit != null && usage.clients > plan.clientLimit) {
+    reasons.push(`Clients : ${usage.clients} / ${plan.clientLimit}`);
+  }
+  if (plan.userLimit != null && usage.users > plan.userLimit) {
+    reasons.push(`Utilisateurs : ${usage.users} / ${plan.userLimit}`);
+  }
+  if (plan.activeCollectionLimit != null && usage.activeCollections > plan.activeCollectionLimit) {
+    reasons.push(`Collectes actives : ${usage.activeCollections} / ${plan.activeCollectionLimit}`);
+  }
+  if (plan.storageLimitMb != null && usage.storageBytes > plan.storageLimitMb * 1024 * 1024) {
+    reasons.push(`Stockage : ${formatBytesShort(usage.storageBytes)} / ${plan.storageLimitMb} Mo`);
+  }
+  return reasons;
+}
+
+function formatBytesShort(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} Mo`;
+}
+
 export async function markInvoicePaid(input: {
   invoiceId: string;
   adminUserId: string;

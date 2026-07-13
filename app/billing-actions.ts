@@ -194,7 +194,8 @@ export async function submitPaymentProofAction(invoiceId: string, formData: Form
 
   let fileMeta: { originalFileName: string; storageKey: string; mimeType: string; size: number } | null = null;
   if (file instanceof File && file.size > 0) {
-    validateUpload(file);
+    const uploadError = await validateUpload(file);
+    if (uploadError) redirect("/app/billing?error=file");
     const saved = await saveLocalUpload(file, `billing-proofs/${user.firmId}`);
     fileMeta = {
       originalFileName: file.name,

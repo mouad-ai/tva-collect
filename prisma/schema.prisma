@@ -292,6 +292,7 @@ model User {
   name                  String
   email                 String                 @unique
   passwordHash          String?
+  passwordChangedAt     DateTime?
   role                  UserRole               @default(OWNER)
   isActive              Boolean                @default(true)
   disabledAt            DateTime?

@@ -2,6 +2,7 @@ import { FirmStatus, UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { requireFirmAnyRole } from "@/lib/auth";
 import { getPlanByCode } from "@/lib/billing";
+import { isSameOriginRequest, rejectCrossOrigin } from "@/lib/csrf";
 import { logServerError } from "@/lib/error-logging";
 import { createLemonSqueezyCheckout, LemonSqueezyConfigError, type BillingInterval } from "@/lib/lemonsqueezy";
 
@@ -10,6 +11,7 @@ function validInterval(value: unknown): BillingInterval {
 }
 
 export async function POST(request: Request) {
+  if (!isSameOriginRequest(request)) return rejectCrossOrigin();
   const user = await requireFirmAnyRole([UserRole.OWNER, UserRole.MANAGER]);
   if (user.firm.status === FirmStatus.CANCELLED) {
     return NextResponse.json({ error: "Cabinet annule. Contactez le support." }, { status: 403 });

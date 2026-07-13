@@ -9,6 +9,7 @@ import {
   BillingSchemaUnavailableError,
   formatMad,
   getFirmBillingSnapshot,
+  overLimitReasons,
   subscriptionStatusLabel,
   syncBillingLifecycle,
   usagePercent
@@ -52,6 +53,13 @@ export default async function BillingPage({
   const userUsage = usagePercent(usage.users, plan?.userLimit);
   const storageUsage = usagePercent(usage.storageBytes, plan?.storageLimitMb ? plan.storageLimitMb * 1024 * 1024 : null);
   const showOverdueBanner = firm.status === "OVERDUE" || subscription?.status === "OVERDUE" || subscription?.status === "PAST_DUE";
+  const overLimit = overLimitReasons(plan, usage);
+  const errorMessages: Record<string, string> = {
+    file: "Le fichier joint n'a pas ete accepte (type non autorise, taille excessive, ou contenu ne correspondant pas a son extension).",
+    invoice: "Facture introuvable ou deja reglee.",
+    plan: "Plan invalide.",
+    trial: "Date d'essai invalide."
+  };
 
   return (
     <div className="content-stack">
@@ -61,6 +69,9 @@ export default async function BillingPage({
         actions={<a href={`mailto:${supportEmail}`} className="btn">Contacter le support</a>}
       />
 
+      {params.error && errorMessages[params.error] ? (
+        <div className="alert alert-danger">{errorMessages[params.error]}</div>
+      ) : null}
       {params.checkout === "success" ? (
         <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">
           Paiement recu par Lemon Squeezy. L&apos;abonnement sera active des reception du webhook verifie.
@@ -74,6 +85,18 @@ export default async function BillingPage({
       {firm.status === "SUSPENDED" ? (
         <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-900">
           Cabinet suspendu. Vous pouvez encore gerer la facturation et mettre a jour le paiement.
+        </div>
+      ) : null}
+      {overLimit.length ? (
+        <div className="alert alert-warning">
+          <div>
+            <div className="font-extrabold">Utilisation au-dessus des limites de votre plan {plan ? planLabel(plan.code) : ""}</div>
+            <p className="mt-1">
+              {overLimit.join(" · ")}. Vos données restent intactes et accessibles, mais vous ne pouvez pas ajouter de nouveaux
+              clients, utilisateurs ou collectes tant que vous dépassez ces limites. Passez à un plan supérieur ci-dessous pour
+              débloquer l&apos;ajout, ou réduisez votre usage.
+            </p>
+          </div>
         </div>
       ) : null}
 

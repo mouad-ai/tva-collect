@@ -19,6 +19,16 @@ async function loadOptionalResend() {
 export async function sendEmail({ to, subject, html, text }: SendEmailInput) {
   const provider = process.env.EMAIL_PROVIDER || "console";
 
+  if (provider === "console" && process.env.NODE_ENV === "production") {
+    // The console provider prints the full email body to stdout, including
+    // raw password-reset and invite links — acceptable for local dev only.
+    // A production deploy that forgot to set EMAIL_PROVIDER must fail loudly
+    // here rather than silently leak every token into server logs.
+    throw new Error(
+      "EMAIL_PROVIDER=console (or unset) is not allowed when NODE_ENV=production — it would print password-reset and invite links to server logs. Set EMAIL_PROVIDER=resend or EMAIL_PROVIDER=smtp."
+    );
+  }
+
   if (provider === "console") {
     console.log("------ EMAIL DEBUG ------");
     console.log("To:", to);

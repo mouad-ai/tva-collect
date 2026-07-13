@@ -5,7 +5,7 @@ import { reactivateFirm, suspendFirm } from "@/app/actions";
 import { PageHeader } from "@/components/PageHeader";
 import { PendingSubmitButton } from "@/components/PendingSubmitButton";
 import { requireAdmin } from "@/lib/auth";
-import { formatMad, getFirmBillingSnapshot, subscriptionStatusLabel, syncBillingLifecycle } from "@/lib/billing";
+import { formatMad, getFirmBillingSnapshot, overLimitReasons, subscriptionStatusLabel, syncBillingLifecycle } from "@/lib/billing";
 import { firmStatusLabel, planLabel } from "@/lib/labels";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
@@ -25,6 +25,7 @@ export default async function AdminFirmBillingPage({
   const plans = await prisma.subscriptionPlan.findMany({ where: { isActive: true }, orderBy: { monthlyPriceMad: "asc" } });
   const events = await prisma.billingEvent.findMany({ where: { firmId: id }, orderBy: { createdAt: "desc" }, take: 20 });
   const subscription = snapshot.subscription;
+  const overLimit = overLimitReasons(snapshot.plan, snapshot.usage);
 
   return (
     <div className="content-stack">
@@ -61,6 +62,11 @@ export default async function AdminFirmBillingPage({
         <div className="card grid gap-3 p-4">
           <h2 className="font-extrabold">Statut cabinet</h2>
           <p className="text-sm text-muted">Clients: {snapshot.usage.clients} - Utilisateurs: {snapshot.usage.users} - Collectes actives: {snapshot.usage.activeCollections}</p>
+          {overLimit.length ? (
+            <p className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs font-bold text-amber-900">
+              Au-dessus des limites du plan : {overLimit.join(" · ")}. Nouveaux ajouts bloqués côté cabinet jusqu&apos;à upgrade ou réduction d&apos;usage — aucune donnée existante n&apos;est affectée.
+            </p>
+          ) : null}
           <form action={suspendFirm.bind(null, id)} className="grid gap-2">
             <label>Raison suspension<textarea name="suspendedReason" rows={2} defaultValue={firm.suspendedReason || ""} /></label>
             <button className="btn" type="submit">Suspendre</button>

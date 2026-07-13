@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 
 const errorMessages: Record<string, string> = {
   missing: "Nom cabinet, nom propriétaire et email propriétaire sont obligatoires.",
-  "owner-email-exists": "Cet email propriétaire existe deja."
+  "owner-email-exists": "Cet email propriétaire existe déjà."
 };
 
 export default async function NewAdminFirmPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
@@ -16,7 +16,7 @@ export default async function NewAdminFirmPage({ searchParams }: { searchParams:
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black">Nouveau cabinet</h1>
-          <p className="text-sm text-muted">Creation SaaS du cabinet et de son premier propriétaire.</p>
+          <p className="text-sm text-muted">Création SaaS du cabinet et de son premier propriétaire.</p>
         </div>
         <Link href="/admin/firms" className="btn">Retour cabinets</Link>
       </div>
@@ -48,7 +48,7 @@ export default async function NewAdminFirmPage({ searchParams }: { searchParams:
                 <option value="CANCELLED">Annulé</option>
               </select>
             </label>
-            <label>Debut essai<input name="trialStartDate" type="date" /></label>
+            <label>Début essai<input name="trialStartDate" type="date" /></label>
             <label>Fin essai<input name="trialEndDate" type="date" /></label>
             <label>Nom propriétaire<input name="ownerName" required /></label>
             <label>Email propriétaire<input name="ownerEmail" type="email" required /></label>

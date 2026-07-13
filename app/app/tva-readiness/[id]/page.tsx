@@ -73,15 +73,16 @@ export default async function TvaReadinessDetailPage({ params }: { params: Promi
           <div className="text-sm font-bold">Readiness score</div>
           <div className="mt-2 text-4xl font-black">{readiness.score}/100</div>
           <div className="mt-1 text-sm font-black">{readinessStatusLabel(readiness.status)}</div>
-          <div className={cn("mt-4 inline-flex rounded-full border px-2.5 py-1 text-xs font-black", riskTone[readiness.riskLevel])}>
+          <div className={cn("badge mt-4", riskTone[readiness.riskLevel])}>
+            <span className="badge-dot" aria-hidden="true" />
             Risque {fiscalSeverityLabel(readiness.riskLevel)}
           </div>
         </div>
         <div className="card p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="font-extrabold">Workflow preparation TVA</h2>
-              <p className="text-sm text-muted">Impossible de passer a pret declaration si le readiness est bloque.</p>
+              <h2 className="font-extrabold">Workflow préparation TVA</h2>
+              <p className="text-sm text-muted">Impossible de passer à prêt déclaration si le readiness est bloqué.</p>
             </div>
             <span className="rounded-md border border-border px-3 py-2 text-sm font-black">{preparationStatusLabel(item.tvaPreparationStatus)}</span>
           </div>
@@ -99,12 +100,12 @@ export default async function TvaReadinessDetailPage({ params }: { params: Promi
           <div className="mt-4 flex flex-wrap gap-2">
             {item.isLocked ? (
               <form action={unlockClientCollectionAction.bind(null, item.id)} className="flex flex-wrap gap-2">
-                <input name="unlockReason" placeholder="Raison de reouverture" required />
+                <input name="unlockReason" placeholder="Raison de réouverture" required />
                 <button className="btn">Rouvrir dépôt</button>
               </form>
             ) : (
               <form action={lockClientCollectionAction.bind(null, item.id)} className="flex flex-wrap gap-2">
-                <input name="lockReason" defaultValue="Préparation TVA demarree apres readiness check." />
+                <input name="lockReason" defaultValue="Préparation TVA démarrée après readiness check." />
                 <button className="btn"><LockKeyhole size={16} /> Verrouiller dépôt</button>
               </form>
             )}
@@ -136,24 +137,24 @@ export default async function TvaReadinessDetailPage({ params }: { params: Promi
           <div className="text-xs text-muted">HT {formatMad(readiness.summary.salesHT)} / TTC {formatMad(readiness.summary.salesTTC)}</div>
         </div>
         <div className="card p-4">
-          <div className="text-sm font-bold text-muted">TVA deductible</div>
+          <div className="text-sm font-bold text-muted">TVA déductible</div>
           <div className="mt-2 text-2xl font-black">{formatMad(readiness.summary.purchaseTVA)}</div>
           <div className="text-xs text-muted">HT {formatMad(readiness.summary.purchaseHT)} / TTC {formatMad(readiness.summary.purchaseTTC)}</div>
         </div>
         <div className="card p-4">
-          <div className="text-sm font-bold text-muted">TVA nette estimee</div>
+          <div className="text-sm font-bold text-muted">TVA nette estimée</div>
           <div className="mt-2 text-2xl font-black">{formatMad(readiness.summary.netTVA)}</div>
-          <div className="text-xs text-muted">Avoirs: {formatMad(readiness.summary.creditNoteTVA)}</div>
+          <div className="text-xs text-muted">Avoirs : {formatMad(readiness.summary.creditNoteTVA)}</div>
         </div>
         <div className="card p-4">
-          <div className="text-sm font-bold text-muted">Qualite saisie</div>
+          <div className="text-sm font-bold text-muted">Qualité saisie</div>
           <div className="mt-2 text-2xl font-black">{readiness.summary.entriesCount}</div>
-          <div className="text-xs text-muted">{readiness.summary.entriesMissingInvoiceNumber} sans numero, {readiness.summary.suspiciousEntries} suspecte(s)</div>
+          <div className="text-xs text-muted">{readiness.summary.entriesMissingInvoiceNumber} sans numéro, {readiness.summary.suspiciousEntries} suspecte(s)</div>
         </div>
       </section>
 
       <section className="card p-4">
-        <h2 className="mb-4 font-extrabold">Ajouter une entree TVA manuelle</h2>
+        <h2 className="mb-4 font-extrabold">Ajouter une entrée TVA manuelle</h2>
         <form action={createTvaAmountEntryAction.bind(null, item.id)} className="grid gap-4">
           <div className="field-grid">
             <label>
@@ -170,7 +171,7 @@ export default async function TvaReadinessDetailPage({ params }: { params: Promi
             <label>Montant TTC<input name="amountTTC" type="number" step="0.01" defaultValue="0" /></label>
             <label>Taux TVA %<input name="tvaRate" type="number" step="0.01" defaultValue="20" /></label>
             <label>
-              Document lie
+              Document lié
               <select name="uploadedDocumentId" defaultValue="">
                 <option value="">Aucun document</option>
                 {item.uploadedDocuments.map((document) => (
@@ -180,13 +181,13 @@ export default async function TvaReadinessDetailPage({ params }: { params: Promi
             </label>
           </div>
           <label>Notes<textarea name="notes" rows={2} /></label>
-          <button className="btn btn-primary w-fit"><FilePlus2 size={16} /> Ajouter entree TVA</button>
+          <button className="btn btn-primary w-fit"><FilePlus2 size={16} /> Ajouter entrée TVA</button>
         </form>
       </section>
 
       <section className="card min-w-0 overflow-hidden">
         <div className="border-b border-border p-4">
-          <h2 className="font-extrabold">Entrees TVA saisies</h2>
+          <h2 className="font-extrabold">Entrées TVA saisies</h2>
         </div>
         <div className="table-wrap">
           <table className="data-table">
@@ -217,7 +218,7 @@ export default async function TvaReadinessDetailPage({ params }: { params: Promi
                   <td>{entry.uploadedDocument?.originalFileName || "-"}</td>
                 </tr>
               ))}
-              {!item.tvaAmountEntries.length ? <tr><td colSpan={9} className="text-muted">Aucune entree TVA saisie.</td></tr> : null}
+              {!item.tvaAmountEntries.length ? <tr><td colSpan={9} className="text-muted">Aucune entrée TVA saisie.</td></tr> : null}
             </tbody>
           </table>
         </div>
@@ -229,10 +230,10 @@ export default async function TvaReadinessDetailPage({ params }: { params: Promi
           {item.tvaReadinessChecks.map((check) => (
             <div key={check.id} className="rounded-md border border-border p-3 text-sm">
               <div className="font-extrabold">{readinessStatusLabel(check.status)} - risque {fiscalSeverityLabel(check.riskLevel)}</div>
-              <div className="text-muted">{formatDate(check.generatedAt)} - {check.missingDocumentsCount} manquant(s), {check.unreviewedDocumentsCount} a verifier, {check.rejectedDocumentsCount} rejete(s)</div>
+              <div className="text-muted">{formatDate(check.generatedAt)} - {check.missingDocumentsCount} manquant(s), {check.unreviewedDocumentsCount} à vérifier, {check.rejectedDocumentsCount} rejeté(s)</div>
             </div>
           ))}
-          {!item.tvaReadinessChecks.length ? <div className="text-sm text-muted">Aucun check sauvegarde. Changez le statut preparation pour enregistrer un snapshot.</div> : null}
+          {!item.tvaReadinessChecks.length ? <div className="text-sm text-muted">Aucun check sauvegardé. Changez le statut préparation pour enregistrer un snapshot.</div> : null}
         </div>
       </section>
     </div>

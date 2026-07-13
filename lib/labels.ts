@@ -1,9 +1,9 @@
-import { FirmStatus, UserRole } from "@prisma/client";
+import { ClientTvaFrequency, FirmStatus, FiscalSeverity, UserRole } from "@prisma/client";
 
 export function roleLabel(role: UserRole | string) {
   const labels: Record<string, string> = {
     ADMIN: "Administrateur SaaS",
-    OWNER: "Proprietaire",
+    OWNER: "Propriétaire",
     MANAGER: "Responsable",
     ASSISTANT: "Assistant",
     READ_ONLY: "Lecture seule"
@@ -17,8 +17,8 @@ export function firmStatusLabel(status: FirmStatus | string) {
     ACTIVE: "Actif",
     OVERDUE: "En retard",
     SUSPENDED: "Suspendu",
-    CANCELLED_BUT_ACTIVE: "Annule - actif",
-    CANCELLED: "Annule"
+    CANCELLED_BUT_ACTIVE: "Annulé - actif",
+    CANCELLED: "Annulé"
   };
   return labels[String(status)] || String(status);
 }
@@ -39,14 +39,14 @@ export function collectionStatusLabel(status: string) {
   const labels: Record<string, string> = {
     DRAFT: "Brouillon",
     ACTIVE: "Active",
-    CLOSED: "Fermee"
+    CLOSED: "Fermée"
   };
   return labels[status] || status;
 }
 
 export function documentQualityLabel(status: string) {
   const labels: Record<string, string> = {
-    UNREVIEWED: "A verifier",
+    UNREVIEWED: "À vérifier",
     VALID: "Valide",
     WRONG_DOCUMENT: "Mauvais document",
     UNREADABLE: "Illisible",
@@ -55,4 +55,24 @@ export function documentQualityLabel(status: string) {
     NOT_TVA: "Hors TVA"
   };
   return labels[status] || status;
+}
+
+export function tvaFrequencyLabel(frequency: ClientTvaFrequency | string) {
+  const labels: Record<string, string> = {
+    MONTHLY: "Mensuelle",
+    QUARTERLY: "Trimestrielle",
+    EXEMPT: "Exonérée",
+    CUSTOM: "Personnalisée"
+  };
+  return labels[String(frequency)] || String(frequency);
+}
+
+export function fiscalSeverityLabel(severity: FiscalSeverity | string) {
+  const labels: Record<string, string> = {
+    LOW: "Faible",
+    MEDIUM: "Moyen",
+    HIGH: "Élevé",
+    CRITICAL: "Critique"
+  };
+  return labels[String(severity)] || String(severity);
 }

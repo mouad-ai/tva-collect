@@ -2,7 +2,7 @@ import { OperationalActorType } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { clientUploadProofText } from "@/lib/constants";
 import { logServerError, publicError } from "@/lib/error-logging";
-import { createCleanLocalScan } from "@/lib/file-security";
+import { scanUploadedFile } from "@/lib/file-security";
 import { recordOperationalEvent, requestEventContext } from "@/lib/operational-events";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitIp } from "@/lib/rate-limit";
@@ -144,8 +144,9 @@ async function handlePOST(request: Request, { params }: { params: Promise<{ toke
     : null;
 
   for (const file of files) {
-    const error = validateUpload(file);
+    const error = await validateUpload(file);
     if (error) return NextResponse.json({ error }, { status: 400 });
+    const bytes = Buffer.from(await file.arrayBuffer());
     const saved = await saveLocalUpload(file, item.id);
     const document = await prisma.uploadedDocument.create({
       data: {
@@ -163,7 +164,7 @@ async function handlePOST(request: Request, { params }: { params: Promise<{ toke
         uploaderComment: uploaderComment || null
       }
     });
-    await createCleanLocalScan(document.id, item.firmId);
+    await scanUploadedFile({ documentId: document.id, firmId: item.firmId, bytes });
     await recordOperationalEvent({
       firmId: item.firmId,
       actorType: OperationalActorType.CLIENT,

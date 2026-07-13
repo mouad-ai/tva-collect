@@ -7,6 +7,33 @@ export function requestId() {
   return `ERR-${new Date().getFullYear()}-${randomUUID().slice(0, 8)}`;
 }
 
+/**
+ * Best-effort alert for ERROR/CRITICAL severities via a generic incoming
+ * webhook (Slack, Discord, Teams, or any endpoint that accepts a JSON
+ * `{ text }` body — Slack/Discord/Mattermost all do). This is the entire
+ * "monitoring" story until a real APM is wired in: no external account or
+ * new dependency required, and it's a no-op unless ALERT_WEBHOOK_URL is set.
+ * Never throws — a broken webhook must not compound the error being reported.
+ */
+async function sendCriticalErrorAlert(input: { id: string; message: string; severity: ErrorSeverity; route: string | null; firmId: string | null }) {
+  const webhookUrl = process.env.ALERT_WEBHOOK_URL;
+  if (!webhookUrl) return;
+  if (input.severity !== ErrorSeverity.ERROR && input.severity !== ErrorSeverity.CRITICAL) return;
+  try {
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        text: `[TVA Collect] ${input.severity} ${input.route || ""} — ${input.message.slice(0, 300)} (ref: ${input.id}${input.firmId ? `, firm: ${input.firmId}` : ""})`
+      }),
+      signal: AbortSignal.timeout(5000)
+    });
+  } catch {
+    // Alerting must never break the caller — the error is already durably
+    // logged to ErrorLog regardless of whether this notification succeeds.
+  }
+}
+
 export async function logServerError({
   error,
   request,
@@ -25,12 +52,13 @@ export async function logServerError({
   const id = requestId();
   const message = error instanceof Error ? error.message : String(error);
   const stack = error instanceof Error ? error.stack : null;
+  const route = request ? new URL(request.url).pathname : null;
   await prisma.errorLog.create({
     data: {
       requestId: id,
       firmId: firmId || null,
       userId: userId || null,
-      route: request ? new URL(request.url).pathname : null,
+      route,
       method: request?.method || null,
       message,
       stack,
@@ -38,6 +66,7 @@ export async function logServerError({
       metadata
     }
   }).catch(() => null);
+  await sendCriticalErrorAlert({ id, message, severity, route, firmId: firmId || null });
   return id;
 }
 

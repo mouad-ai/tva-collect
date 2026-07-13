@@ -2,6 +2,7 @@ import { WorkflowType } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireFirmUser, requireMutableFirmUser } from "@/lib/auth";
+import { isSameOriginRequest, rejectCrossOrigin } from "@/lib/csrf";
 import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
@@ -24,6 +25,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!isSameOriginRequest(request)) return rejectCrossOrigin();
   const user = await requireMutableFirmUser();
   const body = schema.safeParse(await request.json().catch(() => null));
   if (!body.success) return NextResponse.json({ error: "Collecte invalide." }, { status: 400 });

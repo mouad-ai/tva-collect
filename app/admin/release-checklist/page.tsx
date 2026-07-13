@@ -9,45 +9,45 @@ const sections = [
   {
     title: "Configuration technique",
     items: [
-      { key: "tech.env", label: "Variables .env configurees" },
-      { key: "tech.migrations", label: "Migrations Prisma appliquees" },
-      { key: "tech.build", label: "Build production valide" },
-      { key: "tech.storage", label: "Stockage uploads configure" },
-      { key: "tech.upload-limits", label: "Limites upload verifiees" },
-      { key: "tech.legal-pages", label: "Pages conditions/confidentialite presentes" }
+      { key: "tech.env", label: "Variables .env configurées" },
+      { key: "tech.migrations", label: "Migrations Prisma appliquées" },
+      { key: "tech.build", label: "Build production validé" },
+      { key: "tech.storage", label: "Stockage uploads configuré" },
+      { key: "tech.upload-limits", label: "Limites upload vérifiées" },
+      { key: "tech.legal-pages", label: "Pages conditions/confidentialité présentes" }
     ]
   },
   {
     title: "Flux cabinet",
     items: [
-      { key: "cabinet.login", label: "Connexion demo fonctionne" },
-      { key: "cabinet.client", label: "Creation/import client teste" },
-      { key: "cabinet.collection", label: "Creation collecte TVA testee" },
-      { key: "cabinet.upload-link", label: "Copie lien dépôt testee" },
-      { key: "cabinet.document-review", label: "Verification document testee" },
-      { key: "cabinet.reminder", label: "Relance WhatsApp/email manuelle testee" }
+      { key: "cabinet.login", label: "Connexion démo fonctionne" },
+      { key: "cabinet.client", label: "Création/import client testé" },
+      { key: "cabinet.collection", label: "Création collecte TVA testée" },
+      { key: "cabinet.upload-link", label: "Copie lien dépôt testée" },
+      { key: "cabinet.document-review", label: "Vérification document testée" },
+      { key: "cabinet.reminder", label: "Relance WhatsApp/email manuelle testée" }
     ]
   },
   {
     title: "Flux TVA",
     items: [
-      { key: "tva.readiness", label: "Préparation TVA calculee" },
-      { key: "tva.amounts", label: "Saisie montants TVA testee" },
-      { key: "tva.csv", label: "Export CSV TVA teste" },
-      { key: "tva.filing", label: "Dossier declaration cree" },
-      { key: "tva.payment", label: "Paiement TVA sauvegarde" },
-      { key: "tva.evidence", label: "Audit/preuves fiscales verifies" }
+      { key: "tva.readiness", label: "Préparation TVA calculée" },
+      { key: "tva.amounts", label: "Saisie montants TVA testée" },
+      { key: "tva.csv", label: "Export CSV TVA testé" },
+      { key: "tva.filing", label: "Dossier déclaration créé" },
+      { key: "tva.payment", label: "Paiement TVA sauvegardé" },
+      { key: "tva.evidence", label: "Audit/preuves fiscales vérifiées" }
     ]
   },
   {
-    title: "Securite et release",
+    title: "Sécurité et release",
     items: [
-      { key: "security.tenant-isolation", label: "Isolation cabinet verifiee sur les pages critiques" },
-      { key: "security.closed-upload", label: "Lien public bloque si collecte fermee" },
-      { key: "security.locked-upload", label: "Lien public bloque si période verrouillee" },
-      { key: "security.document-download", label: "Telechargement document protege" },
-      { key: "security.admin-tracking", label: "Admin peut suivre cabinets/leads/evenements" },
-      { key: "security.backup-doc", label: "Sauvegarde base et uploads documentee" }
+      { key: "security.tenant-isolation", label: "Isolation cabinet vérifiée sur les pages critiques" },
+      { key: "security.closed-upload", label: "Lien public bloqué si collecte fermée" },
+      { key: "security.locked-upload", label: "Lien public bloqué si période verrouillée" },
+      { key: "security.document-download", label: "Téléchargement document protégé" },
+      { key: "security.admin-tracking", label: "Admin peut suivre cabinets/leads/événements" },
+      { key: "security.backup-doc", label: "Sauvegarde base et uploads documentée" }
     ]
   },
   {
@@ -55,38 +55,38 @@ const sections = [
     items: [
       { key: "blocker.admin", label: "ADMIN SaaS créé avec mot de passe fort et firmId nul" },
       { key: "blocker.provisioning", label: "ADMIN créé cabinet + propriétaire depuis /admin/firms/new" },
-      { key: "blocker.team", label: "Propriétaire invite responsables, assistants et lecture seule" },
+      { key: "blocker.team", label: "Propriétaire invité responsables, assistants et lecture seule" },
       { key: "blocker.rbac", label: "RBAC valide pour admin, owner, manager, assistant et lecture seule" },
       { key: "blocker.session-expiry", label: "Expiration de session active" },
       { key: "blocker.rate-limit", label: "Rate limiting login et upload public actif" },
       { key: "blocker.upload-expiry", label: "Expiration des liens de dépôt active" },
-      { key: "blocker.suspended", label: "Cabinet suspendu/annule bloque dans l'app et le dépôt public" },
-      { key: "blocker.tenant-tests", label: "Tests d'isolation tenant passes" },
-      { key: "blocker.trash", label: "Corbeille et restauration testees" },
+      { key: "blocker.suspended", label: "Cabinet suspendu/annulé bloqué dans l'app et le dépôt public" },
+      { key: "blocker.tenant-tests", label: "Tests d'isolation tenant passés" },
+      { key: "blocker.trash", label: "Corbeille et restauration testées" },
       { key: "blocker.health", label: "Endpoint /api/health sain" },
-      { key: "blocker.backup-drill", label: "Strategie backup/restore testee" }
+      { key: "blocker.backup-drill", label: "Stratégie backup/restore testée" }
     ]
   },
   {
     title: "Variables production",
     items: [
       { key: "env.node", label: "NODE_ENV=production" },
-      { key: "env.database", label: "DATABASE_URL production configure" },
+      { key: "env.database", label: "DATABASE_URL production configuré" },
       { key: "env.secret", label: "AUTH_SECRET/NEXTAUTH_SECRET long et unique" },
       { key: "env.url", label: "APP_URL/NEXTAUTH_URL domaine production" },
       { key: "env.storage", label: "UPLOAD_STORAGE=s3 avec S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY, S3_SECRET_KEY" },
       { key: "env.email", label: "EMAIL_PROVIDER=smtp avec SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD" },
-      { key: "env.admin-email", label: "ADMIN_EMAIL configure" },
-      { key: "env.no-demo-secret", label: "Aucun secret demo ou mot de passe password123" }
+      { key: "env.admin-email", label: "ADMIN_EMAIL configuré" },
+      { key: "env.no-demo-secret", label: "Aucun secret démo ou mot de passe password123" }
     ]
   }
 ];
 
 const statusLabels: Record<ReleaseChecklistStatus, string> = {
   TODO: "À vérifier",
-  PASSED: "Valide",
-  FAILED: "Echec",
-  BLOCKED: "Bloque"
+  PASSED: "Validé",
+  FAILED: "Échec",
+  BLOCKED: "Bloqué"
 };
 
 const statusStyles: Record<ReleaseChecklistStatus, string> = {
@@ -146,8 +146,8 @@ export default async function ReleaseChecklistPage() {
     { label: "Clients", value: clients },
     { label: "Collectes", value: collections },
     { label: "Documents", value: documents },
-    { label: "Declarations TVA", value: filingCases },
-    { label: "Contrôles preparation", value: readinessChecks },
+    { label: "Déclarations TVA", value: filingCases },
+    { label: "Contrôles préparation", value: readinessChecks },
     { label: "Événements audit", value: events }
   ];
 
@@ -156,7 +156,7 @@ export default async function ReleaseChecklistPage() {
       <div className="page-header">
         <div>
           <h1>Checklist de recette</h1>
-          <p>Verification sauvegardee avant pilote ou production.</p>
+          <p>Vérification sauvegardée avant pilote ou production.</p>
         </div>
       </div>
 
@@ -164,18 +164,18 @@ export default async function ReleaseChecklistPage() {
         <div className="card p-4">
           <div className="text-sm font-bold text-muted">Progression</div>
           <div className="mt-2 text-3xl font-black">{counts.PASSED}/{allItems.length}</div>
-          <p className="mt-1 text-xs font-bold text-muted">Derniere verification: {formatDate(lastCheckedAt)}</p>
+          <p className="mt-1 text-xs font-bold text-muted">Dernière vérification : {formatDate(lastCheckedAt)}</p>
         </div>
         <div className={`rounded-lg border p-4 ${statusStyles.PASSED}`}>
-          <div className="text-sm font-bold">Valides</div>
+          <div className="text-sm font-bold">Validés</div>
           <div className="mt-2 text-3xl font-black">{counts.PASSED}</div>
         </div>
         <div className={`rounded-lg border p-4 ${statusStyles.BLOCKED}`}>
-          <div className="text-sm font-bold">Bloques</div>
+          <div className="text-sm font-bold">Bloqués</div>
           <div className="mt-2 text-3xl font-black">{counts.BLOCKED}</div>
         </div>
         <div className={`rounded-lg border p-4 ${statusStyles.FAILED}`}>
-          <div className="text-sm font-bold">Echecs</div>
+          <div className="text-sm font-bold">Échecs</div>
           <div className="mt-2 text-3xl font-black">{counts.FAILED}</div>
         </div>
       </section>
@@ -193,9 +193,9 @@ export default async function ReleaseChecklistPage() {
         <div className="flex items-start gap-3">
           <TriangleAlert size={18} className="mt-0.5 shrink-0" />
           <div>
-            <div className="font-black">Recette sauvegardee, pas automatique</div>
+            <div className="font-black">Recette sauvegardée, pas automatique</div>
             <p className="mt-1">
-              Cette page garde les decisions de recette dans la base. Les commandes techniques restent a lancer cote serveur:
+              Cette page garde les décisions de recette dans la base. Les commandes techniques restent à lancer côté serveur :
               <span className="ml-1 font-mono">npm run release:check</span>, <span className="font-mono">npm test</span> et{" "}
               <span className="font-mono">npm run smoke:functional</span>.
             </p>
@@ -220,7 +220,7 @@ export default async function ReleaseChecklistPage() {
                         <div>
                           <div className="font-black">{item.label}</div>
                           <div className="mt-1 text-xs font-bold opacity-80">
-                            {statusLabels[status]} - {saved?.checkedByUser?.name || saved?.checkedByUser?.email || "non verifie"} - {formatDate(saved?.checkedAt)}
+                            {statusLabels[status]} - {saved?.checkedByUser?.name || saved?.checkedByUser?.email || "non vérifié"} - {formatDate(saved?.checkedAt)}
                           </div>
                         </div>
                       </div>
@@ -258,10 +258,10 @@ export default async function ReleaseChecklistPage() {
         <div className="flex items-start gap-3">
           <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
           <div>
-            <div className="font-black">Definition de fini</div>
+            <div className="font-black">Définition de fini</div>
             <p className="mt-1">
-              Le produit est pret pour pilote quand tous les blocages production sont valides, sans echec ouvert, et que le flux complet connexion, clients,
-              collecte, dépôt mobile, verification, relance, preparation TVA, declaration, export et usage admin passe sans intervention technique.
+              Le produit est prêt pour pilote quand tous les blocages production sont validés, sans échec ouvert, et que le flux complet connexion, clients,
+              collecte, dépôt mobile, vérification, relance, préparation TVA, déclaration, export et usage admin passe sans intervention technique.
             </p>
           </div>
         </div>

@@ -44,7 +44,8 @@ function MissionCard({ item }: { item: OperationRecommendation }) {
           <div className="mt-1 text-sm text-muted">{item.collectionName}</div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-black", confidenceTone[item.confidence])}>
+          <span className={cn("badge", confidenceTone[item.confidence])}>
+            <span className="badge-dot" aria-hidden="true" />
             {confidenceLabel[item.confidence]}
           </span>
           <span className="rounded-full border border-border px-2.5 py-1 text-xs font-black">P{item.priority}</span>
@@ -58,7 +59,7 @@ function MissionCard({ item }: { item: OperationRecommendation }) {
       <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted">
         <span>{item.estimatedMinutes} min</span>
         <span>{item.missingCount} manquant(s)</span>
-        <span>{item.pendingReviewCount} a verifier</span>
+        <span>{item.pendingReviewCount} à vérifier</span>
         <span>{item.invalidCount} invalide(s)</span>
         <span>{item.reminderCount} relance(s)</span>
       </div>
@@ -124,15 +125,15 @@ export default async function WorkQueuePage() {
   return (
     <div className="content-stack">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight">Operations du jour</h1>
-        <p className="text-sm text-muted">Plan quotidien calcule depuis les échéances, documents, relances et risques client.</p>
+        <h1 className="text-2xl font-extrabold tracking-tight">Opérations du jour</h1>
+        <p className="text-sm text-muted">Plan quotidien calculé depuis les échéances, documents, relances et risques client.</p>
       </div>
 
       <section className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
         <div className="card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-primary">
             <AlertTriangle size={16} />
-            Cerveau operations
+            Cerveau opérations
           </div>
           <h2 className="mt-2 text-xl font-black">Ce qui doit se passer aujourd&apos;hui</h2>
           <div className="mt-4 grid gap-2">
@@ -144,20 +145,20 @@ export default async function WorkQueuePage() {
             ))}
             {!plan.recoveryActions.length ? (
               <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm font-bold text-emerald-800">
-                Aucun risque opérationnel fort detecte aujourd&apos;hui.
+                Aucun risque opérationnel fort détecté aujourd&apos;hui.
               </div>
             ) : null}
           </div>
         </div>
 
         <div className={cn("rounded-lg border p-4", plan.overloadMinutes ? "border-red-200 bg-red-50 text-red-900" : "border-emerald-200 bg-emerald-50 text-emerald-900")}>
-          <div className="text-sm font-bold">Contrôle de charge reel</div>
+          <div className="text-sm font-bold">Contrôle de charge réel</div>
           <div className="mt-2 text-3xl font-black">{workloadHours}h{String(workloadMinutes).padStart(2, "0")}</div>
-          <p className="mt-1 text-sm">Capacite estimee: {capacityHours}h / jour.</p>
+          <p className="mt-1 text-sm">Capacité estimée : {capacityHours}h / jour.</p>
           {plan.overloadMinutes ? (
-            <p className="mt-3 text-sm font-bold">Surcharge: {Math.ceil(plan.overloadMinutes / 60)}h. Reporter les actions faibles ou demander du renfort.</p>
+            <p className="mt-3 text-sm font-bold">Surcharge : {Math.ceil(plan.overloadMinutes / 60)}h. Reporter les actions faibles ou demander du renfort.</p>
           ) : (
-            <p className="mt-3 text-sm font-bold">Mission realiste pour la journee.</p>
+            <p className="mt-3 text-sm font-bold">Mission réaliste pour la journée.</p>
           )}
           <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
             <div className="rounded-md border border-white/60 bg-white/60 p-3">
@@ -174,8 +175,8 @@ export default async function WorkQueuePage() {
 
       <section className="grid gap-4 xl:grid-cols-3">
         <MissionSection title="Matin" items={plan.grouped.morning} empty="Aucune mission forte pour ce matin." />
-        <MissionSection title="Apres-midi" items={plan.grouped.afternoon} empty="Aucune relance prioritaire pour l'apres-midi." />
-        <MissionSection title="Avant de partir" items={plan.grouped.endOfDay} empty="Aucun dossier pret a clôturer." />
+        <MissionSection title="Après-midi" items={plan.grouped.afternoon} empty="Aucune relance prioritaire pour l'après-midi." />
+        <MissionSection title="Avant de partir" items={plan.grouped.endOfDay} empty="Aucun dossier prêt à clôturer." />
       </section>
     </div>
   );

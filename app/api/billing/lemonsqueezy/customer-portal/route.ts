@@ -1,11 +1,13 @@
 import { UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { requireFirmAnyRole } from "@/lib/auth";
+import { isSameOriginRequest, rejectCrossOrigin } from "@/lib/csrf";
 import { logServerError } from "@/lib/error-logging";
 import { fetchLemonSqueezyCustomerPortalUrl, LemonSqueezyConfigError } from "@/lib/lemonsqueezy";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
+  if (!isSameOriginRequest(request)) return rejectCrossOrigin();
   const user = await requireFirmAnyRole([UserRole.OWNER, UserRole.MANAGER]);
 
   const subscription = await prisma.firmSubscription.findUnique({ where: { firmId: user.firmId } });

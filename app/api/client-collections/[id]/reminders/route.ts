@@ -2,6 +2,7 @@ import { OperationalActorType, ReminderChannel } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireMutableFirmUser } from "@/lib/auth";
+import { isSameOriginRequest, rejectCrossOrigin } from "@/lib/csrf";
 import { sendReminderEmail } from "@/lib/email";
 import { loggedApiError, logServerError } from "@/lib/error-logging";
 import { recordOperationalEvent, requestEventContext } from "@/lib/operational-events";
@@ -13,6 +14,7 @@ const schema = z.object({
 });
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!isSameOriginRequest(request)) return rejectCrossOrigin();
   const user = await requireMutableFirmUser();
   const { id } = await params;
   try {

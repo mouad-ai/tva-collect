@@ -4,6 +4,7 @@ import { deleteClientAction, updateClientAction } from "@/app/actions";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireFirmUser } from "@/lib/auth";
 import { buildClientComplianceProfile, complianceTrendLabel, serviceTierLabel } from "@/lib/client-compliance";
+import { fiscalSeverityLabel, tvaFrequencyLabel } from "@/lib/labels";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 
@@ -42,10 +43,10 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
 
       <section className="grid gap-4 lg:grid-cols-[280px_1fr]">
         <div className={`rounded-lg border p-4 ${compliance.tone}`}>
-          <div className="text-sm font-bold">Score de conformite</div>
+          <div className="text-sm font-bold">Score de conformité</div>
           <div className="mt-2 text-4xl font-black">{compliance.score}/100</div>
           <div className="mt-1 text-sm font-black">{compliance.label}</div>
-          <div className="mt-4 text-sm">Pression recommandee: <span className="font-extrabold">{compliance.pressureLevel}</span></div>
+          <div className="mt-4 text-sm">Pression recommandée : <span className="font-extrabold">{compliance.pressureLevel}</span></div>
           <div className="text-sm">Timing relance: <span className="font-extrabold">{compliance.nextReminderTiming}</span></div>
         </div>
         <div className="card p-4">
@@ -60,7 +61,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           </div>
           <div className="grid gap-3 md:grid-cols-4">
             <div className="rounded-md border border-border p-3">
-              <div className="text-xs font-bold text-muted">Reponse moyenne</div>
+              <div className="text-xs font-bold text-muted">Réponse moyenne</div>
               <div className="mt-1 text-xl font-black">{compliance.averageResponseDays ?? "-"} j</div>
             </div>
             <div className="rounded-md border border-border p-3">
@@ -91,7 +92,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             </div>
           </div>
           <div className="mt-4 rounded-md border border-border p-3 text-sm">
-            Niveau de service recommande: <span className="font-extrabold">{serviceTierLabel(compliance.serviceTier)}</span>
+            Niveau de service recommandé : <span className="font-extrabold">{serviceTierLabel(compliance.serviceTier)}</span>
             {compliance.repricingSignal ? <span className="ml-2 font-black text-red-700">Signal revalorisation</span> : null}
           </div>
         </div>
@@ -103,8 +104,8 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             <div className="flex items-center gap-2 font-black"><Landmark size={17} /> Profil fiscal</div>
             <p className="mt-1 text-sm text-muted">
               {client.fiscalProfile
-                ? `TVA: ${client.fiscalProfile.tvaFrequency}, risque: ${client.fiscalProfile.fiscalRiskLevel}.`
-                : "Profil fiscal incomplet: frequence TVA, regime, ICE/IF et responsable dossier a completer."}
+                ? `TVA : ${tvaFrequencyLabel(client.fiscalProfile.tvaFrequency)}, risque : ${fiscalSeverityLabel(client.fiscalProfile.fiscalRiskLevel)}.`
+                : "Profil fiscal incomplet : fréquence TVA, régime, ICE/IF et responsable dossier à compléter."}
             </p>
           </div>
           <Link href={`/app/clients/${client.id}/fiscal-profile`} className="btn">

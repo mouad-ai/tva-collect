@@ -3,7 +3,7 @@ import { InvoiceStatus } from "@prisma/client";
 import { BillingInvoiceStatusBadge } from "@/components/BillingInvoiceStatusBadge";
 import { PageHeader } from "@/components/PageHeader";
 import { requireAdmin } from "@/lib/auth";
-import { formatMad } from "@/lib/billing";
+import { formatMad, invoiceStatusLabel } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 
@@ -38,7 +38,7 @@ export default async function AdminInvoicesPage({
           <Link href="/admin/invoices" className={!status ? "btn btn-primary" : "btn"}>Toutes</Link>
           {(["UNPAID", "PAYMENT_PROOF_SUBMITTED", "OVERDUE", "PAID", "DRAFT"] as InvoiceStatus[]).map((item) => (
             <Link key={item} href={`/admin/invoices?status=${item}`} className={status === item ? "btn btn-primary" : "btn"}>
-              {item}
+              {invoiceStatusLabel(item)}
             </Link>
           ))}
         </div>

@@ -67,7 +67,7 @@ export default async function AdminFirmsPage({ searchParams }: { searchParams: P
         <PaginationControls total={total} page={page} limit={limit} searchParams={params} />
         {!firms.length ? (
           <div className="p-4">
-            <EmptyState title={params.search ? "Aucun cabinet trouve" : "Aucun cabinet"} description={params.search ? "Essayez un autre filtre ou effacez la recherche." : "Créez le premier cabinet et son propriétaire pour demarrer."} actionHref="/admin/firms/new" actionLabel="Nouveau cabinet" />
+            <EmptyState title={params.search ? "Aucun cabinet trouvé" : "Aucun cabinet"} description={params.search ? "Essayez un autre filtre ou effacez la recherche." : "Créez le premier cabinet et son propriétaire pour démarrer."} actionHref="/admin/firms/new" actionLabel="Nouveau cabinet" />
           </div>
         ) : (
         <div className="table-wrap">
@@ -82,7 +82,7 @@ export default async function AdminFirmsPage({ searchParams }: { searchParams: P
                 <th>Clients</th>
                 <th>Collectes</th>
                 <th>Documents</th>
-                <th>Cree le</th>
+                <th>Créé le</th>
               </tr>
             </thead>
             <tbody>

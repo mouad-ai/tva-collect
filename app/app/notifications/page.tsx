@@ -35,7 +35,7 @@ export default async function NotificationsPage({
     <div className="content-stack">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight">Notifications</h1>
-        <p className="text-sm text-muted">Activite recente du cabinet: depots, relances, validations et operations importantes.</p>
+        <p className="text-sm text-muted">Activité récente du cabinet : dépôts, relances, validations et opérations importantes.</p>
       </div>
 
       <section className="card min-w-0 overflow-hidden">
@@ -46,7 +46,7 @@ export default async function NotificationsPage({
         <PaginationControls total={total} page={page} limit={limit} searchParams={params} />
         {!events.length ? (
           <div className="p-4">
-            <EmptyState icon={Bell} title="Aucune notification" description="Les nouveaux depots, relances et actions importantes apparaitront ici." />
+            <EmptyState icon={Bell} title="Aucune notification" description="Les nouveaux dépôts, relances et actions importantes apparaîtront ici." />
           </div>
         ) : (
           <div className="grid divide-y divide-border">

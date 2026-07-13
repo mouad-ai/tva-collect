@@ -40,7 +40,7 @@ import { recordOperationalEvent } from "@/lib/operational-events";
 import { generatePasswordResetToken, hashPasswordResetToken, isPasswordResetUsable, passwordResetExpiresAt, passwordResetUrl } from "@/lib/password-reset";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
-import { createCleanLocalScan } from "@/lib/file-security";
+import { scanUploadedFile } from "@/lib/file-security";
 import { saveLocalUpload, validateUpload } from "@/lib/storage";
 import { tvaFilingDeadlinesWithConfig } from "@/lib/tva-filing";
 import { calculateTvaReadiness } from "@/lib/tva-readiness";
@@ -346,6 +346,7 @@ export async function acceptInviteAndSetPassword(token: string, formData: FormDa
       where: { id: user.id },
       data: {
         passwordHash: await bcrypt.hash(password, 10),
+        passwordChangedAt: new Date(),
         isActive: true,
         disabledAt: null,
         disabledReason: null
@@ -455,6 +456,7 @@ export async function resetPasswordWithToken(token: string, formData: FormData) 
       where: { id: reset.userId },
       data: {
         passwordHash: await bcrypt.hash(password, 10),
+        passwordChangedAt: new Date(),
         disabledAt: null,
         disabledReason: null
       }
@@ -1684,6 +1686,18 @@ export async function uploadDocumentsAction(token: string, formData: FormData) {
   if (item.uploadTokenExpiresAt && item.uploadTokenExpiresAt < new Date()) {
     return { error: "Ce lien de dépôt a expire. Contactez votre cabinet pour recevoir un nouveau lien." };
   }
+  // This server action is the real handler behind the public /upload/[token]
+  // page — it must be rate-limited the same as its JSON-API twin
+  // (app/api/public/upload/[token]/route.ts), otherwise that route's limits
+  // are trivially bypassed by submitting the page's own form directly.
+  const ip = await actionIp();
+  const [tokenLimit, ipLimit] = await Promise.all([
+    rateLimit({ key: `upload:token:${token}`, limit: 20, windowMs: 15 * 60 * 1000 }),
+    rateLimit({ key: `upload:ip:${ip}`, limit: 40, windowMs: 15 * 60 * 1000 })
+  ]);
+  if (!tokenLimit.allowed || !ipLimit.allowed) {
+    return { error: "Trop de tentatives. Veuillez patienter avant de reessayer." };
+  }
   if (formData.get("clientAcknowledgement") !== "yes") {
     return { error: "Veuillez confirmer que les documents manquants ou en retard peuvent retarder le traitement." };
   }
@@ -1713,8 +1727,9 @@ export async function uploadDocumentsAction(token: string, formData: FormData) {
   const targetDoc = requiredDocumentName ? item.requiredDocuments.find((doc) => doc.name === requiredDocumentName) : null;
 
   for (const file of files) {
-    const error = validateUpload(file);
+    const error = await validateUpload(file);
     if (error) return { error };
+    const bytes = Buffer.from(await file.arrayBuffer());
     const saved = await saveLocalUpload(file, item.id);
     const document = await prisma.uploadedDocument.create({
       data: {
@@ -1732,7 +1747,7 @@ export async function uploadDocumentsAction(token: string, formData: FormData) {
         uploaderComment: text(formData, "uploaderComment")
       }
     });
-    await createCleanLocalScan(document.id, item.firmId);
+    await scanUploadedFile({ documentId: document.id, firmId: item.firmId, bytes });
     await recordOperationalEvent({
       firmId: item.firmId,
       actorType: OperationalActorType.CLIENT,

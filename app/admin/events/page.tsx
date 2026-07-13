@@ -46,6 +46,7 @@ export default async function AdminEventsPage({
     }),
     prisma.operationalEvent.count({ where })
   ]);
+  const firmNameById = new Map(firms.map((firm) => [firm.id, firm.name]));
 
   return (
     <div className="grid gap-6">
@@ -71,7 +72,7 @@ export default async function AdminEventsPage({
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Firm</th>
+                <th>Cabinet</th>
                 <th>Type</th>
                 <th>Titre</th>
                 <th>Acteur</th>
@@ -82,14 +83,14 @@ export default async function AdminEventsPage({
               {events.map((event) => (
                 <tr key={event.id}>
                   <td>{formatDateTime(event.occurredAt)}</td>
-                  <td>{event.firmId}</td>
+                  <td>{firmNameById.get(event.firmId) || event.firmId}</td>
                   <td>{event.eventType}</td>
                   <td>{event.eventTitle}</td>
                   <td>{event.actorType}</td>
                   <td>{event.source}</td>
                 </tr>
               ))}
-              {!events.length ? <tr><td colSpan={6}><EmptyState title="Aucun evenement" description="Aucun audit ne correspond aux filtres." /></td></tr> : null}
+              {!events.length ? <tr><td colSpan={6}><EmptyState title="Aucun événement" description="Aucun audit ne correspond aux filtres." /></td></tr> : null}
             </tbody>
           </table>
         </div>

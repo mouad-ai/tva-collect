@@ -65,7 +65,7 @@ export default async function FiscalAuditsPage({
     <div className="content-stack">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight">Audits fiscaux</h1>
-        <p className="text-sm text-muted">Défense fiscale: contrôles, notices, preuves demandees et reponses.</p>
+        <p className="text-sm text-muted">Défense fiscale : contrôles, notices, preuves demandées et réponses.</p>
       </div>
 
       <section className="grid gap-4 md:grid-cols-3">
@@ -74,11 +74,11 @@ export default async function FiscalAuditsPage({
           <div className="mt-2 text-3xl font-black">{openCases}</div>
         </div>
         <div className="card p-4">
-          <div className="text-sm font-bold text-muted">Échéances depassees</div>
+          <div className="text-sm font-bold text-muted">Échéances dépassées</div>
           <div className="mt-2 text-3xl font-black">{overdue}</div>
         </div>
         <div className="card p-4">
-          <div className="text-sm font-bold text-muted">Reponses a preparer</div>
+          <div className="text-sm font-bold text-muted">Réponses à préparer</div>
           <div className="mt-2 text-3xl font-black">{responseDrafts.length}</div>
         </div>
       </section>
@@ -94,10 +94,10 @@ export default async function FiscalAuditsPage({
             <label>Type<select name="type" defaultValue={FiscalAuditCaseType.TAX_CONTROL}>
               {Object.values(FiscalAuditCaseType).map((type) => <option key={type} value={type}>{fiscalAuditTypeLabel(type)}</option>)}
             </select></label>
-            <label>Severite<select name="severity" defaultValue={FiscalSeverity.MEDIUM}>
+            <label>Sévérité<select name="severity" defaultValue={FiscalSeverity.MEDIUM}>
               {Object.values(FiscalSeverity).map((severity) => <option key={severity} value={severity}>{fiscalSeverityLabel(severity)}</option>)}
             </select></label>
-            <label>Declaration liee<select name="relatedFilingCaseId" defaultValue="">
+            <label>Déclaration liée<select name="relatedFilingCaseId" defaultValue="">
               <option value="">Aucun</option>
               {filingCases.map((filingCase) => {
                 const client = clientsById.get(filingCase.clientId);
@@ -106,20 +106,20 @@ export default async function FiscalAuditsPage({
             </select></label>
           </div>
           <label>Titre<input name="title" placeholder="Contrôle TVA Juillet - demande d'information" required /></label>
-          <label>Resume<textarea name="summary" rows={3} placeholder="Ce que demande l'administration ou le client." /></label>
+          <label>Résumé<textarea name="summary" rows={3} placeholder="Ce que demande l'administration ou le client." /></label>
           <button className="btn btn-primary w-fit"><Plus size={16} /> Créer dossier</button>
         </form>
       </section>
 
       <section className="card min-w-0 overflow-hidden">
         <div className="border-b border-border p-4">
-          <h2 className="font-extrabold">Dossiers de defense fiscale</h2>
+          <h2 className="font-extrabold">Dossiers de défense fiscale</h2>
         </div>
         <SearchFilterForm
-          searchPlaceholder="Rechercher client, titre, resume"
+          searchPlaceholder="Rechercher client, titre, résumé"
           filters={[
             { name: "status", label: "Statut", value: params.status, options: [{ value: "", label: "Tous les statuts" }, ...Object.values(FiscalAuditCaseStatus).map((item) => ({ value: item, label: fiscalStatusLabel(item) }))] },
-            { name: "severity", label: "Severite", value: params.severity, options: [{ value: "", label: "Toutes les severites" }, ...Object.values(FiscalSeverity).map((item) => ({ value: item, label: fiscalSeverityLabel(item) }))] }
+            { name: "severity", label: "Sévérité", value: params.severity, options: [{ value: "", label: "Toutes les sévérités" }, ...Object.values(FiscalSeverity).map((item) => ({ value: item, label: fiscalSeverityLabel(item) }))] }
           ]}
         />
         <PaginationControls total={auditTotal} page={page} limit={limit} searchParams={params} />
@@ -128,9 +128,9 @@ export default async function FiscalAuditsPage({
             <EmptyState
               icon={FileWarning}
               title="Aucun dossier fiscal"
-              description="Créez un dossier uniquement lorsqu'un contrôle, une demande client ou une preuve fiscale doit etre suivie."
+              description="Créez un dossier uniquement lorsqu'un contrôle, une demande client ou une preuve fiscale doit être suivie."
               actionHref="/app/tva-filing"
-              actionLabel="Voir declarations TVA"
+              actionLabel="Voir déclarations TVA"
             />
           </div>
         ) : (
@@ -141,7 +141,7 @@ export default async function FiscalAuditsPage({
                 <th>Cas</th>
                 <th>Client</th>
                 <th>Statut</th>
-                <th>Severite</th>
+                <th>Sévérité</th>
                 <th>Risque</th>
                 <th>Ouvert</th>
                 <th>Action</th>
@@ -168,8 +168,8 @@ export default async function FiscalAuditsPage({
                       <div className="text-xs text-muted">{fiscalAuditTypeLabel(auditCase.type)}</div>
                     </td>
                     <td>{client?.companyName || "-"}</td>
-                    <td><span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-black", fiscalStatusTone(auditCase.status))}>{fiscalStatusLabel(auditCase.status)}</span></td>
-                    <td><span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-black", severityTone(auditCase.severity))}>{fiscalSeverityLabel(auditCase.severity)}</span></td>
+                    <td><span className={cn("badge", fiscalStatusTone(auditCase.status))}><span className="badge-dot" aria-hidden="true" />{fiscalStatusLabel(auditCase.status)}</span></td>
+                    <td><span className={cn("badge", severityTone(auditCase.severity))}><span className="badge-dot" aria-hidden="true" />{fiscalSeverityLabel(auditCase.severity)}</span></td>
                     <td>
                       <div className="font-bold">{risk.score}/100</div>
                       <div className="text-xs text-muted">{fiscalSeverityLabel(risk.level)}</div>

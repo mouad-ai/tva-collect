@@ -174,7 +174,8 @@ export default async function ReportsPage() {
                         </Link>
                       </td>
                       <td>
-                        <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-bold", compliance.tone)}>
+                        <span className={cn("badge", compliance.tone)}>
+                          <span className="badge-dot" aria-hidden="true" />
                           {compliance.score}/100 · {compliance.label}
                         </span>
                       </td>
@@ -226,12 +227,14 @@ export default async function ReportsPage() {
                         </Link>
                       </td>
                       <td>
-                        <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-bold", compliance.tone)}>
+                        <span className={cn("badge", compliance.tone)}>
+                          <span className="badge-dot" aria-hidden="true" />
                           {compliance.score}/100
                         </span>
                       </td>
                       <td>
-                        <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-bold", complianceTrendTone(compliance.trend))}>
+                        <span className={cn("badge", complianceTrendTone(compliance.trend))}>
+                          <span className="badge-dot" aria-hidden="true" />
                           {complianceTrendLabel(compliance.trend)}
                         </span>
                       </td>

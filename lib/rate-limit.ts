@@ -1,3 +1,5 @@
+import { ErrorSeverity } from "@prisma/client";
+import { logServerError } from "@/lib/error-logging";
 import { prisma } from "@/lib/prisma";
 
 function isMissingRateLimitTable(error: unknown) {
@@ -40,9 +42,18 @@ export async function rateLimit({
       where: { key },
       data: { attempts: { increment: 1 } }
     });
-  }).catch((error) => {
+  }).catch(async (error) => {
     if (isMissingRateLimitTable(error)) {
+      // Fail-open by design (blocking every request platform-wide because a
+      // rate-limit table is missing would be worse than the missing limit
+      // itself), but this means rate limiting is silently OFF — that's a
+      // security-relevant infra problem, not a warning to lose in stdout.
       console.warn("RateLimitBucket table is missing; allowing request without persistent rate limit.");
+      await logServerError({
+        error: new Error(`RateLimitBucket table missing — rate limiting is disabled for key "${key}".`),
+        severity: ErrorSeverity.CRITICAL,
+        metadata: { key }
+      });
       return { attempts: 1, resetAt };
     }
     throw error;

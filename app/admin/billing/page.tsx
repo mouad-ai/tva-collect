@@ -14,12 +14,15 @@ export default async function AdminBillingPage() {
     prisma.billingEvent.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
     prisma.firm.count({ where: { status: { in: [FirmStatus.OVERDUE, FirmStatus.SUSPENDED] } } })
   ]);
+  const eventFirmIds = events.map((event) => event.firmId).filter((id): id is string => Boolean(id));
+  const eventFirms = eventFirmIds.length ? await prisma.firm.findMany({ where: { id: { in: eventFirmIds } }, select: { id: true, name: true } }) : [];
+  const eventFirmNameById = new Map(eventFirms.map((firm) => [firm.id, firm.name]));
 
   return (
     <div className="content-stack">
       <PageHeader
         title="Facturation SaaS"
-        description="Controle Lemon Squeezy: abonnements, statuts locaux, variantes et webhooks."
+        description="Contrôle Lemon Squeezy : abonnements, statuts locaux, variantes et webhooks."
         actions={
           <>
             <Link href="/admin/subscriptions" className="btn btn-primary">Abonnements</Link>
@@ -31,13 +34,13 @@ export default async function AdminBillingPage() {
       <section className="grid gap-4 md:grid-cols-4">
         <div className="stat-card"><div className="stat-card-label">Plans actifs</div><div className="stat-card-value">{plans.length}</div></div>
         <div className="stat-card"><div className="stat-card-label">Abonnements</div><div className="stat-card-value">{subscriptions.length}</div></div>
-        <div className="stat-card"><div className="stat-card-label">Webhooks recents</div><div className="stat-card-value">{events.length}</div></div>
-        <div className="stat-card"><div className="stat-card-label">Cabinets a surveiller</div><div className="stat-card-value text-red-700">{blockedFirms}</div></div>
+        <div className="stat-card"><div className="stat-card-label">Webhooks récents</div><div className="stat-card-value">{events.length}</div></div>
+        <div className="stat-card"><div className="stat-card-label">Cabinets à surveiller</div><div className="stat-card-value text-red-700">{blockedFirms}</div></div>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
         <div className="card min-w-0 overflow-hidden">
-          <div className="border-b border-border p-4"><h2 className="font-extrabold">Abonnements recents</h2></div>
+          <div className="border-b border-border p-4"><h2 className="font-extrabold">Abonnements récents</h2></div>
           <div className="table-wrap">
             <table className="data-table">
               <thead><tr><th>Cabinet</th><th>Plan</th><th>Statut</th><th>Renouvellement</th></tr></thead>
@@ -60,13 +63,13 @@ export default async function AdminBillingPage() {
           <div className="border-b border-border p-4"><h2 className="font-extrabold">Derniers webhooks Lemon</h2></div>
           <div className="table-wrap">
             <table className="data-table">
-              <thead><tr><th>Evenement</th><th>Cabinet</th><th>Traitement</th><th>Date</th></tr></thead>
+              <thead><tr><th>Événement</th><th>Cabinet</th><th>Traitement</th><th>Date</th></tr></thead>
               <tbody>
                 {events.map((event) => (
                   <tr key={event.id}>
                     <td>{event.eventName}</td>
-                    <td>{event.firmId || "-"}</td>
-                    <td>{event.processingError ? "Erreur" : event.processedAt ? "Traite" : "Recu"}</td>
+                    <td>{event.firmId ? (eventFirmNameById.get(event.firmId) || event.firmId) : "-"}</td>
+                    <td>{event.processingError ? "Erreur" : event.processedAt ? "Traité" : "Reçu"}</td>
                     <td>{formatDate(event.createdAt)}</td>
                   </tr>
                 ))}
@@ -85,8 +88,8 @@ export default async function AdminBillingPage() {
               <div className="font-extrabold">{plan.name}</div>
               <div className="mt-1 text-2xl font-black">{formatMad(plan.monthlyPriceMad)}</div>
               <div className="mt-2 text-xs text-muted">
-                Monthly variant: {plan.lemonMonthlyVariantId || "non configure"}<br />
-                Yearly variant: {plan.lemonYearlyVariantId || "non configure"}
+                Monthly variant: {plan.lemonMonthlyVariantId || "non configuré"}<br />
+                Yearly variant: {plan.lemonYearlyVariantId || "non configuré"}
               </div>
             </div>
           ))}

@@ -1,4 +1,4 @@
-import { mkdir, readFile, stat, writeFile } from "fs/promises";
+import { access, constants as fsConstants, mkdir, readFile, stat, writeFile } from "fs/promises";
 import { createHash, createHmac, randomUUID } from "crypto";
 import path from "path";
 import { allowedExtensions, allowedMimeTypes, maxUploadSize } from "@/lib/constants";
@@ -145,13 +145,44 @@ export function localUploadRoot() {
   return path.join(process.cwd(), "uploads", scopedName);
 }
 
-export function validateUpload(file: File) {
+function isZipSignature(head: Buffer) {
+  // xlsx/docx are ZIP containers (local file header, empty archive, or spanned archive).
+  return head.length >= 4 && head[0] === 0x50 && head[1] === 0x4b && (head[2] === 0x03 || head[2] === 0x05 || head[2] === 0x07);
+}
+
+function isOleSignature(head: Buffer) {
+  // legacy doc/xls: OLE Compound File Binary Format.
+  return head.length >= 8 && head[0] === 0xd0 && head[1] === 0xcf && head[2] === 0x11 && head[3] === 0xe0 && head[4] === 0xa1 && head[5] === 0xb1 && head[6] === 0x1a && head[7] === 0xe1;
+}
+
+// Verifies the file's actual bytes match what its extension claims, so a
+// script/HTML payload renamed "invoice.pdf" with a spoofed Content-Type is
+// rejected instead of trusted on filename/MIME alone (both attacker-controlled).
+const magicSignatureByExtension: Record<string, (head: Buffer) => boolean> = {
+  pdf: (head) => head.length >= 5 && head.subarray(0, 5).toString("latin1") === "%PDF-",
+  png: (head) => head.length >= 8 && head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47 && head[4] === 0x0d && head[5] === 0x0a && head[6] === 0x1a && head[7] === 0x0a,
+  jpg: (head) => head.length >= 3 && head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff,
+  jpeg: (head) => head.length >= 3 && head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff,
+  xlsx: isZipSignature,
+  docx: isZipSignature,
+  xls: isOleSignature,
+  doc: isOleSignature
+};
+
+export async function validateUpload(file: File) {
   const extension = file.name.split(".").pop()?.toLowerCase() || "";
   if (!allowedExtensions.has(extension) || !allowedMimeTypes.has(file.type)) {
     return "Type de fichier non autorise.";
   }
   if (file.size > maxUploadSize) {
     return "Fichier trop volumineux. Maximum 10 Mo.";
+  }
+  const signatureCheck = magicSignatureByExtension[extension];
+  if (signatureCheck) {
+    const head = Buffer.from(await file.slice(0, 16).arrayBuffer());
+    if (!signatureCheck(head)) {
+      return "Le contenu du fichier ne correspond pas a son extension declaree.";
+    }
   }
   return null;
 }
@@ -178,4 +209,43 @@ export async function readLocalUpload(storageKey: string) {
   const info = await stat(fullPath);
   const bytes = await readFile(fullPath);
   return { bytes, size: info.size, fullPath };
+}
+
+/**
+ * Lightweight, side-effect-free storage connectivity check for /api/health.
+ * Local: confirms the upload directory exists and is writable. S3: signs a
+ * GET for a key that need not exist and discards the body — 200/404 both
+ * prove the endpoint is reachable and credentials are accepted; anything
+ * else (403 = bad credentials, network error, timeout) is reported
+ * unhealthy. (Must sign and fetch with the same method — SigV4 includes the
+ * HTTP method in the signature, so HEAD can't reuse a GET signature.)
+ */
+export async function checkStorageHealth(): Promise<{ ok: boolean; detail: string }> {
+  if (storageMode() === "s3") {
+    try {
+      const url = s3RequestUrl("__healthcheck__");
+      const now = amzDate();
+      const payloadHash = sha256Hex("");
+      const signed = s3Authorization({ method: "GET", url, payloadHash, now });
+      const response = await fetch(url, {
+        method: "GET",
+        headers: { ...requestHeaders(signed.headers), authorization: signed.authorization },
+        signal: AbortSignal.timeout(5000)
+      });
+      await response.body?.cancel();
+      if (response.status === 200 || response.status === 404) {
+        return { ok: true, detail: `s3 reachable (${response.status})` };
+      }
+      return { ok: false, detail: `s3 responded ${response.status}` };
+    } catch (error) {
+      return { ok: false, detail: error instanceof Error ? error.message : String(error) };
+    }
+  }
+  try {
+    await mkdir(localUploadRoot(), { recursive: true });
+    await access(localUploadRoot(), fsConstants.W_OK);
+    return { ok: true, detail: "local upload directory writable" };
+  } catch (error) {
+    return { ok: false, detail: error instanceof Error ? error.message : String(error) };
+  }
 }

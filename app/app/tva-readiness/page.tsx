@@ -72,7 +72,7 @@ export default async function TvaReadinessPage({
     <div className="content-stack">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight">Préparation TVA</h1>
-        <p className="text-sm text-muted">Contrôle avant declaration: documents, revue, anomalies simples, montants manuels et statut TVA.</p>
+        <p className="text-sm text-muted">Contrôle avant déclaration : documents, revue, anomalies simples, montants manuels et statut TVA.</p>
       </div>
 
       <section className="grid gap-4 md:grid-cols-4">
@@ -85,7 +85,7 @@ export default async function TvaReadinessPage({
           <div className="mt-2 text-3xl font-black">{warnings}</div>
         </div>
         <div className="card p-4">
-          <div className="flex items-center gap-2 text-sm font-bold text-muted"><LockKeyhole size={16} /> Bloques</div>
+          <div className="flex items-center gap-2 text-sm font-bold text-muted"><LockKeyhole size={16} /> Bloqués</div>
           <div className="mt-2 text-3xl font-black">{blocked}</div>
         </div>
         <div className="card p-4">
@@ -97,11 +97,11 @@ export default async function TvaReadinessPage({
       <section className="card min-w-0 overflow-hidden">
         <div className="border-b border-border p-4">
           <h2 className="font-extrabold">Dossiers TVA clients</h2>
-          <p className="text-sm text-muted">Ouvrez un dossier pour saisir les montants HT/TVA/TTC et marquer la preparation TVA.</p>
+          <p className="text-sm text-muted">Ouvrez un dossier pour saisir les montants HT/TVA/TTC et marquer la préparation TVA.</p>
         </div>
         <SearchFilterForm
-          searchPlaceholder="Rechercher client, telephone, période"
-          filters={[{ name: "preparation", label: "Preparation", value: params.preparation, options: [
+          searchPlaceholder="Rechercher client, téléphone, période"
+          filters={[{ name: "preparation", label: "Préparation", value: params.preparation, options: [
             { value: "", label: "Tous les statuts" },
             ...Object.values(TvaPreparationStatus).map((status) => ({ value: status, label: preparationStatusLabel(status) }))
           ] }]}
@@ -114,7 +114,7 @@ export default async function TvaReadinessPage({
                 <th>Client</th>
                 <th>Période</th>
                 <th>Readiness</th>
-                <th>Preparation</th>
+                <th>Préparation</th>
                 <th>Documents</th>
                 <th>TVA nette</th>
                 <th>Dernier check</th>
@@ -133,21 +133,23 @@ export default async function TvaReadinessPage({
                     <div className="text-xs text-muted">{monthNames[item.collectionPeriod.month - 1]} {item.collectionPeriod.year}</div>
                   </td>
                   <td>
-                    <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-black", readinessTone(readiness.status))}>
+                    <span className={cn("badge", readinessTone(readiness.status))}>
+                      <span className="badge-dot" aria-hidden="true" />
                       {readinessStatusLabel(readiness.status)}
                     </span>
-                    <div className={cn("mt-1 inline-flex rounded-full border px-2 py-0.5 text-[11px] font-black", riskTone[readiness.riskLevel])}>
+                    <div className={cn("badge mt-1", riskTone[readiness.riskLevel])}>
+                      <span className="badge-dot" aria-hidden="true" />
                       Risque {fiscalSeverityLabel(readiness.riskLevel)}
                     </div>
                   </td>
                   <td>{preparationStatusLabel(item.tvaPreparationStatus)}</td>
                   <td>
                     <div className="font-bold">{item.uploadedDocuments.length} reçu(s)</div>
-                    <div className="text-xs text-muted">{readiness.missingDocumentsCount} manquant(s), {readiness.unreviewedDocumentsCount} a verifier</div>
+                    <div className="text-xs text-muted">{readiness.missingDocumentsCount} manquant(s), {readiness.unreviewedDocumentsCount} à vérifier</div>
                   </td>
                   <td>
                     <div className="font-extrabold">{formatMad(readiness.summary.netTVA)}</div>
-                    <div className="text-xs text-muted">{readiness.summary.entriesCount} entree(s)</div>
+                    <div className="text-xs text-muted">{readiness.summary.entriesCount} entrée(s)</div>
                   </td>
                   <td>{latestCheck ? formatDate(latestCheck.generatedAt) : "-"}</td>
                   <td><Link href={`/app/tva-readiness/${item.id}`} className="btn">Ouvrir</Link></td>

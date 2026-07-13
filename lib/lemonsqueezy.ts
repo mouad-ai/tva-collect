@@ -1,5 +1,7 @@
 import { createHmac, timingSafeEqual } from "crypto";
-import { FirmStatus, Prisma, SubscriptionStatus } from "@prisma/client";
+import { FirmStatus, OperationalActorType, Prisma, SubscriptionStatus } from "@prisma/client";
+import { getFirmUsage, overLimitReasons } from "@/lib/billing";
+import { recordOperationalEvent } from "@/lib/operational-events";
 import { prisma } from "@/lib/prisma";
 import { appHost, isAppHost, isLocalHost } from "@/lib/routing";
 
@@ -353,6 +355,25 @@ export async function processLemonSqueezyWebhook(payload: Record<string, unknown
           cancelledAt: firmStatus === FirmStatus.CANCELLED ? now : null
         }
       });
+
+      // A plan change (typically a downgrade) can leave a firm above its new
+      // plan's limits. We never delete/disable anything over a billing event
+      // — requireWithinLimit() already stops further growth — but this makes
+      // the over-limit state auditable instead of silently invisible.
+      const usageAfterChange = await getFirmUsage(context.firmId);
+      const overLimit = overLimitReasons(plan, usageAfterChange);
+      if (overLimit.length) {
+        await recordOperationalEvent({
+          firmId: context.firmId,
+          actorType: OperationalActorType.SYSTEM,
+          eventType: "PLAN_OVER_LIMIT",
+          eventTitle: "Cabinet au-dessus des limites du plan",
+          eventDescription: `Après ${context.eventName}, le cabinet dépasse les limites du plan ${plan.code} : ${overLimit.join(" · ")}.`,
+          metadata: { planCode: plan.code, reasons: overLimit },
+          source: "LEMONSQUEEZY_WEBHOOK"
+        });
+      }
+
       await prisma.billingEvent.update({
         where: { id: event.id },
         data: { firmId: context.firmId, subscriptionId: subscription.id, processedAt: now, processingError: null }

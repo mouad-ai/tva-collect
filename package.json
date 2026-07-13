@@ -2,6 +2,9 @@
   "name": "tva-collect",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,7 +12,7 @@
     "lint": "eslint .",
     "test": "tsx --test tests/*.ts && node tests/security.test.mjs",
     "smoke:functional": "tsx scripts/functional-smoke.ts",
-    "production:check": "tsx scripts/production-check.ts"  ,
+    "production:check": "tsx scripts/production-check.ts",
     "release:check": "prisma validate && npm run lint && npm run build",
     "postinstall": "prisma generate",
     "seed": "prisma db seed",

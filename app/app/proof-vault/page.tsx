@@ -52,12 +52,12 @@ export default async function ProofVaultPage({
     <div className="content-stack">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight">Coffre de preuves</h1>
-        <p className="text-sm text-muted">Historique opérationnel: demandes, relances, dépôts, contrôles et decisions.</p>
+        <p className="text-sm text-muted">Historique opérationnel : demandes, relances, dépôts, contrôles et décisions.</p>
       </div>
 
       <section className="card p-4">
         <SearchFilterForm
-          searchPlaceholder="Rechercher preuve, source, detail"
+          searchPlaceholder="Rechercher preuve, source, détail"
           filters={[
             { name: "clientId", label: "Client", value: params.clientId, options: [{ value: "", label: "Tous les clients" }, ...clients.map((client) => ({ value: client.id, label: client.companyName }))] },
             { name: "eventType", label: "Type", value: params.eventType, options: [{ value: "", label: "Tous les types" }, ...eventTypes.map((item) => ({ value: item.eventType, label: item.eventType }))] }
@@ -75,7 +75,7 @@ export default async function ProofVaultPage({
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Evenement</th>
+                <th>Événement</th>
                 <th>Client</th>
                 <th>Source</th>
                 <th>Acteur</th>
@@ -110,7 +110,7 @@ export default async function ProofVaultPage({
                 </tr>
               ))}
               {!events.length ? (
-                <tr><td colSpan={6}><EmptyState title="Aucun evenement trouve" description="Les prochains dépôts, relances et contrôles apparaitront ici." /></td></tr>
+                <tr><td colSpan={6}><EmptyState title="Aucun événement trouvé" description="Les prochains dépôts, relances et contrôles apparaîtront ici." /></td></tr>
               ) : null}
             </tbody>
           </table>

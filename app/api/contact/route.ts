@@ -3,6 +3,7 @@ import { z } from "zod";
 import { sendLeadNotificationEmail } from "@/lib/email";
 import { logServerError } from "@/lib/error-logging";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, rateLimitIp } from "@/lib/rate-limit";
 
 const schema = z.object({
   name: z.string().min(1),
@@ -27,6 +28,14 @@ export async function POST(request: Request) {
   const body = schema.safeParse(Object.fromEntries(form));
   const redirectTo = body.success && body.data.redirectTo === "/demo" ? "/demo" : "/contact";
   if (!body.success) {
+    return NextResponse.redirect(new URL(`${redirectTo}?error=1`, request.url), 303);
+  }
+
+  // Public, unauthenticated form — without this, it can be spammed to flood
+  // the Lead table and trigger unlimited sendLeadNotificationEmail sends.
+  const ip = rateLimitIp(request);
+  const { allowed } = await rateLimit({ key: `contact:ip:${ip}`, limit: 5, windowMs: 15 * 60 * 1000 });
+  if (!allowed) {
     return NextResponse.redirect(new URL(`${redirectTo}?error=1`, request.url), 303);
   }
   const numberOfClients = body.data.numberOfClients === "" ? null : Number(body.data.numberOfClients);

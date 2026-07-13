@@ -12,6 +12,8 @@ TVA Collect is a focused B2B SaaS MVP for Moroccan accounting firms. It helps a 
 - Signed-cookie credentials auth with role checks and session expiry
 - Local file storage abstraction for MVP uploads
 
+**Requires Node.js 20+** (Next.js 16 needs 18.18+ minimum; the production Docker image uses Node 22 — see `.nvmrc`). Running with an older Node will fail with cryptic install/build errors, not a clear version message.
+
 ## Setup
 
 1. Install dependencies:
@@ -32,14 +34,19 @@ cp .env.example .env
 docker compose up -d
 ```
 
-4. Run migrations and seed demo data:
+4. Run migrations:
 
 ```bash
 npx prisma migrate dev
-npx prisma db seed
 ```
 
-5. Start the app:
+5. Seed demo data (optional, safe to re-run — see `docs/demo-pilot-guide.md` for details):
+
+```bash
+ALLOW_DEMO_SEED=true DEMO_PASSWORD='Choose-A-Strong-One-1!' npx prisma db seed
+```
+
+6. Start the app:
 
 ```bash
 npm run dev
@@ -49,10 +56,13 @@ Open http://localhost:3000.
 
 ## Demo Login
 
-- SaaS Admin: `demo@tvacollect.ma` / `password123`
-- Cabinet Owner: `owner@cabinet-demo.ma` / `password123`
+The seed script never hardcodes a password — it's whatever `DEMO_PASSWORD` you set when running it (step 5 above). After seeding:
 
-For a real environment, create the first platform admin manually:
+- Cabinet owner: `demo@tvacollect.com`
+- Cabinet assistant: `assistant-demo@tvacollect.com`
+- Trial cabinet owner (second firm, for admin-list variety): `essai@tvacollect.com`
+
+The seed does **not** create a platform `ADMIN` account. Create/verify one separately:
 
 ```bash
 npm run create-admin
@@ -130,13 +140,14 @@ Full launch sequence: `docs/production-launch-runbook.md`.
 
 ## Known Limitations
 
-- Reminder messages are copied manually; no real notification is sent.
+- Reminders can send a real email (`sendReminderEmail`) and open a WhatsApp deep link with the message pre-filled — but there is still no automatic/scheduled reminder job; a human has to trigger each one.
 - There is no ZIP export in this MVP.
 - The status logic is intentionally simple and document-level classification is manual.
-- Malware scanning is a local `NONE` provider foundation; production should wire ClamAV or an external scanner.
-- Login/upload rate limits are stored in PostgreSQL. For very high traffic, move them to Redis or another purpose-built shared store.
+- Malware scanning is pluggable: if `CLAMAV_HOST` is set, uploads are streamed to a real clamd daemon; if unset, files are only checked for a valid extension/MIME/content-signature (no real antivirus scan) — see `lib/file-security.ts`.
+- Login/upload rate limits are stored in PostgreSQL. For very high traffic, move them to Redis or another purpose-built shared store. If the rate-limit table is unreachable, requests are currently allowed through rather than blocked (fail-open) — see `lib/rate-limit.ts`.
 - Uploads support `UPLOAD_STORAGE=local` and S3-compatible `UPLOAD_STORAGE=s3`; production is designed for private MinIO.
 - Local uploads are scoped under `uploads/`; use MinIO/S3-compatible storage before real client files.
+- No APM/error-tracking or uptime monitoring is wired in — `/api/health` checks DB connectivity only, not storage.
 
 ## Security Environment
 
@@ -227,8 +238,8 @@ Critical blockers that must be green before real production:
 
 Then verify the manual flow:
 
-1. Login as `demo@tvacollect.ma` and verify `/admin/firms`.
-2. Login as `owner@cabinet-demo.ma`.
+1. Login as your platform admin (created via `npm run create-admin`) and verify `/admin/firms`.
+2. Login as `demo@tvacollect.com` (after running the demo seed, see "Demo Login" above).
 3. Create or import clients.
 4. Create a TVA collection and copy one public upload link.
 5. Upload files from `/upload/[token]`.

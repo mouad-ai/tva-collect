@@ -69,8 +69,8 @@ export default async function FiscalAuditDetailPage({ params }: { params: Promis
           <p className="text-sm text-muted">{client?.companyName || "Client"} - {fiscalAuditTypeLabel(auditCase.type)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <span className={cn("inline-flex rounded-full border px-3 py-2 text-sm font-black", fiscalStatusTone(auditCase.status))}>{fiscalStatusLabel(auditCase.status)}</span>
-          <span className={cn("inline-flex rounded-full border px-3 py-2 text-sm font-black", severityTone(auditCase.severity))}>{fiscalSeverityLabel(auditCase.severity)}</span>
+          <span className={cn("badge", fiscalStatusTone(auditCase.status))}><span className="badge-dot" aria-hidden="true" />{fiscalStatusLabel(auditCase.status)}</span>
+          <span className={cn("badge", severityTone(auditCase.severity))}><span className="badge-dot" aria-hidden="true" />{fiscalSeverityLabel(auditCase.severity)}</span>
         </div>
       </div>
 
@@ -87,14 +87,14 @@ export default async function FiscalAuditDetailPage({ params }: { params: Promis
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="font-extrabold">Contrôle du dossier</h2>
-              <p className="text-sm text-muted">{auditCase.summary || "Aucun resume ajoute."}</p>
-              {filingCase ? <p className="mt-2 text-sm text-muted">Declaration liee : {filingCase.periodMonth}/{filingCase.periodYear}</p> : null}
+              <p className="text-sm text-muted">{auditCase.summary || "Aucun résumé ajouté."}</p>
+              {filingCase ? <p className="mt-2 text-sm text-muted">Déclaration liée : {filingCase.periodMonth}/{filingCase.periodYear}</p> : null}
             </div>
             <form action={updateFiscalAuditCaseStatusAction.bind(null, auditCase.id)} className="flex flex-wrap gap-2">
               <select name="status" defaultValue={auditCase.status}>
                 {Object.values(FiscalAuditCaseStatus).map((status) => <option key={status} value={status}>{fiscalStatusLabel(status)}</option>)}
               </select>
-              <button className="btn btn-primary">Mettre a jour</button>
+              <button className="btn btn-primary">Mettre à jour</button>
             </form>
           </div>
         </div>
@@ -110,10 +110,10 @@ export default async function FiscalAuditDetailPage({ params }: { params: Promis
             <label>Statut<select name="status" defaultValue={TaxAuthorityNoticeStatus.RESPONSE_REQUIRED}>
               {Object.values(TaxAuthorityNoticeStatus).map((status) => <option key={status} value={status}>{noticeStatusLabel(status)}</option>)}
             </select></label>
-            <label>Reference<input name="referenceNumber" /></label>
+            <label>Référence<input name="referenceNumber" /></label>
             <label>Reçu le<input name="receivedAt" type="date" defaultValue={dateInputValue(new Date())} /></label>
-            <label>Échéance reponse<input name="responseDeadline" type="date" /></label>
-            <label>Resume<textarea name="summary" rows={3} /></label>
+            <label>Échéance réponse<input name="responseDeadline" type="date" /></label>
+            <label>Résumé<textarea name="summary" rows={3} /></label>
             <button className="btn btn-primary w-fit">Ajouter avis</button>
           </form>
           <div className="mt-4 grid gap-2">
@@ -124,6 +124,7 @@ export default async function FiscalAuditDetailPage({ params }: { params: Promis
                 <div className="mt-1">{notice.summary || "-"}</div>
               </div>
             ))}
+            {!notices.length ? <p className="text-sm text-muted">Aucun avis de l&apos;administration fiscale enregistré.</p> : null}
           </div>
         </div>
 
@@ -137,7 +138,7 @@ export default async function FiscalAuditDetailPage({ params }: { params: Promis
               {Object.values(FiscalEvidenceRequestStatus).map((status) => <option key={status} value={status}>{evidenceStatusLabel(status)}</option>)}
             </select></label>
             <label>Description<textarea name="description" rows={2} /></label>
-            <label>Reponse / preuve<textarea name="responseText" rows={3} /></label>
+            <label>Réponse / preuve<textarea name="responseText" rows={3} /></label>
             <button className="btn btn-primary w-fit">Ajouter demande</button>
           </form>
           <div className="mt-4 grid gap-2">
@@ -148,17 +149,18 @@ export default async function FiscalAuditDetailPage({ params }: { params: Promis
                 <div className="mt-1">{request.responseText || request.description || "-"}</div>
               </div>
             ))}
+            {!evidenceRequests.length ? <p className="text-sm text-muted">Aucune demande de preuve enregistrée.</p> : null}
           </div>
         </div>
 
         <div className="card p-4">
-          <h2 className="mb-3 font-black">Brouillon de reponse fiscale</h2>
+          <h2 className="mb-3 font-black">Brouillon de réponse fiscale</h2>
           <form action={createAuditResponseDraftAction.bind(null, auditCase.id)} className="grid gap-3">
-            <label>Titre<input name="title" placeholder="Reponse a la demande reference..." required /></label>
+            <label>Titre<input name="title" placeholder="Réponse à la demande référence..." required /></label>
             <label>Statut<select name="status" defaultValue={AuditResponseStatus.DRAFT}>
               {Object.values(AuditResponseStatus).map((status) => <option key={status} value={status}>{responseStatusLabel(status)}</option>)}
             </select></label>
-            <label>Corps de reponse<textarea name="responseBody" rows={8} required defaultValue={`Objet: Reponse contrôle fiscal\n\nClient: ${client?.companyName || ""}\nReference: \n\nResume de la reponse:\n\nPieces jointes:\n\nPrepare par: ${user.name}\nDate: ${new Date().toLocaleDateString("fr-FR")}`} /></label>
+            <label>Corps de réponse<textarea name="responseBody" rows={8} required defaultValue={`Objet : Réponse contrôle fiscal\n\nClient : ${client?.companyName || ""}\nRéférence : \n\nRésumé de la réponse :\n\nPièces jointes :\n\nPréparé par : ${user.name}\nDate : ${new Date().toLocaleDateString("fr-FR")}`} /></label>
             <button className="btn btn-primary w-fit"><Send size={16} /> Créer brouillon</button>
           </form>
           <div className="mt-4 grid gap-2">
@@ -169,6 +171,7 @@ export default async function FiscalAuditDetailPage({ params }: { params: Promis
                 <pre className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap font-sans text-xs text-muted">{response.responseBody}</pre>
               </div>
             ))}
+            {!responses.length ? <p className="text-sm text-muted">Aucun brouillon de réponse fiscale créé.</p> : null}
           </div>
         </div>
       </section>
@@ -186,7 +189,7 @@ export default async function FiscalAuditDetailPage({ params }: { params: Promis
               </div>
             </div>
           ))}
-          {!events.length ? <p className="text-sm text-muted">Aucun evenement fiscal ou opérationnel trouve.</p> : null}
+          {!events.length ? <p className="text-sm text-muted">Aucun événement fiscal ou opérationnel trouvé.</p> : null}
         </div>
       </section>
     </div>

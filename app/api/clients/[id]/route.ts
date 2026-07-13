@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { OperationalActorType } from "@prisma/client";
 import { z } from "zod";
 import { requireFirmUser, requireMutableFirmUser } from "@/lib/auth";
+import { isSameOriginRequest, rejectCrossOrigin } from "@/lib/csrf";
 import { loggedApiError } from "@/lib/error-logging";
 import { recordOperationalEvent } from "@/lib/operational-events";
 import { prisma } from "@/lib/prisma";
@@ -32,6 +33,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!isSameOriginRequest(request)) return rejectCrossOrigin();
   const user = await requireMutableFirmUser();
   const { id } = await params;
   const body = clientSchema.safeParse(await request.json().catch(() => null));
@@ -50,6 +52,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!isSameOriginRequest(request)) return rejectCrossOrigin();
   const user = await requireMutableFirmUser();
   const { id } = await params;
   try {

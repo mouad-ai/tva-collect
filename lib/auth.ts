@@ -48,7 +48,7 @@ export function createSessionToken(userId: string, now = Date.now()) {
   return `${payload}.${sign(payload)}`;
 }
 
-export function verifySessionToken(token?: string): { userId: string; shouldRefresh: boolean } | null {
+export function verifySessionToken(token?: string): { userId: string; createdAt: number; shouldRefresh: boolean } | null {
   if (!token) return null;
   const [payload, signature] = token.split(".");
   if (!payload || !signature) return null;
@@ -63,7 +63,7 @@ export function verifySessionToken(token?: string): { userId: string; shouldRefr
     const now = Date.now();
     if (now - decoded.createdAt > sessionMaxAgeSeconds() * 1000) return null;
     if (now - lastActivityAt > idleTimeoutMs()) return null;
-    return { userId: decoded.userId, shouldRefresh: now - lastActivityAt > 60_000 };
+    return { userId: decoded.userId, createdAt: decoded.createdAt, shouldRefresh: now - lastActivityAt > 60_000 };
   } catch {
     return null;
   }
@@ -135,6 +135,14 @@ export async function getCurrentUser() {
     await clearSessionCookie();
     return null;
   }
+  // A session token issued before the user's last password change/revocation
+  // is stale even if its signature and expiry are still valid — sessions are
+  // stateless, so this is how a password reset actually logs out other
+  // devices instead of leaving them silently authenticated.
+  if (user.passwordChangedAt && session.createdAt < user.passwordChangedAt.getTime()) {
+    await clearSessionCookie();
+    return null;
+  }
   if (session.shouldRefresh) await refreshSessionCookie(session.userId);
   return user;
 }
@@ -157,8 +165,16 @@ export function canManageTeam(role: UserRole) {
   return role === UserRole.OWNER || role === UserRole.MANAGER;
 }
 
-export async function revokeUserSessions(_userId: string) {
-  return;
+/**
+ * Invalidates every existing session for a user immediately. Sessions carry
+ * no server-side identifier to delete, so this works by bumping
+ * passwordChangedAt — getCurrentUser() rejects any token issued before it.
+ */
+export async function revokeUserSessions(userId: string) {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordChangedAt: new Date() }
+  });
 }
 
 export async function requireAdmin() {

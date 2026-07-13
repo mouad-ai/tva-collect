@@ -48,7 +48,7 @@ export function submissionStatusLabel(status: TvaSubmissionStatus | string) {
   return {
     NOT_SUBMITTED: "Non soumis",
     SUBMITTED: "Soumis",
-    REJECTED: "Rejete",
+    REJECTED: "Rejeté",
     NEEDS_CORRECTION: "Correction requise"
   }[String(status)] || String(status);
 }
@@ -61,6 +61,25 @@ export function paymentStatusLabel(status: TvaPaymentStatus | string) {
     LATE: "En retard",
     FAILED: "Échec"
   }[String(status)] || String(status);
+}
+
+export function paymentMethodLabel(method: string) {
+  return {
+    BANK_TRANSFER: "Virement bancaire",
+    ONLINE_PORTAL: "Portail en ligne",
+    CASH: "Espèces",
+    OTHER: "Autre"
+  }[method] || method;
+}
+
+export function receiptTypeLabel(type: string) {
+  return {
+    DECLARATION_RECEIPT: "Accusé de déclaration",
+    PAYMENT_RECEIPT: "Reçu de paiement",
+    PORTAL_SCREENSHOT: "Capture du portail",
+    TAX_AUTHORITY_REFERENCE: "Référence administration fiscale",
+    OTHER: "Autre"
+  }[type] || type;
 }
 
 export function paymentStatusTone(status: string) {

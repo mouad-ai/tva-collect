@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import test from "node:test";
-import { FirmStatus, SubscriptionStatus } from "@prisma/client";
-import { usagePercent } from "../lib/billing";
+import { FirmStatus, SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
+import { overLimitReasons, usagePercent } from "../lib/billing";
 import {
   extractLemonWebhookContext,
   mapLemonStatusToSubscriptionStatus,
@@ -32,12 +32,49 @@ test("Lemon Squeezy statuses map to local subscription and firm access statuses"
   assert.equal(mapLemonStatusToSubscriptionStatus("past_due"), SubscriptionStatus.OVERDUE);
   assert.equal(mapLemonStatusToSubscriptionStatus("unpaid"), SubscriptionStatus.SUSPENDED);
   assert.equal(mapLemonStatusToSubscriptionStatus("cancelled"), SubscriptionStatus.CANCELLED_BUT_ACTIVE);
+  assert.equal(mapLemonStatusToSubscriptionStatus("expired"), SubscriptionStatus.SUSPENDED);
+  assert.equal(mapLemonStatusToSubscriptionStatus("paused"), SubscriptionStatus.SUSPENDED);
+  assert.equal(mapLemonStatusToSubscriptionStatus("resumed"), SubscriptionStatus.ACTIVE);
 
   assert.equal(mapSubscriptionStatusToFirmStatus(SubscriptionStatus.ACTIVE), FirmStatus.ACTIVE);
   assert.equal(mapSubscriptionStatusToFirmStatus(SubscriptionStatus.TRIAL), FirmStatus.TRIAL);
   assert.equal(mapSubscriptionStatusToFirmStatus(SubscriptionStatus.OVERDUE), FirmStatus.OVERDUE);
   assert.equal(mapSubscriptionStatusToFirmStatus(SubscriptionStatus.SUSPENDED), FirmStatus.SUSPENDED);
   assert.equal(mapSubscriptionStatusToFirmStatus(SubscriptionStatus.CANCELLED_BUT_ACTIVE), FirmStatus.ACTIVE);
+});
+
+test("Lemon Squeezy payment/invoice events resolve the parent subscription ID differently than lifecycle events", () => {
+  // Lifecycle event: `data` IS the subscription resource, so data.id is the subscription ID.
+  const lifecyclePayload = {
+    meta: { event_name: "subscription_updated", event_id: "evt_1" },
+    data: { id: "sub_lifecycle_id", attributes: { status: "active" } }
+  };
+  assert.equal(extractLemonWebhookContext(lifecyclePayload).lemonSubscriptionId, "sub_lifecycle_id");
+
+  // Payment/invoice event: `data` is a subscription-invoice resource — data.id
+  // is the INVOICE's own ID, and the real subscription ID only lives in
+  // attributes.subscription_id. Regression test for a bug where this used to
+  // read data.id here too and would misattribute the payment to the wrong
+  // (or a nonexistent) subscription.
+  const paymentPayload = {
+    meta: { event_name: "subscription_payment_failed", event_id: "evt_2" },
+    data: { id: "invoice_id_not_a_subscription", attributes: { subscription_id: "sub_payment_parent_id", status: "past_due" } }
+  };
+  assert.equal(extractLemonWebhookContext(paymentPayload).lemonSubscriptionId, "sub_payment_parent_id");
+});
+
+test("overLimitReasons flags a firm above its plan limits without ever suggesting deletion", () => {
+  const plan = { clientLimit: 20, userLimit: 1, activeCollectionLimit: 1, storageLimitMb: 2048 } as SubscriptionPlan;
+
+  assert.deepEqual(overLimitReasons(plan, { clients: 10, users: 1, activeCollections: 1, storageBytes: 0, files: 0 }), []);
+
+  const overUsage = { clients: 25, users: 3, activeCollections: 1, storageBytes: 0, files: 0 };
+  const reasons = overLimitReasons(plan, overUsage);
+  assert.equal(reasons.length, 2);
+  assert.match(reasons[0], /Clients : 25 \/ 20/);
+  assert.match(reasons[1], /Utilisateurs : 3 \/ 1/);
+
+  assert.deepEqual(overLimitReasons(null, overUsage), []);
 });
 
 test("Lemon Squeezy webhook context extracts firm, plan, subscription, portal, and card fields", () => {

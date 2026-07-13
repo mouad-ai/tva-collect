@@ -4,6 +4,7 @@ import Link from "next/link";
 import { addClientsToCollectionAction, markClientCollectionCompleteAction, markRequiredDocumentAction, updateClientCollectionNotesAction, updateCollectionStatusAction } from "@/app/actions";
 import { BulkReminderButton } from "@/components/BulkReminderButton";
 import { CopyButton } from "@/components/CopyButton";
+import { EmptyState } from "@/components/EmptyState";
 import { PaginationControls } from "@/components/PaginationControls";
 import { ReminderButton } from "@/components/ReminderButton";
 import { SearchFilterForm } from "@/components/SearchFilterForm";
@@ -94,7 +95,7 @@ export default async function CollectionDetailPage({
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">{collection.name}</h1>
           <p className="text-sm text-muted">
-            {workflowTemplate.label} - {monthNames[collection.month - 1]} {collection.year} - {collection.clientCollections.length} clients - échéance estimee {formatDate(deadline)}
+            {workflowTemplate.label} - {monthNames[collection.month - 1]} {collection.year} - {collection.clientCollections.length} clients - échéance estimée {formatDate(deadline)}
           </p>
           <div className="mt-2"><StatusBadge status={collection.status} /></div>
         </div>
@@ -126,7 +127,7 @@ export default async function CollectionDetailPage({
       </section>
 
       <section className="card p-4">
-        <h2 className="mb-4 font-extrabold">Ajouter des clients a la collecte</h2>
+        <h2 className="mb-4 font-extrabold">Ajouter des clients à la collecte</h2>
         {availableClients.length ? (
           <form action={addClientsToCollectionAction.bind(null, collection.id)} className="grid gap-4">
             <div className="grid gap-2 md:grid-cols-2">
@@ -137,10 +138,10 @@ export default async function CollectionDetailPage({
                 </label>
               ))}
             </div>
-            <button className="btn btn-primary w-fit">Ajouter a la collecte</button>
+            <button className="btn btn-primary w-fit">Ajouter à la collecte</button>
           </form>
         ) : (
-          <p className="text-sm text-muted">Tous les clients existants sont deja dans cette collecte.</p>
+          <p className="text-sm text-muted">Tous les clients existants sont déjà dans cette collecte.</p>
         )}
       </section>
 
@@ -149,14 +150,13 @@ export default async function CollectionDetailPage({
           <h2 className="font-extrabold">Suivi des dossiers</h2>
         </div>
         <SearchFilterForm
-          searchPlaceholder="Rechercher client, telephone, note"
+          searchPlaceholder="Rechercher client, téléphone, note"
           filters={[{ name: "status", label: "Statut", value: tableParams.status, options: [
             { value: "", label: "Tous les statuts" },
-            { value: "NOT_STARTED", label: "Pas commence" },
+            { value: "NOT_STARTED", label: "Non commencé" },
             { value: "IN_PROGRESS", label: "En cours" },
             { value: "MISSING", label: "Documents manquants" },
-            { value: "COMPLETE", label: "Complet" },
-            { value: "CLOSED", label: "Cloture" }
+            { value: "COMPLETE", label: "Dossier complet" }
           ] }]}
         />
         <PaginationControls total={filteredClientCollections.length} page={page} limit={limit} searchParams={tableParams} />
@@ -206,7 +206,7 @@ export default async function CollectionDetailPage({
                         {linkOpen ? (
                           <span className="font-bold text-emerald-700">Ouvert {linkOpen.count} fois - {formatDate(linkOpen.latest)}</span>
                         ) : linkSent ? (
-                          <span className="font-bold text-amber-700">Relance envoyee, lien jamais ouvert</span>
+                          <span className="font-bold text-amber-700">Relance envoyée, lien jamais ouvert</span>
                         ) : (
                           <span className="text-muted">Pas encore ouvert</span>
                         )}
@@ -232,7 +232,8 @@ export default async function CollectionDetailPage({
                       <div className="text-xs text-muted">{formatDate(deadline)}</div>
                     </td>
                     <td className="min-w-[170px]">
-                      <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-bold", riskTone[clientRisk.risk])}>
+                      <span className={cn("badge", riskTone[clientRisk.risk])}>
+                        <span className="badge-dot" aria-hidden="true" />
                         {deadlineRiskLabel(clientRisk.risk)}
                       </span>
                       <div className="mt-2 text-xs text-muted">{clientRisk.nextAction}</div>
@@ -272,7 +273,7 @@ export default async function CollectionDetailPage({
                 );
               })}
               {!paginatedClientCollections.length ? (
-                <tr><td colSpan={10} className="text-muted">Aucun dossier client ne correspond aux filtres.</td></tr>
+                <tr><td colSpan={10}><EmptyState title="Aucun dossier client" description="Aucun dossier client ne correspond aux filtres, ou aucun client n'a encore été ajouté à cette collecte." /></td></tr>
               ) : null}
             </tbody>
           </table>
