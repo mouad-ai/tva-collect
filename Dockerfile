@@ -36,6 +36,11 @@ RUN apk add --no-cache openssl
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
+# next start reads next.config.ts at RUNTIME (this app has no standalone
+# output). Without this file in the image, Next silently ran on all-default
+# config — most painfully serverActions.bodySizeLimit=1MB, which 413-crashed
+# every phone-photo upload no matter what the repo's config said.
+COPY --from=builder /app/next.config.ts ./next.config.ts
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
