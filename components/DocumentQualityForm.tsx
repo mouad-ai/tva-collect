@@ -79,7 +79,7 @@ export function DocumentQualityForm({
       if (result && "error" in result) {
         setStatus(previousStatus);
         setComment(previousComment);
-        setError(result.error);
+        setError(result.error || "Impossible d enregistrer la modification.");
         return;
       }
       if (result && "ok" in result && result.ok) {

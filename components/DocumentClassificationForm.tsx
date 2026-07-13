@@ -42,7 +42,7 @@ export function DocumentClassificationForm({
       if (result && "error" in result) {
         setRequiredDocumentId(previousId);
         setRequiredDocumentName(previousName);
-        setError(result.error);
+        setError(result.error || "Impossible d enregistrer la modification.");
         return;
       }
       if (result && "ok" in result && result.ok) {
