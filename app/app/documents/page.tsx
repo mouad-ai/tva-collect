@@ -79,6 +79,12 @@ export default async function DocumentsPage({
   ]);
 
   const hasActiveFilters = Boolean(params.search || params.clientId || params.collectionPeriodId || params.qualityStatus);
+  const returnSearchParams = new URLSearchParams();
+  for (const key of ["clientId", "collectionPeriodId", "search", "qualityStatus", "page", "limit", "sort"] as const) {
+    const value = params[key];
+    if (value) returnSearchParams.set(key, value);
+  }
+  const documentsReturnTo = `/app/documents${returnSearchParams.size ? `?${returnSearchParams.toString()}` : ""}`;
 
   return (
     <div className="content-stack">
@@ -210,6 +216,7 @@ export default async function DocumentsPage({
                       </td>
                       <td>
                         <form action={classifyUploadedDocumentAction.bind(null, document.id)} className="doc-inline-form">
+                          <input type="hidden" name="returnTo" value={documentsReturnTo} />
                           <div className="doc-inline-form-row">
                             <select name="requiredDocumentId" defaultValue={document.requiredDocumentId || ""} aria-label="Type de document">
                               <option value="">Autre / non classé</option>
@@ -229,6 +236,7 @@ export default async function DocumentsPage({
                       </td>
                       <td className="doc-review-cell">
                         <form action={updateUploadedDocumentQualityAction.bind(null, document.id)} className="doc-inline-form">
+                          <input type="hidden" name="returnTo" value={documentsReturnTo} />
                           <DocumentQualityBadge status={document.qualityStatus} />
                           <div className="doc-inline-form-row">
                             <select name="qualityStatus" defaultValue={document.qualityStatus} aria-label="Statut de contrôle">

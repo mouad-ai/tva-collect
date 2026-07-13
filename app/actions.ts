@@ -68,6 +68,13 @@ function dateValue(formData: FormData, key: string) {
   const value = text(formData, key);
   return value ? new Date(value) : null;
 }
+function redirectBackToDocuments(formData: FormData) {
+  const returnTo = formData.get("returnTo");
+  if (typeof returnTo === "string" && (returnTo === "/documents" || returnTo.startsWith("/documents?") || returnTo === "/app/documents" || returnTo.startsWith("/app/documents?"))) {
+    redirect(returnTo);
+  }
+  redirect("/app/documents");
+}
 
 async function actionIp() {
   const store = await headers();
@@ -1415,7 +1422,9 @@ export async function classifyUploadedDocumentAction(documentId: string, formDat
     source: "APP_DOCUMENTS"
   });
   revalidatePath("/app/documents");
+  revalidatePath("/documents");
   revalidatePath(`/app/collections/${document.clientCollection.collectionPeriodId}`);
+  redirectBackToDocuments(formData);
 }
 
 export async function updateUploadedDocumentQualityAction(documentId: string, formData: FormData) {
@@ -1505,7 +1514,9 @@ export async function updateUploadedDocumentQualityAction(documentId: string, fo
   });
 
   revalidatePath("/app/documents");
+  revalidatePath("/documents");
   revalidatePath(`/app/collections/${document.clientCollection.collectionPeriodId}`);
+  redirectBackToDocuments(formData);
 }
 
 export async function restoreUploadedDocumentAction(documentId: string) {
