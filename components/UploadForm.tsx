@@ -56,6 +56,13 @@ export function UploadForm({
         const result = await uploadDocumentsAction(token, formData);
         setIsError(Boolean(result?.error));
         setMessage(result?.error ? result.error : "Documents reçus avec succès. Vous pouvez ajouter d'autres fichiers si besoin.");
+      } catch {
+        // Typical cause: the page was loaded before a redeploy, so its Server
+        // Action ID no longer exists ("Failed to find Server Action"). Without
+        // this catch the whole page crashes to the generic error screen —
+        // clients keep upload links open for days, so tell them to reload.
+        setIsError(true);
+        setMessage("L'application a été mise à jour. Rechargez la page puis réessayez l'envoi.");
       } finally {
         setIsSubmitting(false);
       }

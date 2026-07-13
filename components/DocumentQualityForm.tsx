@@ -96,6 +96,13 @@ export function DocumentQualityForm({
           setStatus(normalizeQualityStatus(result.qualityStatus));
           setComment(result.accountantComment || "");
         }
+      } catch {
+        // Stale tab after a redeploy ("Failed to find Server Action") or a
+        // network drop: revert the optimistic update and ask for a reload
+        // instead of crashing the page to the generic error screen.
+        setStatus(previousStatus);
+        setComment(previousComment);
+        setError("L'application a été mise à jour. Rechargez la page puis réessayez.");
       } finally {
         setIsSaving(false);
       }
