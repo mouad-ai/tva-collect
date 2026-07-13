@@ -17,6 +17,8 @@ function progressTone(progress: number) {
   return "border-slate-200 bg-slate-50";
 }
 
+export const metadata = { title: "Rapports" };
+
 export default async function ReportsPage() {
   const user = await requireFirmUser();
   try {

@@ -22,6 +22,8 @@ const riskTone = {
   CRITICAL: "border-red-200 bg-red-50 text-red-700"
 };
 
+export const metadata = { title: "Détail collecte" };
+
 export default async function CollectionDetailPage({
   params,
   searchParams

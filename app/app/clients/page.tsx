@@ -11,6 +11,8 @@ import { SearchFilterForm } from "@/components/SearchFilterForm";
 import { requireFirmUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+export const metadata = { title: "Clients" };
+
 export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ search?: string; page?: string; limit?: string; sort?: string }> }) {
   const user = await requireFirmUser();
   const params = await searchParams;

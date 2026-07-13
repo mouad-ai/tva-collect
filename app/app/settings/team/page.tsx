@@ -14,6 +14,8 @@ const errorMessages: Record<string, string> = {
   "email-exists": "Un utilisateur existe deja avec cet email."
 };
 
+export const metadata = { title: "Équipe" };
+
 export default async function TeamSettingsPage({ searchParams }: { searchParams: Promise<{ created?: string; error?: string; search?: string; role?: string; page?: string; limit?: string }> }) {
   const user = await requireFirmAnyRole([UserRole.OWNER, UserRole.MANAGER]);
   const params = await searchParams;

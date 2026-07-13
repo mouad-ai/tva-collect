@@ -21,6 +21,8 @@ const riskTone = {
   CRITICAL: "border-red-200 bg-red-50 text-red-700"
 };
 
+export const metadata = { title: "Collectes TVA" };
+
 export default async function CollectionsPage({ searchParams }: { searchParams: Promise<{ search?: string; status?: string; workflowType?: string; page?: string; limit?: string; sort?: string }> }) {
   const user = await requireFirmUser();
   const params = await searchParams;

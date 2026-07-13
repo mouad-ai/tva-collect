@@ -9,6 +9,8 @@ import { roleLabel } from "@/lib/labels";
 import { prisma } from "@/lib/prisma";
 import { cn, formatDate } from "@/lib/utils";
 
+export const metadata = { title: "Invitations" };
+
 export default async function AdminInvitesPage({ searchParams }: { searchParams: Promise<{ created?: string; search?: string; state?: string; page?: string; limit?: string }> }) {
   await requireAdmin();
   const params = await searchParams;

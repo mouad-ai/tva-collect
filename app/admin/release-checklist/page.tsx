@@ -108,6 +108,8 @@ function formatDate(date: Date | null | undefined) {
   return new Intl.DateTimeFormat("fr-MA", { dateStyle: "short", timeStyle: "short" }).format(date);
 }
 
+export const metadata = { title: "Recette" };
+
 export default async function ReleaseChecklistPage() {
   await requireAdmin();
   const [firms, clients, collections, documents, filingCases, readinessChecks, events, savedItems] = await Promise.all([

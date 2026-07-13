@@ -8,6 +8,8 @@ import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { UserRole } from "@prisma/client";
 
+export const metadata = { title: "Corbeille" };
+
 export default async function TrashPage({
   searchParams
 }: {

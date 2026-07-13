@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { requireFirmUser } from "@/lib/auth";
 
+export const metadata = { title: "Compte suspendu" };
+
 export default async function SuspendedFirmPage() {
   const user = await requireFirmUser();
   const suspended = user.firm.status === "SUSPENDED";

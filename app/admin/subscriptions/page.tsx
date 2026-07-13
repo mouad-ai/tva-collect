@@ -5,6 +5,8 @@ import { getFirmUsage, overLimitReasons, subscriptionStatusLabel } from "@/lib/b
 import { prisma } from "@/lib/prisma";
 import { cn, formatDate } from "@/lib/utils";
 
+export const metadata = { title: "Abonnements" };
+
 export default async function AdminSubscriptionsPage() {
   await requireAdmin();
   const subscriptions = await prisma.firmSubscription.findMany({

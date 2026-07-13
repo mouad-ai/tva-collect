@@ -7,6 +7,8 @@ import { formatMad, invoiceStatusLabel } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 
+export const metadata = { title: "Factures" };
+
 export default async function AdminInvoicesPage({
   searchParams
 }: {

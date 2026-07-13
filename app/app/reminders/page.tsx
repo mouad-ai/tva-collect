@@ -9,6 +9,8 @@ import { requireFirmUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 
+export const metadata = { title: "Relances" };
+
 export default async function RemindersPage({
   searchParams
 }: {

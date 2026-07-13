@@ -31,6 +31,8 @@ function moneyValue(value: unknown) {
   return value == null ? "" : String(value);
 }
 
+export const metadata = { title: "Préparation TVA" };
+
 export default async function TvaReadinessDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireFirmUser();
   const { id } = await params;

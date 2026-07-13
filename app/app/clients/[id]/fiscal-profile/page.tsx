@@ -18,6 +18,8 @@ function missingFiscalFields(
   return missing;
 }
 
+export const metadata = { title: "Profil fiscal" };
+
 export default async function ClientFiscalProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireFirmUser();
   const { id } = await params;

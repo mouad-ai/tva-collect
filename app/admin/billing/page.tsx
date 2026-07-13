@@ -6,6 +6,8 @@ import { formatMad, subscriptionStatusLabel } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 
+export const metadata = { title: "Facturation SaaS" };
+
 export default async function AdminBillingPage() {
   await requireAdmin();
   const [plans, subscriptions, events, blockedFirms] = await Promise.all([

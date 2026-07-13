@@ -22,6 +22,8 @@ const qualityFilterOptions = [
   { value: "NOT_TVA", label: "Hors TVA" }
 ];
 
+export const metadata = { title: "Documents" };
+
 export default async function DocumentsPage({
   searchParams
 }: {

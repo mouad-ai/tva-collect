@@ -21,6 +21,8 @@ const deadlineToneClass = {
   LOW: "deadline-low"
 } as const;
 
+export const metadata = { title: "Déclaration TVA" };
+
 export default async function TvaFilingPage({
   searchParams
 }: {

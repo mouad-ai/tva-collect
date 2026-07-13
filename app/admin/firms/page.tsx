@@ -8,6 +8,8 @@ import { firmStatusLabel, planLabel } from "@/lib/labels";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 
+export const metadata = { title: "Cabinets" };
+
 export default async function AdminFirmsPage({ searchParams }: { searchParams: Promise<{ search?: string; status?: string; plan?: string; page?: string; limit?: string; sort?: string }> }) {
   await requireAdmin();
   const params = await searchParams;

@@ -7,6 +7,8 @@ import { markNotificationsSeen } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 
+export const metadata = { title: "Notifications" };
+
 export default async function NotificationsPage({
   searchParams
 }: {

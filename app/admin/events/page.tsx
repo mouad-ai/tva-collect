@@ -9,6 +9,8 @@ function formatDateTime(value: Date) {
   return new Intl.DateTimeFormat("fr-MA", { dateStyle: "medium", timeStyle: "short" }).format(value);
 }
 
+export const metadata = { title: "Événements" };
+
 export default async function AdminEventsPage({
   searchParams
 }: {

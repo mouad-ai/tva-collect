@@ -49,6 +49,8 @@ const launchMessages = [
   }
 ];
 
+export const metadata = { title: "Aide" };
+
 export default async function HelpPage() {
   await requireFirmUser();
 

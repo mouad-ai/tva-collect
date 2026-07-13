@@ -25,6 +25,8 @@ function usageFillClass(percent: number) {
   return "usage-meter-fill";
 }
 
+export const metadata = { title: "Facturation" };
+
 export default async function BillingPage({
   searchParams
 }: {

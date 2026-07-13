@@ -10,6 +10,8 @@ import { buildFiscalRiskExposure, fiscalAuditTypeLabel, fiscalSeverityLabel, fis
 import { prisma } from "@/lib/prisma";
 import { cn, formatDate } from "@/lib/utils";
 
+export const metadata = { title: "Défense fiscale" };
+
 export default async function FiscalAuditsPage({
   searchParams
 }: {

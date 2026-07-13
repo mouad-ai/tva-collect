@@ -6,6 +6,8 @@ import { collectionStatusLabel, firmStatusLabel, planLabel, roleLabel } from "@/
 import { prisma } from "@/lib/prisma";
 import { formatBytes, formatDate } from "@/lib/utils";
 
+export const metadata = { title: "Détail cabinet" };
+
 export default async function AdminFirmDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();
   const { id } = await params;

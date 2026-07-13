@@ -8,6 +8,8 @@ function docsToText(value: unknown) {
   return Array.isArray(value) ? value.join("\n") : defaultRequiredDocuments.join("\n");
 }
 
+export const metadata = { title: "Paramètres" };
+
 export default async function SettingsPage() {
   const user = await requireFirmUser();
 

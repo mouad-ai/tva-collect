@@ -10,6 +10,8 @@ function formatDateTime(value: Date) {
   return new Intl.DateTimeFormat("fr-MA", { dateStyle: "medium", timeStyle: "short" }).format(value);
 }
 
+export const metadata = { title: "Preuves" };
+
 export default async function ProofVaultPage({
   searchParams
 }: {

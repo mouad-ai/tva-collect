@@ -5,6 +5,8 @@ import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatBytes, formatDate } from "@/lib/utils";
 
+export const metadata = { title: "Tableau de bord admin" };
+
 export default async function AdminDashboardPage() {
   await requireAdmin();
   const [firms, users, clients, documents, leads, recentEvents] = await Promise.all([

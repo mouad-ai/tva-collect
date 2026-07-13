@@ -4,6 +4,8 @@ import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 
+export const metadata = { title: "Webhooks" };
+
 export default async function AdminBillingEventsPage() {
   await requireAdmin();
   const events = await prisma.billingEvent.findMany({

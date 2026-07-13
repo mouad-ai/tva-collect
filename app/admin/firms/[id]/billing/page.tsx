@@ -10,6 +10,8 @@ import { firmStatusLabel, planLabel } from "@/lib/labels";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 
+export const metadata = { title: "Facturation cabinet" };
+
 export default async function AdminFirmBillingPage({
   params
 }: {

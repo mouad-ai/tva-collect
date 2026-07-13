@@ -25,6 +25,8 @@ function stageLabel(value: string | null | undefined) {
   return leadStages.find((stage) => stage.value === value)?.label || value || "Nouveau";
 }
 
+export const metadata = { title: "Prospects" };
+
 export default async function AdminLeadsPage({
   searchParams
 }: {

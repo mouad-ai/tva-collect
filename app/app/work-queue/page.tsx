@@ -85,6 +85,8 @@ function MissionSection({ title, items, empty }: { title: string; items: Operati
   );
 }
 
+export const metadata = { title: "File de travail" };
+
 export default async function WorkQueuePage() {
   const user = await requireFirmUser();
   const activeClientCollections = await prisma.clientCollection.findMany({

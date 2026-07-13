@@ -17,6 +17,8 @@ const riskTone = {
   CRITICAL: "border-red-200 bg-red-50 text-red-800"
 };
 
+export const metadata = { title: "Risques TVA" };
+
 export default async function TvaRiskRegisterPage({
   searchParams
 }: {

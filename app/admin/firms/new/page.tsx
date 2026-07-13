@@ -7,6 +7,8 @@ const errorMessages: Record<string, string> = {
   "owner-email-exists": "Cet email propriétaire existe déjà."
 };
 
+export const metadata = { title: "Nouveau cabinet" };
+
 export default async function NewAdminFirmPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   await requireAdmin();
   const { error } = await searchParams;

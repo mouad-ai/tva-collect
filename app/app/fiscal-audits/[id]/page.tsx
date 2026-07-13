@@ -29,6 +29,8 @@ function dateInputValue(date?: Date | null) {
   return date.toISOString().slice(0, 10);
 }
 
+export const metadata = { title: "Dossier fiscal" };
+
 export default async function FiscalAuditDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireFirmUser();
   const { id } = await params;

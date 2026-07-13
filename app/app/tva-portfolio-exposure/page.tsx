@@ -29,6 +29,8 @@ const deadlineToneClass = {
 const portfolioRiskTone = (score: number) =>
   score >= 70 ? "text-red-700" : score >= 45 ? "text-orange-700" : score >= 20 ? "text-amber-700" : "text-emerald-700";
 
+export const metadata = { title: "Trésorerie TVA" };
+
 export default async function TvaPortfolioExposurePage({
   searchParams
 }: {

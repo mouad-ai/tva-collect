@@ -15,6 +15,8 @@ const riskTone = {
   CRITICAL: "border-red-200 bg-red-50 text-red-700"
 };
 
+export const metadata = { title: "Tableau de bord" };
+
 export default async function DashboardPage() {
   const user = await requireFirmUser();
   const [

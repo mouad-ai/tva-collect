@@ -8,6 +8,8 @@ import { fiscalSeverityLabel, tvaFrequencyLabel } from "@/lib/labels";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 
+export const metadata = { title: "Fiche client" };
+
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireFirmUser();
   const { id } = await params;

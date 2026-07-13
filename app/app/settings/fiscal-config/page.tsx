@@ -16,6 +16,8 @@ function percentValue(value: unknown) {
   return value == null ? "" : String(value);
 }
 
+export const metadata = { title: "Configuration fiscale" };
+
 export default async function FiscalConfigPage() {
   const user = await requireFirmUser();
   const [config, rates, regimes] = await Promise.all([

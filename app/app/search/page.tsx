@@ -6,6 +6,8 @@ import { requireFirmUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 
+export const metadata = { title: "Recherche" };
+
 export default async function GlobalSearchPage({
   searchParams
 }: {

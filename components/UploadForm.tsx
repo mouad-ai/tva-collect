@@ -18,7 +18,30 @@ export function UploadForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [, startTransition] = useTransition();
 
+  // Per-file limit mirrors the server's validateUpload (10 Mo). The total
+  // limit protects the Server Action's request-body cap (25mb in
+  // next.config.ts): without this pre-check, a couple of large phone photos
+  // sent together blow past the body limit and Next aborts the request with
+  // the generic error page instead of a readable message.
+  const maxFileBytes = 10 * 1024 * 1024;
+  const maxTotalBytes = 20 * 1024 * 1024;
+
+  function oversizeError(files: File[]) {
+    const tooBig = files.find((file) => file.size > maxFileBytes);
+    if (tooBig) return `"${tooBig.name}" dépasse 10 Mo. Réduisez la taille de la photo ou envoyez un PDF plus léger.`;
+    const total = files.reduce((sum, file) => sum + file.size, 0);
+    if (total > maxTotalBytes) return "Vos fichiers dépassent 20 Mo au total. Envoyez-les en plusieurs fois (2-3 fichiers à la fois).";
+    return null;
+  }
+
   async function action(formData: FormData) {
+    const files = formData.getAll("files").filter((value): value is File => value instanceof File && value.size > 0);
+    const sizeError = oversizeError(files);
+    if (sizeError) {
+      setIsError(true);
+      setMessage(sizeError);
+      return;
+    }
     setMessage("");
     setIsSubmitting(true);
     startTransition(async () => {
@@ -63,18 +86,24 @@ export function UploadForm({
           <UploadCloud size={26} className="text-primary" aria-hidden="true" />
           <span className="text-sm font-bold text-ink">Touchez pour choisir vos fichiers</span>
           <span className="text-xs text-muted">ou prenez une photo directement</span>
+          {/* No `capture` attribute: on Android it would force the camera to
+              open directly, hiding the native chooser (camera / galerie /
+              fichiers). Without it the phone shows all three options, and the
+              camera is still one of them thanks to accept="image/*". */}
           <input
             name="files"
             type="file"
             multiple
             required
             accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.doc,.docx,image/*"
-            capture="environment"
             disabled={isSubmitting}
             className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             onChange={(event) => {
               const files = Array.from(event.target.files || []);
               setFileSummary(files.length ? `${files.length} fichier(s) sélectionné(s) · ${files.map((file) => file.name).slice(0, 3).join(", ")}` : "");
+              const sizeError = oversizeError(files);
+              setIsError(Boolean(sizeError));
+              setMessage(sizeError || "");
             }}
           />
         </div>
