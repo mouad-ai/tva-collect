@@ -19,7 +19,6 @@ import {
   ListChecks,
   LockKeyhole,
   MessageSquareText,
-  PlayCircle,
   Send,
   Server,
   ShieldCheck,
@@ -573,14 +572,17 @@ export default function LandingPage() {
               Découvrez ce que voit votre client au dépôt, et ce que voit votre cabinet dans le tableau de bord.
             </p>
           </div>
-          <div className="mt-10 flex aspect-video w-full flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border bg-surface text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-primary shadow-card">
-              <PlayCircle size={34} />
-            </span>
-            <div>
-              <div className="text-lg font-extrabold">Vidéo de démonstration bientôt disponible</div>
-              <p className="mt-1 text-sm text-muted">En attendant, réservez une démo en direct de 15 minutes.</p>
-            </div>
+          <div className="mt-10 overflow-hidden rounded-2xl border border-border bg-[#07111f] shadow-elevated">
+            <iframe
+              className="aspect-video w-full"
+              src="https://www.youtube.com/embed/j9m-pEXEBR0"
+              title="Démonstration TVA Collect"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          </div>
+          <div className="mt-6 flex justify-center">
             <Link href="/demo" className="btn btn-primary">
               Réserver une démo de 15 min <ArrowRight size={16} />
             </Link>
