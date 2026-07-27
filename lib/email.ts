@@ -228,6 +228,38 @@ export async function sendLeadNotificationEmail(input: {
   return sendEmail({ to, subject: `Nouveau lead : ${input.firmName}`, text, html });
 }
 
+export async function sendTrialWelcomeEmail(input: { to: string; name: string; firmName: string; appUrl: string; trialEndDate: Date }) {
+  const trialEndLabel = input.trialEndDate.toLocaleDateString("fr-MA", { day: "numeric", month: "long", year: "numeric" });
+  return sendEmail({
+    to: input.to,
+    subject: `Bienvenue sur TVA Collect, ${input.firmName}`,
+    text: `Bonjour ${input.name},\n\nVotre essai gratuit de 30 jours pour ${input.firmName} est actif jusqu'au ${trialEndLabel}.\n\nAccédez à votre espace : ${input.appUrl}\n\nCommencez par ajouter vos premiers clients, puis créez votre première collecte TVA.\n`,
+    html: `<div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto;">
+  <h2>Bienvenue sur TVA Collect${input.firmName ? `, ${escapeHtml(input.firmName)}` : ""}</h2>
+  <p>Bonjour ${escapeHtml(input.name)},</p>
+  <p>Votre essai gratuit de 30 jours est actif jusqu'au <strong>${trialEndLabel}</strong>, sans carte bancaire.</p>
+  <p>
+    <a href="${input.appUrl}" style="display:inline-block;padding:12px 18px;background:#0f766e;color:#ffffff;text-decoration:none;border-radius:8px;">
+      Accéder à mon espace
+    </a>
+  </p>
+  <p>Pour commencer : ajoutez vos premiers clients, puis créez votre première collecte TVA — vos clients recevront un lien de dépôt en quelques secondes.</p>
+</div>`
+  });
+}
+
+export async function sendSelfServeSignupNotificationEmail(input: { firmName: string; ownerName: string; email: string; phone?: string | null }) {
+  const to = process.env.LEAD_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL || supportEmail;
+  const rows: [string, string][] = [
+    ["Cabinet", input.firmName],
+    ["Propriétaire", input.ownerName],
+    ["Email", input.email],
+    ["Téléphone", input.phone || "-"]
+  ];
+  const text = ["Nouvel essai gratuit démarré en libre-service", "", ...rows.map(([label, value]) => `${label}: ${value}`)].join("\n");
+  return sendEmail({ to, subject: `Nouvel essai gratuit : ${input.firmName}`, text });
+}
+
 export async function sendReminderEmail(input: { to: string; firmName: string; message: string }) {
   return sendEmail({
     to: input.to,

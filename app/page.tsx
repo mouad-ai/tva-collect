@@ -183,7 +183,7 @@ const pricingPlans = [
     note: "/ mois",
     description: "Pour un petit cabinet qui veut centraliser la collecte et arrêter les relances dispersées.",
     highlights: ["20 clients", "1 utilisateur", "Portail de dépôt client", "Export CSV"],
-    cta: "Commencer simple",
+    cta: "Essai gratuit",
     recommended: false
   },
   {
@@ -193,7 +193,7 @@ const pricingPlans = [
     note: "/ mois",
     description: "Le meilleur choix pour un cabinet actif avec assistants, exports et suivi avancé.",
     highlights: ["75 clients", "3 utilisateurs", "Export ZIP et rapports avancés", "Support prioritaire"],
-    cta: "Choisir Professionnel",
+    cta: "Essai gratuit",
     recommended: true
   },
   {
@@ -266,8 +266,13 @@ export default function LandingPage() {
                 Connexion
               </Link>
             </span>
-            <Link href="/demo" className="btn btn-primary">
-              Réserver une démo
+            <span className="hidden sm:inline-block">
+              <Link href="/demo" className="btn border-white/20 bg-white/5 text-white hover:bg-white/10">
+                Réserver une démo
+              </Link>
+            </span>
+            <Link href="/signup" className="btn btn-primary">
+              Essai gratuit
             </Link>
           </div>
         </div>
@@ -290,15 +295,15 @@ export default function LandingPage() {
               pour que vos dossiers soient complets avant la date limite, sans mobiliser votre équipe.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/demo" className="btn btn-primary px-5">
-                Réserver une démo de 15 min <ArrowRight size={16} />
+              <Link href="/signup" className="btn btn-primary px-5">
+                Essai gratuit 30 jours <ArrowRight size={16} />
               </Link>
-              <a href="#fonctionnement" className="btn border-white/20 bg-white text-ink hover:bg-slate-100">
-                Voir comment ça marche
-              </a>
+              <Link href="/demo" className="btn border-white/20 bg-white text-ink hover:bg-slate-100">
+                Réserver une démo de 15 min
+              </Link>
             </div>
             <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Essai gratuit 30 jours &middot; Sans carte bancaire &middot; Configuration accompagnée
+              Accès immédiat &middot; Sans carte bancaire &middot; Aucun appel requis
             </p>
             <dl className="mt-10 grid max-w-xl gap-4 sm:grid-cols-3">
               {[
@@ -582,9 +587,12 @@ export default function LandingPage() {
               allowFullScreen
             />
           </div>
-          <div className="mt-6 flex justify-center">
-            <Link href="/demo" className="btn btn-primary">
-              Réserver une démo de 15 min <ArrowRight size={16} />
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link href="/signup" className="btn btn-primary">
+              Essai gratuit 30 jours <ArrowRight size={16} />
+            </Link>
+            <Link href="/demo" className="btn">
+              Réserver une démo de 15 min
             </Link>
           </div>
         </div>
@@ -660,6 +668,9 @@ export default function LandingPage() {
               <Link href="/demo" className="btn mt-3 w-full">
                 Ou réserver une démo de 15 min
               </Link>
+              <Link href="/signup" className="mt-3 block text-center text-sm font-bold text-primary hover:underline">
+                Ou démarrer l&apos;essai gratuit maintenant, sans attendre
+              </Link>
             </div>
           </div>
         </div>
@@ -703,7 +714,10 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href={`/contact?plan=${plan.code}`} className={`btn mt-6 w-full ${plan.recommended ? "btn-primary" : ""}`}>
+                <Link
+                  href={plan.code === "PREMIUM" ? `/contact?plan=${plan.code}` : `/signup?plan=${plan.code}`}
+                  className={`btn mt-6 w-full ${plan.recommended ? "btn-primary" : ""}`}
+                >
                   {plan.cta}
                 </Link>
               </article>
@@ -732,16 +746,16 @@ export default function LandingPage() {
               Arrêtez de courir après les documents ce mois-ci.
             </h2>
             <p className="mt-3 max-w-2xl text-slate-300">
-              Réservez une démo de 15 minutes, ou demandez un accès pilote et testez la collecte
-              sur vos propres clients avant la prochaine déclaration TVA.
+              Démarrez votre essai gratuit de 30 jours dès maintenant, ou réservez une démo de 15 minutes
+              si vous préférez qu'on vous accompagne.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row md:shrink-0">
-            <Link href="/demo" className="btn btn-primary">
-              Réserver une démo de 15 min <ArrowRight size={16} />
+            <Link href="/signup" className="btn btn-primary">
+              Essai gratuit 30 jours <ArrowRight size={16} />
             </Link>
-            <Link href="/contact" className="btn border-white/20 bg-white/5 text-white hover:bg-white/10">
-              Demander un accès pilote
+            <Link href="/demo" className="btn border-white/20 bg-white/5 text-white hover:bg-white/10">
+              Réserver une démo
             </Link>
           </div>
         </div>
@@ -800,6 +814,7 @@ export default function LandingPage() {
           <div>
             <div className="text-xs font-bold uppercase tracking-wide text-slate-500">Cabinet</div>
             <nav className="mt-3 grid gap-2 text-sm font-semibold" aria-label="Cabinet">
+              <Link href="/signup" className="hover:text-white">Essai gratuit</Link>
               <Link href="/demo" className="hover:text-white">Réserver une démo</Link>
               <Link href="/contact" className="hover:text-white">Demander un accès pilote</Link>
               <Link href={loginHref} className="hover:text-white">Connexion</Link>

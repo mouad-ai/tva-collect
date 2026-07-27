@@ -16,7 +16,7 @@ const plans = [
     description: "Pour un petit cabinet qui veut remplacer WhatsApp et Excel par un suivi simple.",
     limits: ["20 clients", "1 utilisateur", "1 collecte active", "2 Go de stockage"],
     features: ["Portail de depot client", "Suivi des documents manquants", "Relances de base", "Export CSV"],
-    cta: "Commencer simple",
+    cta: "Essai gratuit",
     recommended: false
   },
   {
@@ -27,7 +27,7 @@ const plans = [
     description: "Le meilleur choix pour un cabinet actif avec assistants, exports et reporting.",
     limits: ["75 clients", "3 utilisateurs", "Collectes actives illimitees", "10 Go de stockage"],
     features: ["Tout Essentiel", "Export ZIP", "Rapports avances", "Validation des documents", "Priorite support"],
-    cta: "Choisir Professionnel",
+    cta: "Essai gratuit",
     recommended: true
   },
   {
@@ -100,7 +100,10 @@ export default function PricingPage() {
                   <span className="pb-1 text-sm font-semibold text-muted">{plan.note}</span>
                 </div>
                 <p className="mt-1 text-xs font-semibold text-muted">Prix mensuel, hors taxes si applicable.</p>
-                <Link href={`/contact?plan=${plan.code}`} className={`btn mt-6 w-full ${plan.recommended ? "btn-primary" : ""}`}>
+                <Link
+                  href={plan.code === "PREMIUM" ? `/contact?plan=${plan.code}` : `/signup?plan=${plan.code}`}
+                  className={`btn mt-6 w-full ${plan.recommended ? "btn-primary" : ""}`}
+                >
                   {plan.cta}
                 </Link>
                 <div className="mt-6 border-t border-border pt-5">

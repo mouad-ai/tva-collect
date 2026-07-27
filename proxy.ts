@@ -37,6 +37,7 @@ function isPublicRuntimePath(pathname: string) {
 function isAuthPage(pathname: string) {
   return (
     pathname === "/login" ||
+    pathname === "/signup" ||
     pathname === "/forgot-password" ||
     pathname === "/reset-password" ||
     pathname.startsWith("/reset-password/") ||
