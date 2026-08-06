@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Suivi prospection — TVA Collect</title>
+<style>
+  :root {
+    --ink:#101828; --muted:#667085; --border:#e4e7ec; --surface:#f6f7f9;
+    --primary:#0f766e; --primary-dark:#0b5751;
+    --green:#067647; --green-bg:#ecfdf3; --green-br:#abefc6;
+    --amber:#b54708; --amber-bg:#fffaeb; --amber-br:#fedf89;
+    --red:#b42318; --red-bg:#fef3f2; --red-br:#fecdca;
+    --blue:#175cd3; --blue-bg:#eff8ff; --blue-br:#b2ddff;
+    --slate:#475467; --slate-bg:#f8fafc; --slate-br:#e2e8f0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--surface);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,ui-sans-serif,system-ui,sans-serif;font-size:14px}
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 16px 64px}
+  header.top{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .mark{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:10px;
+    background:var(--primary);color:#fff;font-size:12px;font-weight:800}
+  h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.02em}
+  .sub{margin:2px 0 0;color:var(--muted);font-size:13px}
+
+  .goal{margin-top:18px;border:1px solid var(--border);border-radius:12px;background:#fff;padding:16px 18px}
+  .goal-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px}
+  .goal-title{font-weight:800;font-size:15px}
+  .goal-note{color:var(--muted);font-size:12.5px}
+  .bar{margin-top:12px;height:10px;border-radius:999px;background:#e9eef2;overflow:hidden}
+  .bar-fill{height:100%;background:var(--primary);border-radius:999px;transition:width .25s ease;width:0}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
+  .stat{border:1px solid var(--border);border-radius:10px;background:#fff;padding:12px 14px}
+  .stat b{display:block;font-size:24px;font-weight:800;letter-spacing:-.02em}
+  .stat span{color:var(--muted);font-size:12px;font-weight:600}
+
+  .panel{margin-top:18px;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden}
+  .panel-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+  .panel-head h2{margin:0;font-size:15px;font-weight:800}
+  .row{display:grid;grid-template-columns:1.4fr 1fr 1fr .9fr;gap:10px;padding:14px 16px}
+  @media(max-width:760px){.row{grid-template-columns:1fr}}
+  label{display:grid;gap:6px;font-size:12.5px;font-weight:700;color:#344054}
+  input,select,textarea{width:100%;border:1px solid var(--border);border-radius:9px;padding:10px 12px;font:inherit;color:var(--ink);background:#fff}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3.5px rgb(15 118 110/16%)}
+  textarea{resize:vertical;min-height:44px}
+  .actions{padding:0 16px 16px;display:flex;flex-wrap:wrap;gap:8px}
+  button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;border:1px solid var(--border);
+    border-radius:9px;padding:10px 16px;background:#fff;color:var(--ink);font:inherit;font-weight:700;cursor:pointer}
+  button:hover{background:var(--surface)}
+  button.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+  button.primary:hover{background:var(--primary-dark)}
+  button.ghost{background:transparent;border-color:transparent;color:var(--muted);min-height:32px;padding:4px 8px;font-size:12.5px}
+  button.ghost:hover{color:var(--red);background:var(--red-bg)}
+
+  .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .filters input,.filters select{min-height:38px;padding:8px 10px}
+  .filters input{min-width:190px}
+
+  .tablewrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:800;background:#fcfcfd;white-space:nowrap}
+  tbody tr:hover{background:#fcfcfd}
+  td.name{font-weight:700;min-width:150px}
+  td.notes{color:var(--muted);max-width:280px}
+  .empty{padding:34px 16px;text-align:center;color:var(--muted)}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;border-radius:999px;
+    border:1px solid transparent;padding:4px 10px;font-size:11.5px;font-weight:800}
+  .b-todo{background:var(--slate-bg);border-color:var(--slate-br);color:var(--slate)}
+  .b-contacted{background:var(--blue-bg);border-color:var(--blue-br);color:var(--blue)}
+  .b-talking{background:var(--amber-bg);border-color:var(--amber-br);color:var(--amber)}
+  .b-pilot{background:var(--green-bg);border-color:var(--green-br);color:var(--green)}
+  .b-paying{background:var(--green-bg);border-color:var(--green-br);color:var(--green)}
+  .b-no{background:var(--red-bg);border-color:var(--red-br);color:var(--red)}
+  td select.inline{min-height:32px;padding:5px 8px;font-size:12.5px;font-weight:700}
+
+  .why{margin-top:18px;border:1px solid var(--border);border-radius:12px;background:#fff;padding:16px 18px}
+  .why h2{margin:0 0 6px;font-size:15px;font-weight:800}
+  .why p{margin:0 0 10px;color:var(--muted);line-height:1.55}
+  .why ol{margin:0;padding-left:20px;color:var(--muted);line-height:1.7}
+  .why li b{color:var(--ink)}
+  .foot{margin-top:22px;text-align:center;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="mark">TVA</span>
+    <div>
+      <h1>Suivi prospection — recrutement de cabinets pilotes</h1>
+      <p class="sub">Tout est enregistré dans ce navigateur uniquement. Aucun compte, aucun envoi.</p>
+    </div>
+  </header>
+
+  <section class="goal">
+    <div class="goal-head">
+      <span class="goal-title">Objectif : 3 cabinets pilotes</span>
+      <span class="goal-note" id="goalNote">Comptez ~50 à 100 vraies conversations pour y arriver.</span>
+    </div>
+    <div class="bar"><div class="bar-fill" id="goalBar"></div></div>
+    <div class="stats">
+      <div class="stat"><b id="sTotal">0</b><span>Cabinets listés</span></div>
+      <div class="stat"><b id="sContacted">0</b><span>Contactés</span></div>
+      <div class="stat"><b id="sTalking">0</b><span>En discussion</span></div>
+      <div class="stat"><b id="sPilot">0</b><span>Pilotes obtenus</span></div>
+      <div class="stat"><b id="sPaying">0</b><span>Clients payants</span></div>
+      <div class="stat"><b id="sNo">0</b><span>Refus (= info utile)</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Ajouter un cabinet</h2></div>
+    <div class="row">
+      <label>Cabinet<input id="fCabinet" placeholder="Cabinet Bennani & Associés" /></label>
+      <label>Contact<input id="fContact" placeholder="Nom du comptable" /></label>
+      <label>Téléphone / Email<input id="fCoord" placeholder="06 .. / nom@cabinet.ma" /></label>
+      <label>Source
+        <select id="fSource">
+          <option>Visite en personne</option>
+          <option>Recommandation</option>
+          <option>LinkedIn</option>
+          <option>WhatsApp</option>
+          <option>Groupe Facebook</option>
+          <option>Événement / OEC</option>
+          <option>Autre</option>
+        </select>
+      </label>
+    </div>
+    <div class="row" style="padding-top:0">
+      <label>Ville<input id="fVille" placeholder="Casablanca" /></label>
+      <label>Taille (nb clients)<input id="fTaille" placeholder="ex. 30" /></label>
+      <label>Statut
+        <select id="fStatut">
+          <option value="todo">À contacter</option>
+          <option value="contacted">Contacté</option>
+          <option value="talking">En discussion</option>
+          <option value="pilot">Pilote actif</option>
+          <option value="paying">Client payant</option>
+          <option value="no">Pas intéressé</option>
+        </select>
+      </label>
+      <label>Prochaine action<input id="fNext" type="date" /></label>
+    </div>
+    <div class="row" style="padding-top:0;grid-template-columns:1fr">
+      <label>Notes — surtout : <em>pourquoi</em> ils ont dit non
+        <textarea id="fNotes" placeholder="Ex : utilise déjà WhatsApp, trouve que ça suffit. Ou : intéressé mais veut voir après la déclaration de juillet."></textarea>
+      </label>
+    </div>
+    <div class="actions">
+      <button class="primary" id="btnAdd">Ajouter au suivi</button>
+      <button id="btnExport">Exporter en CSV</button>
+      <button id="btnClear">Tout effacer</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Pipeline</h2>
+      <div class="filters">
+        <input id="qSearch" placeholder="Rechercher cabinet, ville, note…" />
+        <select id="qStatut">
+          <option value="">Tous les statuts</option>
+          <option value="todo">À contacter</option>
+          <option value="contacted">Contacté</option>
+          <option value="talking">En discussion</option>
+          <option value="pilot">Pilote actif</option>
+          <option value="paying">Client payant</option>
+          <option value="no">Pas intéressé</option>
+        </select>
+      </div>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Cabinet</th><th>Contact</th><th>Coordonnées</th><th>Ville</th>
+            <th>Clients</th><th>Source</th><th>Statut</th><th>Prochaine action</th><th>Notes</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="emptyState">Aucun cabinet pour le moment. Ajoutez le premier ci-dessus.</div>
+  </section>
+
+  <section class="why">
+    <h2>Comment s'en servir (et pourquoi ça marche)</h2>
+    <p>Le but n'est pas de vendre tout de suite. C'est d'obtenir <b>3 cabinets pilotes gratuits</b> qui utilisent vraiment
+      le produit — pour en tirer des témoignages, des références, et surtout comprendre pourquoi les autres disent non.</p>
+    <ol>
+      <li><b>Listez avant d'appeler.</b> 30-50 cabinets d'un coup, puis contactez-les en série. Contacter 3 personnes par jour au hasard ne donne aucun signal exploitable.</li>
+      <li><b>Notez chaque refus, avec la raison.</b> Après 20 conversations, les motifs se répètent — c'est là qu'est l'information la plus utile de tout ce tableau.</li>
+      <li><b>Fixez toujours une prochaine action datée.</b> La majorité des ventes B2B se font au 2ᵉ ou 3ᵉ contact, pas au premier.</li>
+      <li><b>Visez petit.</b> Cabinets de 15 à 50 clients, 1 à 3 personnes, comptables plutôt jeunes : ils changent d'outil bien plus facilement qu'un grand cabinet établi.</li>
+      <li><b>Un « non » n'est pas un échec.</b> C'est une donnée. 15 refus pour la même raison vous disent quoi corriger dans le produit ou le discours.</li>
+    </ol>
+  </section>
+
+  <p class="foot">Données stockées localement (localStorage). Exportez en CSV pour garder une sauvegarde.</p>
+</div>
+
+<script>
+(function(){
+  var KEY = "tvacollect_pilot_tracker_v1";
+  var STATUS = {
+    todo:{label:"À contacter",cls:"b-todo"},
+    contacted:{label:"Contacté",cls:"b-contacted"},
+    talking:{label:"En discussion",cls:"b-talking"},
+    pilot:{label:"Pilote actif",cls:"b-pilot"},
+    paying:{label:"Client payant",cls:"b-paying"},
+    no:{label:"Pas intéressé",cls:"b-no"}
+  };
+  var rows = load();
+
+  function load(){
+    try { var raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : []; }
+    catch(e){ return []; }
+  }
+  function save(){
+    try { localStorage.setItem(KEY, JSON.stringify(rows)); } catch(e){}
+  }
+  function el(id){ return document.getElementById(id); }
+  function esc(s){
+    return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function fmtDate(d){
+    if(!d) return "—";
+    var parts = d.split("-");
+    if(parts.length!==3) return d;
+    return parts[2]+"/"+parts[1]+"/"+parts[0];
+  }
+
+  function add(){
+    var cabinet = el("fCabinet").value.trim();
+    if(!cabinet){ el("fCabinet").focus(); return; }
+    rows.unshift({
+      id: Date.now()+"-"+Math.random().toString(36).slice(2,8),
+      cabinet: cabinet,
+      contact: el("fContact").value.trim(),
+      coord: el("fCoord").value.trim(),
+      ville: el("fVille").value.trim(),
+      taille: el("fTaille").value.trim(),
+      source: el("fSource").value,
+      statut: el("fStatut").value,
+      next: el("fNext").value,
+      notes: el("fNotes").value.trim()
+    });
+    save();
+    ["fCabinet","fContact","fCoord","fVille","fTaille","fNext","fNotes"].forEach(function(id){ el(id).value=""; });
+    el("fStatut").value = "todo";
+    render();
+    el("fCabinet").focus();
+  }
+
+  function render(){
+    var q = el("qSearch").value.trim().toLowerCase();
+    var qs = el("qStatut").value;
+    var list = rows.filter(function(r){
+      if(qs && r.statut!==qs) return false;
+      if(!q) return true;
+      return [r.cabinet,r.contact,r.ville,r.notes,r.source,r.coord]
+        .join(" ").toLowerCase().indexOf(q) !== -1;
+    });
+
+    var tb = el("tbody");
+    tb.innerHTML = list.map(function(r){
+      var opts = Object.keys(STATUS).map(function(k){
+        return '<option value="'+k+'"'+(k===r.statut?" selected":"")+'>'+STATUS[k].label+'</option>';
+      }).join("");
+      return '<tr>'+
+        '<td class="name">'+esc(r.cabinet)+'</td>'+
+        '<td>'+esc(r.contact||"—")+'</td>'+
+        '<td>'+esc(r.coord||"—")+'</td>'+
+        '<td>'+esc(r.ville||"—")+'</td>'+
+        '<td>'+esc(r.taille||"—")+'</td>'+
+        '<td>'+esc(r.source||"—")+'</td>'+
+        '<td><select class="inline" data-id="'+r.id+'">'+opts+'</select></td>'+
+        '<td>'+fmtDate(r.next)+'</td>'+
+        '<td class="notes">'+esc(r.notes||"—")+'</td>'+
+        '<td><button class="ghost" data-del="'+r.id+'">Supprimer</button></td>'+
+      '</tr>';
+    }).join("");
+
+    el("emptyState").style.display = list.length ? "none" : "block";
+
+    Array.prototype.forEach.call(tb.querySelectorAll("select.inline"), function(sel){
+      sel.addEventListener("change", function(){
+        var row = rows.filter(function(r){ return r.id===sel.getAttribute("data-id"); })[0];
+        if(row){ row.statut = sel.value; save(); render(); }
+      });
+    });
+    Array.prototype.forEach.call(tb.querySelectorAll("button[data-del]"), function(btn){
+      btn.addEventListener("click", function(){
+        var id = btn.getAttribute("data-del");
+        rows = rows.filter(function(r){ return r.id!==id; });
+        save(); render();
+      });
+    });
+
+    var count = function(s){ return rows.filter(function(r){ return r.statut===s; }).length; };
+    var pilots = count("pilot") + count("paying");
+    el("sTotal").textContent = rows.length;
+    el("sContacted").textContent = rows.filter(function(r){ return r.statut!=="todo"; }).length;
+    el("sTalking").textContent = count("talking");
+    el("sPilot").textContent = count("pilot");
+    el("sPaying").textContent = count("paying");
+    el("sNo").textContent = count("no");
+    el("goalBar").style.width = Math.min(100, (pilots/3)*100) + "%";
+    el("goalNote").textContent = pilots >= 3
+      ? "Objectif atteint — demandez maintenant témoignages et recommandations."
+      : pilots + " / 3 pilotes · comptez ~50 à 100 vraies conversations.";
+  }
+
+  function exportCsv(){
+    var head = ["Cabinet","Contact","Coordonnees","Ville","NbClients","Source","Statut","ProchaineAction","Notes"];
+    var esc2 = function(v){ return '"'+String(v==null?"":v).replace(/"/g,'""')+'"'; };
+    var lines = [head.map(esc2).join(",")];
+    rows.forEach(function(r){
+      lines.push([r.cabinet,r.contact,r.coord,r.ville,r.taille,r.source,
+        (STATUS[r.statut]||{}).label||r.statut,r.next,r.notes].map(esc2).join(","));
+    });
+    var blob = new Blob(["﻿"+lines.join("\r\n")], {type:"text/csv;charset=utf-8;"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "prospection-tvacollect.csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  el("btnAdd").addEventListener("click", add);
+  el("btnExport").addEventListener("click", exportCsv);
+  el("btnClear").addEventListener("click", function(){
+    if(confirm("Effacer tout le suivi ? Cette action est irréversible.")){ rows=[]; save(); render(); }
+  });
+  el("qSearch").addEventListener("input", render);
+  el("qStatut").addEventListener("change", render);
+  el("fCabinet").addEventListener("keydown", function(e){ if(e.key==="Enter") add(); });
+
+  render();
+})();
+</script>
+</body>
+</html>

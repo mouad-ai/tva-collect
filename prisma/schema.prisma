@@ -708,8 +708,71 @@ model Lead {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
+  // AI sourcing (Google Places import) — googlePlaceId is the dedup key so the
+  // daily sourcing job never creates the same cabinet twice.
+  googlePlaceId String? @unique
+  address       String?
+  website       String?
+
+  // AI outreach pipeline. A first-contact message is always drafted, never
+  // auto-sent (WhatsApp policy requires a human-approved send for the first
+  // message to someone who hasn't messaged us — see LeadMessage below for
+  // the full conversation log this status is derived from).
+  draftMessage String?           @db.Text
+  draftStatus  LeadDraftStatus   @default(NONE)
+  needsHumanReview Boolean       @default(false)
+  aiSummary    String?           @db.Text
+
+  // Tracks WhatsApp's 24-hour free-form messaging window: once lastInboundAt
+  // is set, conversationWindowOpenUntil = lastInboundAt + 24h. The AI may only
+  // send free-form replies while that window is open.
+  lastContactedAt             DateTime?
+  lastInboundAt                DateTime?
+  conversationWindowOpenUntil DateTime?
+
+  messages LeadMessage[]
+
   @@index([stage])
   @@index([nextFollowUpAt])
+  @@index([draftStatus])
+}
+
+enum LeadDraftStatus {
+  NONE
+  PENDING_APPROVAL
+  APPROVED
+  SENT
+  REJECTED
+}
+
+model LeadMessage {
+  id        String               @id @default(cuid())
+  leadId    String
+  lead      Lead                 @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  direction LeadMessageDirection
+  channel   String               @default("WHATSAPP")
+  body      String               @db.Text
+  status    LeadMessageStatus    @default(DRAFT)
+  aiIntent  String?
+  createdAt DateTime             @default(now())
+  sentAt    DateTime?
+
+  @@index([leadId])
+  @@index([createdAt])
+}
+
+enum LeadMessageDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum LeadMessageStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  SENT
+  DELIVERED
+  FAILED
 }
 
 model OperationalEvent {

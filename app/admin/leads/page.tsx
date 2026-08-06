@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
-import { CalendarClock, Flame, PhoneCall, TrendingUp } from "lucide-react";
+import { Bot, CalendarClock, Flame, PhoneCall, TrendingUp } from "lucide-react";
 import { updateLeadAction } from "@/app/actions";
+import { approveLeadDraftAction, generateLeadDraftAction, rejectLeadDraftAction } from "@/app/admin/leads-ai-actions";
 import { EmptyState } from "@/components/EmptyState";
 import { PaginationControls } from "@/components/PaginationControls";
 import { SearchFilterForm } from "@/components/SearchFilterForm";
@@ -9,6 +10,28 @@ import { planLabel } from "@/lib/labels";
 import { prisma } from "@/lib/prisma";
 import { demoScriptForLead, isFollowUpOverdue, leadQualification, leadStages, pricingRecommendation, salesFollowUpMessage } from "@/lib/sales";
 import { cn, formatDate } from "@/lib/utils";
+
+function draftStatusBadge(status: string) {
+  const map: Record<string, string> = {
+    NONE: "border-slate-200 bg-slate-50 text-slate-600",
+    PENDING_APPROVAL: "border-amber-200 bg-amber-50 text-amber-800",
+    APPROVED: "border-blue-200 bg-blue-50 text-blue-800",
+    SENT: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    REJECTED: "border-red-200 bg-red-50 text-red-700"
+  };
+  return map[status] || map.NONE;
+}
+
+function draftStatusLabel(status: string) {
+  const map: Record<string, string> = {
+    NONE: "Aucun brouillon",
+    PENDING_APPROVAL: "À valider",
+    APPROVED: "Approuvé",
+    SENT: "Envoyé",
+    REJECTED: "Rejeté"
+  };
+  return map[status] || status;
+}
 
 const painLabel: Record<string, string> = {
   HIGH: "Élevé",
@@ -49,7 +72,13 @@ export default async function AdminLeadsPage({
     ] : undefined
   };
   const [leads, total, allLeadsForStats] = await Promise.all([
-    prisma.lead.findMany({ where, orderBy: { createdAt: "desc" }, skip: (page - 1) * limit, take: limit }),
+    prisma.lead.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
+      include: { messages: { orderBy: { createdAt: "desc" }, take: 4 } }
+    }),
     prisma.lead.count({ where }),
     prisma.lead.findMany({ select: { id: true, stage: true, createdAt: true, firmName: true, numberOfClients: true, numberOfAssistants: true, preferredDemoAt: true, nextFollowUpAt: true, expectedSetupFee: true, painLevel: true } })
   ]);
@@ -66,6 +95,7 @@ export default async function AdminLeadsPage({
     ...stage,
     count: allLeadsForStats.filter((lead) => lead.stage === stage.value).length
   }));
+  const pendingAiDrafts = await prisma.lead.count({ where: { draftStatus: "PENDING_APPROVAL" } });
 
   return (
     <div className="grid gap-6">
@@ -74,7 +104,7 @@ export default async function AdminLeadsPage({
         <p className="text-sm text-muted">Suivi interne pour demos, pilotes, propositions et conversions.</p>
       </div>
 
-      <section className="grid gap-4 md:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-5">
         <div className="card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-muted"><Flame size={16} /> Prospects chauds</div>
           <div className="mt-2 text-3xl font-black">{hotLeads.length}</div>
@@ -90,6 +120,10 @@ export default async function AdminLeadsPage({
         <div className="card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-muted"><TrendingUp size={16} /> Mise en place potentielle</div>
           <div className="mt-2 text-3xl font-black">{expectedSetupRevenue} MAD</div>
+        </div>
+        <div className="card p-4">
+          <div className="flex items-center gap-2 text-sm font-bold text-muted"><Bot size={16} /> Messages IA à valider</div>
+          <div className="mt-2 text-3xl font-black">{pendingAiDrafts}</div>
         </div>
       </section>
 
@@ -147,6 +181,7 @@ export default async function AdminLeadsPage({
                 <th>Recommandation</th>
                 <th>Demo / scenario</th>
                 <th>Message</th>
+                <th>Employé IA</th>
                 <th>Suivi</th>
               </tr>
             </thead>
@@ -190,6 +225,48 @@ export default async function AdminLeadsPage({
                     <td className="min-w-[260px] align-top">
                       <pre className="whitespace-pre-wrap font-sans text-sm text-muted">{salesFollowUpMessage(lead)}</pre>
                     </td>
+                    <td className="min-w-[300px] align-top">
+                      <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-black", draftStatusBadge(lead.draftStatus))}>
+                        {draftStatusLabel(lead.draftStatus)}
+                      </span>
+                      {lead.needsHumanReview && lead.draftStatus !== "PENDING_APPROVAL" ? (
+                        <div className="mt-1 text-xs font-black text-red-700">À examiner</div>
+                      ) : null}
+                      {lead.aiSummary ? <p className="mt-2 text-xs text-muted">{lead.aiSummary}</p> : null}
+
+                      {lead.draftStatus === "PENDING_APPROVAL" && lead.draftMessage ? (
+                        <div className="mt-2 grid gap-2">
+                          <form action={approveLeadDraftAction.bind(null, lead.id)} className="grid gap-2">
+                            <textarea name="draftMessage" rows={4} defaultValue={lead.draftMessage} className="text-xs" />
+                            <button className="btn btn-primary btn-compact">Approuver et envoyer</button>
+                          </form>
+                          <form action={rejectLeadDraftAction.bind(null, lead.id)}>
+                            <button className="btn btn-compact w-full">Rejeter</button>
+                          </form>
+                        </div>
+                      ) : lead.draftStatus === "NONE" || lead.draftStatus === "REJECTED" || lead.draftStatus === "SENT" ? (
+                        // NONE: never drafted yet. REJECTED: without this, a rejected
+                        // draft is a dead end — draft-first-contact only refuses to
+                        // redraft when PENDING_APPROVAL/SENT, but the button to even
+                        // call it was missing for REJECTED. SENT: lets you manually
+                        // draft a fresh message instead of waiting on the automated
+                        // 3-day follow-up scheduler.
+                        <form action={generateLeadDraftAction.bind(null, lead.id)} className="mt-2">
+                          <button className="btn btn-compact w-full"><Bot size={14} /> {lead.draftStatus === "NONE" ? "Générer message IA" : "Générer un nouveau message"}</button>
+                        </form>
+                      ) : null}
+
+                      {lead.messages.length ? (
+                        <div className="mt-3 grid gap-1 border-t border-border pt-2">
+                          {[...lead.messages].reverse().map((m) => (
+                            <div key={m.id} className="text-xs">
+                              <span className="font-black">{m.direction === "OUTBOUND" ? "Nous : " : "Eux : "}</span>
+                              <span className="text-muted">{m.body.length > 100 ? `${m.body.slice(0, 100)}…` : m.body}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </td>
                     <td className="min-w-[280px] align-top">
                       <form action={updateLeadAction.bind(null, lead.id)} className="grid gap-2">
                         <select name="stage" defaultValue={lead.stage}>
@@ -212,7 +289,7 @@ export default async function AdminLeadsPage({
               })}
               {!leads.length ? (
                 <tr>
-                  <td colSpan={7}>
+                  <td colSpan={8}>
                     <EmptyState
                       title={search || params.stage ? "Aucun prospect trouvé" : "Aucun prospect pour le moment"}
                       description={

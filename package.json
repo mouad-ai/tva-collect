@@ -20,7 +20,9 @@
     "diagnose-auth": "tsx scripts/diagnose-auth.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.115.0",
     "@prisma/client": "5.22.0",
+    "@trigger.dev/sdk": "4.5.9",
     "bcryptjs": "2.4.3",
     "clsx": "2.1.1",
     "lucide-react": "0.468.0",

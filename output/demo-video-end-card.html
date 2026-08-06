@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>TVA Collect — Écran de fin</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: radial-gradient(ellipse at 30% 20%, #0f3d3a 0%, #0a2422 55%, #071a19 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+  }
+  .card {
+    text-align: center;
+    display: grid;
+    justify-items: center;
+    gap: 28px;
+    animation: rise 0.9s ease-out both;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .logo {
+    width: 110px;
+    height: 110px;
+    border-radius: 26px;
+    background: linear-gradient(145deg, #14b8a6, #0f766e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    color: #ffffff;
+    box-shadow: 0 18px 50px rgba(20, 184, 166, 0.35);
+  }
+  h1 {
+    font-size: 64px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+  }
+  .tagline {
+    font-size: 28px;
+    font-weight: 500;
+    color: #b7d6d2;
+    max-width: 720px;
+    line-height: 1.35;
+  }
+  .cta {
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: #14b8a6;
+    color: #06211f;
+    font-size: 26px;
+    font-weight: 800;
+    padding: 20px 46px;
+    border-radius: 14px;
+    box-shadow: 0 14px 40px rgba(20, 184, 166, 0.45);
+  }
+  .cta svg { flex-shrink: 0; }
+  .url {
+    font-size: 24px;
+    font-weight: 700;
+    color: #5eead4;
+    letter-spacing: 0.04em;
+  }
+  .subnote {
+    font-size: 16px;
+    color: #7fa8a3;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">TVA</div>
+    <h1>TVA Collect</h1>
+    <p class="tagline">La collecte TVA, sans la course-poursuite.</p>
+    <div class="cta">
+      Essai gratuit 30 jours
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </div>
+    <div class="url">tvacollect.com</div>
+    <p class="subnote">Sans carte bancaire · Configuration accompagnée</p>
+  </div>
+</body>
+</html>

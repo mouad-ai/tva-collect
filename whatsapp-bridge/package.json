@@ -1,0 +1,26 @@
+{
+  "name": "tvacollect-whatsapp-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Standalone always-on service that holds the WhatsApp Web connection (via Baileys) and exposes a small HTTP API so the main app / Trigger.dev tasks can send messages and receive inbound ones, without either of them needing to hold a persistent socket themselves.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "^6.17.16",
+    "express": "^4.21.2",
+    "pino": "^9.6.0",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.2",
+    "@types/qrcode": "^1.5.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
