@@ -1,5 +1,10 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
+# One of Baileys' transitive dependencies is fetched via a git URL, not the
+# npm registry — bare node:22-alpine has no git binary, which fails npm
+# install with "spawn git ENOENT". Same reasoning as the openssl install in
+# the main app's Dockerfile: alpine ships minimal, add what's actually used.
+RUN apk add --no-cache git
 COPY package*.json ./
 # npm install, not npm ci: this service's package-lock.json was generated
 # with the only npm available in this dev environment (v6, bundled with a
