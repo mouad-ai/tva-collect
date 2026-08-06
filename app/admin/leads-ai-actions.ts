@@ -3,6 +3,7 @@
 import { tasks } from "@trigger.dev/sdk";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
+import { logServerError } from "@/lib/error-logging";
 import { prisma } from "@/lib/prisma";
 import { sendWhatsAppMessage } from "@/trigger/lib/whatsapp-bridge";
 import type { draftFirstContact } from "@/trigger/draft-first-contact";
@@ -22,19 +23,38 @@ export async function generateLeadDraftAction(leadId: string) {
 // deliberately gated behind a human clicking this button. See
 // whatsapp-bridge/src/index.ts and trigger/draft-first-contact.ts for why
 // the AI is never allowed to call this on its own for a new contact.
+//
+// Returns void, not a result object: this is bound directly to a plain
+// <form action={...}> in /admin/leads (not wrapped in useActionState), so a
+// returned value would never actually reach the screen — worse, Next's own
+// typing for a raw form action requires void | Promise<void> and rejects
+// anything else at build time. On failure this logs through the same
+// ALERT_WEBHOOK_URL path every other server error in this app uses, and
+// draftStatus simply stays PENDING_APPROVAL so the button is just there to
+// click again — no separate inline error UI to build for an internal tool.
 export async function approveLeadDraftAction(leadId: string, formData: FormData) {
   await requireAdmin();
   const lead = await prisma.lead.findUnique({ where: { id: leadId } });
-  if (!lead) return { error: "Prospect introuvable." };
+  if (!lead) {
+    await logServerError({ error: new Error("approveLeadDraftAction: lead not found"), metadata: { leadId } });
+    return;
+  }
 
   const finalMessage = text(formData, "draftMessage") || lead.draftMessage;
-  if (!finalMessage) return { error: "Aucun message à envoyer." };
-  if (!lead.phone) return { error: "Ce prospect n'a pas de numéro de téléphone." };
+  if (!finalMessage) {
+    await logServerError({ error: new Error("approveLeadDraftAction: no message to send"), firmId: lead.firmId, metadata: { leadId } });
+    return;
+  }
+  if (!lead.phone) {
+    await logServerError({ error: new Error("approveLeadDraftAction: lead has no phone number"), firmId: lead.firmId, metadata: { leadId } });
+    return;
+  }
 
   try {
     await sendWhatsAppMessage(lead.phone, finalMessage);
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "Échec de l'envoi WhatsApp." };
+    await logServerError({ error, firmId: lead.firmId, metadata: { leadId, context: "approve-lead-draft-send" } });
+    return;
   }
 
   await prisma.$transaction([
@@ -54,7 +74,6 @@ export async function approveLeadDraftAction(leadId: string, formData: FormData)
     })
   ]);
   revalidatePath("/admin/leads");
-  return { ok: true };
 }
 
 export async function rejectLeadDraftAction(leadId: string) {
