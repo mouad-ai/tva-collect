@@ -22,9 +22,11 @@ export default defineConfig({
   // uses, so a broken lead-sourcing run or a dead Claude API key actually
   // gets noticed instead of the pipeline silently going stale for days.
   onFailure: async ({ task, payload, error }) => {
+    // `task` here is the task's id string directly (TaskFailureHookParams),
+    // not an object with an .id property.
     await logServerError({
       error: error instanceof Error ? error : new Error(String(error)),
-      metadata: { context: "trigger-dev-task-failure", taskId: task.id, payload: JSON.stringify(payload).slice(0, 2000) }
+      metadata: { context: "trigger-dev-task-failure", taskId: task, payload: JSON.stringify(payload).slice(0, 2000) }
     });
   }
 });
