@@ -1,4 +1,5 @@
 import { defineConfig } from "@trigger.dev/sdk";
+import { prismaExtension } from "@trigger.dev/build/extensions/prisma";
 import { logServerError } from "./lib/error-logging";
 
 export default defineConfig({
@@ -6,6 +7,13 @@ export default defineConfig({
   // (Project settings → Project ref) before running `npx trigger.dev deploy`.
   project: process.env.TRIGGER_PROJECT_REF || "proj_replace_me",
   dirs: ["./trigger"],
+  build: {
+    // Without this, Trigger.dev's bundler doesn't know to copy Prisma's
+    // native query engine binary alongside the bundled task code, so the
+    // deployed tasks fail at runtime even though the local build succeeds
+    // and `binaryTargets` in schema.prisma is correct.
+    extensions: [prismaExtension({ schema: "prisma/schema.prisma", mode: "legacy" })]
+  },
   maxDuration: 300,
   retries: {
     enabledInDev: true,
