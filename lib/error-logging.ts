@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { ErrorSeverity, Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "./prisma";
 
 export function requestId() {
   return `ERR-${new Date().getFullYear()}-${randomUUID().slice(0, 8)}`;
