@@ -1,5 +1,5 @@
 import { schedules, logger } from "@trigger.dev/sdk";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "../lib/prisma";
 
 // Daily lead sourcing via Google Places API (New). Capped at ~15/day on
 // purpose: it matches the realistic outreach pace (10-15 contacts/day) a

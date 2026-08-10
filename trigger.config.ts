@@ -1,5 +1,5 @@
 import { defineConfig } from "@trigger.dev/sdk";
-import { logServerError } from "@/lib/error-logging";
+import { logServerError } from "./lib/error-logging";
 
 export default defineConfig({
   // Set this to your actual project ref from the Trigger.dev dashboard

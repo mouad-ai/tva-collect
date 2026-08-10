@@ -1,6 +1,6 @@
 import { task, logger } from "@trigger.dev/sdk";
-import { normalizePhoneDigits, phoneMatchSuffix, stageForIntent } from "@/lib/sales-ai";
-import { prisma } from "@/lib/prisma";
+import { normalizePhoneDigits, phoneMatchSuffix, stageForIntent } from "../lib/sales-ai";
+import { prisma } from "../lib/prisma";
 import { classifyInboundReply } from "./lib/ai";
 import { sendWhatsAppMessage } from "./lib/whatsapp-bridge";
 

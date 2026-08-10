@@ -1,5 +1,5 @@
 import { task, logger } from "@trigger.dev/sdk";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "../lib/prisma";
 import { draftMessage } from "./lib/ai";
 
 // Drafts a first-contact message for a lead. NEVER sends it — WhatsApp policy

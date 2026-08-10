@@ -1,5 +1,5 @@
 import { schedules, logger } from "@trigger.dev/sdk";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "../lib/prisma";
 import { sendWhatsAppMessage } from "./lib/whatsapp-bridge";
 
 // A factual daily count doesn't need AI to write it — templating it directly

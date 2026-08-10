@@ -1,5 +1,5 @@
 import { schedules, logger } from "@trigger.dev/sdk";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "../lib/prisma";
 import { draftMessage } from "./lib/ai";
 
 const SILENCE_THRESHOLD_DAYS = 3;
