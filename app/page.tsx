@@ -179,7 +179,7 @@ const pricingPlans = [
   {
     name: "Essentiel",
     code: "STARTER",
-    price: "399 MAD",
+    price: "119 MAD",
     note: "/ mois",
     description: "Pour un petit cabinet qui veut centraliser la collecte et arrêter les relances dispersées.",
     highlights: ["20 clients", "1 utilisateur", "Portail de dépôt client", "Export CSV"],
@@ -189,7 +189,7 @@ const pricingPlans = [
   {
     name: "Professionnel",
     code: "PRO",
-    price: "799 MAD",
+    price: "249 MAD",
     note: "/ mois",
     description: "Le meilleur choix pour un cabinet actif avec assistants, exports et suivi avancé.",
     highlights: ["75 clients", "3 utilisateurs", "Export ZIP et rapports avancés", "Support prioritaire"],
@@ -199,7 +199,7 @@ const pricingPlans = [
   {
     name: "Cabinet Plus",
     code: "PREMIUM",
-    price: "1 490 MAD",
+    price: "449 MAD",
     note: "/ mois",
     description: "Pour les cabinets structurés avec plus de volume, marque cabinet et workflows avancés.",
     highlights: ["200 clients", "8 utilisateurs", "Portail marque cabinet", "Accompagnement prioritaire"],
@@ -747,7 +747,7 @@ export default function LandingPage() {
             </h2>
             <p className="mt-3 max-w-2xl text-slate-300">
               Démarrez votre essai gratuit de 30 jours dès maintenant, ou réservez une démo de 15 minutes
-              si vous préférez qu'on vous accompagne.
+              si vous préférez qu&apos;on vous accompagne.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row md:shrink-0">

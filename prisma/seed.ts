@@ -256,7 +256,7 @@ async function main() {
             id: "plan_pro",
             code: "PRO",
             name: "Professionnel",
-            monthlyPriceMad: 799,
+            monthlyPriceMad: 249,
             clientLimit: 75,
             userLimit: 3,
             storageLimitMb: 10240,

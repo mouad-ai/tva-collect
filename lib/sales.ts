@@ -26,9 +26,9 @@ export const leadStages = [
 ];
 
 export const planPrices = {
-  Starter: 399,
-  Pro: 799,
-  Premium: 1490
+  Starter: 119,
+  Pro: 249,
+  Premium: 449
 };
 
 function textIncludes(value: string | null | undefined, terms: string[]) {
@@ -70,23 +70,26 @@ export function pricingRecommendation(lead: SalesLead) {
   if (clients > 75 || assistants > 3) {
     return {
       plan: "Cabinet Plus",
-      price: "1 490 MAD/mois",
-      setupFee: lead.expectedSetupFee || 2000,
+      price: "449 MAD/mois",
+      // Defaults to 0: the public pricing page promises "aucun frais
+      // d'installation", so only an explicitly negotiated fee on the lead
+      // record should ever surface here.
+      setupFee: lead.expectedSetupFee || 0,
       reason: "Volume eleve, besoin de plus d'utilisateurs, stockage, workflows ou accompagnement prioritaire."
     };
   }
   if (clients > 20 || assistants > 1 || textIncludes(lead.currentWorkflow, ["cnss", "paie", "cloture", "multi"])) {
     return {
       plan: "Professionnel",
-      price: "799 MAD/mois",
-      setupFee: lead.expectedSetupFee || 1000,
+      price: "249 MAD/mois",
+      setupFee: lead.expectedSetupFee || 0,
       reason: "Meilleur equilibre pour un cabinet actif: plusieurs utilisateurs, exports, rapports et plus de clients."
     };
   }
   return {
     plan: "Essentiel",
-    price: "399 MAD/mois",
-    setupFee: lead.expectedSetupFee || 500,
+    price: "119 MAD/mois",
+    setupFee: lead.expectedSetupFee || 0,
     reason: "Bon demarrage pour un petit cabinet qui veut sortir de WhatsApp sans gros engagement."
   };
 }
