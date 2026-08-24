@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { getCurrentUser } from "@/lib/auth";
 import { formatMad, getPlatformBillingSettings } from "@/lib/billing";
+import { escapeHtml } from "@/lib/html";
 import { firmStatusLabel, planLabel } from "@/lib/labels";
 import { prisma } from "@/lib/prisma";
 import { canAccessBilling } from "@/lib/security-policy";
@@ -45,12 +46,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   const settings = await getPlatformBillingSettings();
   const body = `
-    <h1>Facture ${invoice.invoiceNumber}</h1>
+    <h1>Facture ${escapeHtml(invoice.invoiceNumber)}</h1>
     <p class="muted">TVA Collect — facturation manuelle B2B</p>
     <div class="box">
-      <strong>${invoice.firm.name}</strong><br />
-      ${invoice.firm.email || ""}<br />
-      ${invoice.firm.city || ""}
+      <strong>${escapeHtml(invoice.firm.name)}</strong><br />
+      ${escapeHtml(invoice.firm.email)}<br />
+      ${escapeHtml(invoice.firm.city)}
     </div>
     <table>
       <tr><th>Plan</th><td>${planLabel(invoice.subscription?.plan.code || invoice.firm.plan)}</td></tr>
@@ -61,16 +62,16 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     </table>
     <div class="box">
       <strong>Instructions de paiement</strong>
-      <p>${settings.paymentInstructions || ""}</p>
-      <p><strong>Banque:</strong> ${settings.bankName || "-"}</p>
-      <p><strong>Titulaire:</strong> ${settings.accountHolder || "-"}</p>
-      <p><strong>RIB:</strong> ${settings.rib || "-"}</p>
-      ${settings.iban ? `<p><strong>IBAN:</strong> ${settings.iban}</p>` : ""}
-      <p><strong>Référence à indiquer:</strong> ${invoice.invoiceNumber}</p>
-      <p><strong>Support:</strong> ${settings.supportEmail || "-"} ${settings.supportWhatsapp ? `— ${settings.supportWhatsapp}` : ""}</p>
+      <p>${escapeHtml(settings.paymentInstructions)}</p>
+      <p><strong>Banque:</strong> ${escapeHtml(settings.bankName) || "-"}</p>
+      <p><strong>Titulaire:</strong> ${escapeHtml(settings.accountHolder) || "-"}</p>
+      <p><strong>RIB:</strong> ${escapeHtml(settings.rib) || "-"}</p>
+      ${settings.iban ? `<p><strong>IBAN:</strong> ${escapeHtml(settings.iban)}</p>` : ""}
+      <p><strong>Référence à indiquer:</strong> ${escapeHtml(invoice.invoiceNumber)}</p>
+      <p><strong>Support:</strong> ${escapeHtml(settings.supportEmail) || "-"} ${settings.supportWhatsapp ? `— ${escapeHtml(settings.supportWhatsapp)}` : ""}</p>
     </div>
   `;
-  return new Response(printShell(`Facture ${invoice.invoiceNumber}`, body), {
+  return new Response(printShell(`Facture ${escapeHtml(invoice.invoiceNumber)}`, body), {
     headers: { "Content-Type": "text/html; charset=utf-8" }
   });
 }

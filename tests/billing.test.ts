@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import test from "node:test";
 import { FirmStatus, SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
-import { overLimitReasons, usagePercent } from "../lib/billing";
+import { BILLING_SUSPENSION_DAYS, overLimitReasons, usagePercent, writeAccessDenial } from "../lib/billing";
 import {
   extractLemonWebhookContext,
   mapLemonStatusToSubscriptionStatus,
@@ -122,4 +122,83 @@ test("Lemon Squeezy webhook context extracts firm, plan, subscription, portal, a
   assert.equal(context.cardBrand, "visa");
   assert.equal(context.cardLastFour, "4242");
   assert.equal(context.renewsAt?.toISOString(), "2026-08-01T00:00:00.000Z");
+});
+
+// --- Trial expiry enforcement -------------------------------------------
+// Regression guard for a real revenue leak: an expired free trial landed in
+// OVERDUE, which requireActiveSubscription allowed, and nothing except a
+// manual admin suspension ever moved a firm to SUSPENDED. Result: 30-day
+// trial, then full write access forever, for free.
+
+const DAY = 24 * 60 * 60 * 1000;
+const NOW = new Date("2026-06-01T12:00:00.000Z");
+const daysFromNow = (days: number) => new Date(NOW.getTime() + days * DAY);
+
+test("expired trial that never paid loses write access", () => {
+  const denial = writeAccessDenial({
+    subscriptionStatus: SubscriptionStatus.OVERDUE,
+    everPaid: false,
+    trialEndsAt: daysFromNow(-1),
+    currentPeriodEnd: daysFromNow(-1),
+    now: NOW
+  });
+  assert.equal(denial?.code, "TRIAL_EXPIRED");
+});
+
+test("trial still running keeps write access", () => {
+  const denial = writeAccessDenial({
+    subscriptionStatus: SubscriptionStatus.TRIAL,
+    everPaid: false,
+    trialEndsAt: daysFromNow(5),
+    currentPeriodEnd: daysFromNow(5),
+    now: NOW
+  });
+  assert.equal(denial, null);
+});
+
+test("paying customer with a failed payment keeps working during the grace window", () => {
+  const denial = writeAccessDenial({
+    subscriptionStatus: SubscriptionStatus.OVERDUE,
+    everPaid: true,
+    trialEndsAt: daysFromNow(-90),
+    currentPeriodEnd: daysFromNow(-3),
+    now: NOW
+  });
+  assert.equal(denial, null, "a real customer must not be cut off 3 days after a failed charge");
+});
+
+test("paying customer loses write access once the grace window elapses", () => {
+  const denial = writeAccessDenial({
+    subscriptionStatus: SubscriptionStatus.OVERDUE,
+    everPaid: true,
+    trialEndsAt: daysFromNow(-90),
+    currentPeriodEnd: daysFromNow(-(BILLING_SUSPENSION_DAYS + 1)),
+    now: NOW
+  });
+  assert.equal(denial?.code, "PAYMENT_OVERDUE");
+});
+
+test("an explicitly ACTIVE subscription is never blocked, even past its trial date", () => {
+  // Covers firms an admin activated by hand on the manual bank-transfer flow,
+  // which have no Lemon Squeezy subscription id and may have no PAID invoice
+  // recorded yet.
+  const denial = writeAccessDenial({
+    subscriptionStatus: SubscriptionStatus.ACTIVE,
+    everPaid: false,
+    trialEndsAt: daysFromNow(-365),
+    currentPeriodEnd: daysFromNow(-365),
+    now: NOW
+  });
+  assert.equal(denial, null);
+});
+
+test("a firm with no trial end date recorded is not blocked", () => {
+  const denial = writeAccessDenial({
+    subscriptionStatus: SubscriptionStatus.TRIAL,
+    everPaid: false,
+    trialEndsAt: null,
+    currentPeriodEnd: null,
+    now: NOW
+  });
+  assert.equal(denial, null);
 });

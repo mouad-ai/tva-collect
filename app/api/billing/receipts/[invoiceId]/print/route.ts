@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { getCurrentUser } from "@/lib/auth";
 import { billingPaymentMethodLabel, formatMad } from "@/lib/billing";
+import { escapeHtml } from "@/lib/html";
 import { prisma } from "@/lib/prisma";
 import { canAccessBilling } from "@/lib/security-policy";
 import { formatDate } from "@/lib/utils";
@@ -41,20 +42,20 @@ export async function GET(_request: Request, { params }: { params: Promise<{ inv
   if (!allowed) notFound();
 
   const body = `
-    <h1>Reçu ${receipt.receiptNumber}</h1>
+    <h1>Reçu ${escapeHtml(receipt.receiptNumber)}</h1>
     <p class="muted">TVA Collect — confirmation de paiement</p>
     <div class="box">
-      <strong>${receipt.invoice.firm.name}</strong><br />
-      Facture liée: ${receipt.invoice.invoiceNumber}
+      <strong>${escapeHtml(receipt.invoice.firm.name)}</strong><br />
+      Facture liée: ${escapeHtml(receipt.invoice.invoiceNumber)}
     </div>
     <div class="box">
       <p><strong>Montant payé:</strong> <span class="total">${formatMad(receipt.amountMad)}</span></p>
       <p><strong>Date de paiement:</strong> ${formatDate(receipt.paidAt)}</p>
       <p><strong>Mode:</strong> ${billingPaymentMethodLabel(receipt.paymentMethod)}</p>
-      ${receipt.reference ? `<p><strong>Référence:</strong> ${receipt.reference}</p>` : ""}
+      ${receipt.reference ? `<p><strong>Référence:</strong> ${escapeHtml(receipt.reference)}</p>` : ""}
     </div>
   `;
-  return new Response(printShell(`Reçu ${receipt.receiptNumber}`, body), {
+  return new Response(printShell(`Reçu ${escapeHtml(receipt.receiptNumber)}`, body), {
     headers: { "Content-Type": "text/html; charset=utf-8" }
   });
 }

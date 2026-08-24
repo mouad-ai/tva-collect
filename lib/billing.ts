@@ -351,7 +351,74 @@ export function planHasFeature(plan: SubscriptionPlan | null | undefined, featur
   return false;
 }
 
-export async function requireActiveSubscription(firmId: string) {
+/**
+ * Has this firm ever actually paid — through Lemon Squeezy checkout, or via
+ * the manual bank-transfer flow (a BillingInvoice marked PAID)?
+ *
+ * Used to tell an expired free trial apart from a real customer whose card
+ * merely failed this month: both land in OVERDUE, but only one of them should
+ * keep write access while it gets sorted out.
+ */
+async function hasEverPaid(firmId: string, lemonSubscriptionId: string | null | undefined) {
+  if (lemonSubscriptionId) return true;
+  const paidInvoices = await prisma.billingInvoice.count({ where: { firmId, status: InvoiceStatus.PAID } });
+  return paidInvoices > 0;
+}
+
+export type WriteAccessFacts = {
+  subscriptionStatus: SubscriptionStatus | null;
+  everPaid: boolean;
+  trialEndsAt: Date | null;
+  currentPeriodEnd: Date | null;
+  now: Date;
+};
+
+/**
+ * Decides whether a firm may still perform *write* operations (new clients,
+ * new users, new collection periods). Reads — viewing and downloading
+ * documents already collected — are deliberately never blocked here: these
+ * are TVA files tied to legal deadlines, and locking a cabinet out of its own
+ * documents would do real harm. An expired account goes read-only, not dark.
+ *
+ * The statuses allowed by requireActiveSubscription include OVERDUE/PAST_DUE
+ * so a customer whose card just failed keeps working. That same leniency,
+ * without the rules below, meant an expired *free trial* also sat in OVERDUE
+ * with full access forever — nothing but a manual admin suspension ever moved
+ * a firm to SUSPENDED, so the 30-day trial never actually ended.
+ *
+ * Deliberately date-driven rather than status-driven, so correctness does not
+ * depend on syncBillingLifecycle having run — there is no scheduled job to
+ * forget to set up.
+ */
+export function writeAccessDenial(facts: WriteAccessFacts): { code: string; message: string } | null {
+  // An explicitly ACTIVE (or cancelled-but-still-inside-the-paid-period)
+  // subscription is trusted as-is; this also covers firms an admin activated
+  // by hand on the manual bank-transfer flow.
+  if (facts.subscriptionStatus === SubscriptionStatus.ACTIVE || facts.subscriptionStatus === SubscriptionStatus.CANCELLED_BUT_ACTIVE) {
+    return null;
+  }
+
+  if (facts.everPaid) {
+    // Real customer behind on payment: grace window past the period end.
+    if (!facts.currentPeriodEnd) return null;
+    const graceEndsAt = new Date(facts.currentPeriodEnd.getTime() + BILLING_SUSPENSION_DAYS * 24 * 60 * 60 * 1000);
+    if (graceEndsAt < facts.now) {
+      return { code: "PAYMENT_OVERDUE", message: "Paiement en retard. Régularisez l'abonnement pour continuer à créer des collectes." };
+    }
+    return null;
+  }
+
+  // Never paid: write access lasts exactly as long as the trial does.
+  if (facts.trialEndsAt && facts.trialEndsAt < facts.now) {
+    return {
+      code: "TRIAL_EXPIRED",
+      message: "Votre essai gratuit est terminé. Choisissez un plan pour continuer à créer des collectes et des clients."
+    };
+  }
+  return null;
+}
+
+export async function requireActiveSubscription(firmId: string, now = new Date()) {
   const snapshot = await getFirmBillingSnapshot(firmId);
   const allowedFirmStatuses: FirmStatus[] = [FirmStatus.TRIAL, FirmStatus.ACTIVE, FirmStatus.OVERDUE, FirmStatus.CANCELLED_BUT_ACTIVE];
   const allowedSubscriptionStatuses: SubscriptionStatus[] = [
@@ -367,6 +434,16 @@ export async function requireActiveSubscription(firmId: string) {
   if (!allowedFirm || !allowedSubscription) {
     throw new BillingEnforcementError("SUBSCRIPTION_INACTIVE", "Abonnement inactif ou suspendu.");
   }
+
+  const subscription = snapshot.subscription;
+  const denial = writeAccessDenial({
+    subscriptionStatus: subscription?.status ?? null,
+    everPaid: await hasEverPaid(firmId, subscription?.lemonSubscriptionId),
+    trialEndsAt: subscription?.trialEndsAt ?? snapshot.firm.trialEndDate ?? null,
+    currentPeriodEnd: subscription?.currentPeriodEnd ?? null,
+    now
+  });
+  if (denial) throw new BillingEnforcementError(denial.code, denial.message);
 }
 
 export async function requirePlanFeature(firmId: string, feature: PlanFeature) {
